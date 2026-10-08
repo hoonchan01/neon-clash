@@ -9,7 +9,6 @@
 3. 제목과 변경 내용 작성 (줄 앞에 `- ` 를 붙이면 목록으로 보여요)
 4. 아래 칸에 zip 파일들을 끌어다 놓기
    - `neon_clash_emulator.zip`, `neon_clash_emulator_ja.zip`, `neon_clash_emulator_zh.zip`
-   - `neon_clash_R4.zip`, `neon_clash_R4_ak2.zip`
 5. **Publish release** → 사이트에 자동으로 최신 버전으로 표시됩니다.
 
 > 참고: Releases가 하나도 없으면 사이트는 이 저장소의 `releases.json`과 `downloads/` 폴더의 파일을 보여줍니다. Releases를 올리기 시작하면 그쪽이 우선 표시돼요.

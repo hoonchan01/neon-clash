@@ -129,13 +129,11 @@ footer{padding:28px 0 48px;color:var(--dim);font-size:13px;border-top:1px solid 
       <button data-p="win">Windows</button>
       <button data-p="android">Android</button>
       <button data-p="ios">iPhone</button>
-      <button data-p="r4">DS Lite + R4</button>
     </div>
     <div class="card">
       <div class="pane" id="p-win"></div>
       <div class="pane" id="p-android"></div>
       <div class="pane" id="p-ios"></div>
-      <div class="pane" id="p-r4"></div>
     </div>
   </section>
 
@@ -161,7 +159,7 @@ const REPO_OVERRIDE = "";
 const I18N = {
 ko:{
   nav_dl:"다운로드", nav_guide:"실행 방법", nav_ctrl:"조작법", nav_upd:"업데이트 소식",
-  tagline:"닌텐도 DS용 2D 대전 격투 게임. 13명의 파이터, 각성 모드, 초필살기. 에뮬레이터나 DS 실기(R4)로 플레이하세요.",
+  tagline:"닌텐도 DS용 2D 대전 격투 게임. 13명의 파이터, 각성 모드, 초필살기. PC·스마트폰 에뮬레이터로 플레이하세요.",
   dl_h:"최신 버전 다운로드", dl_lead:"내 기기에 맞는 파일 하나만 받으면 됩니다. zip을 풀면 .nds 파일이 나와요.",
   loading:"불러오는 중…", none:"아직 올라온 버전이 없어요.", fail:"버전 정보를 불러오지 못했어요. 잠시 후 새로고침해 주세요.",
   latest:"최신", older:"이전 버전 보기", files:"파일",
@@ -194,18 +192,13 @@ ko:{
 <li>Delta → 오른쪽 위 <b>+</b> → <b>파일</b> → <kbd>neon_clash.nds</kbd> 선택.</li>
 <li>처음 DS 게임을 열 때 Delta가 DS용 구성요소를 받도록 안내하면 따라 주세요.</li>
 <li><b>기록 저장:</b> Delta에서는 게임 안 저장이 유지되지 않아요. 게임 중 메뉴 버튼 → <b>Save State</b>로 저장하고, <b>Load State</b>로 이어하세요.</li></ol>`,
-  r4:`<p><b>닌텐도 DS Lite + R4 카트</b> (실기)</p>
-<ol><li>R4용 zip을 받아 압축 풀기. <b>원조 R4(R4DS)</b>는 <kbd>neon_clash_r4tf.nds</kbd>, 안 되면 <b>R4 SDHC / R4i 클론</b>용 <kbd>neon_clash_ak2.nds</kbd>.</li>
-<li>microSD 카드 아무 위치에 .nds 파일 <b>하나만</b> 복사 (예전 버전은 지우기).</li>
-<li>R4 메뉴에서 실행. 음악이 나오고 기록은 SD 카드에 자동 저장됩니다.</li></ol>
-<div class="note">타이틀 화면에 빨간 글씨로 "음악 없음"이 뜨면 다른 R4 파일(ak2)을 써 보세요.</div>`,
   ctrl_h:"조작법", ctrl:[["버튼","동작"],["방향키","이동 · 점프(↑) · 앉기(↓)"],["A","펀치  (→A,A 강펀치 / ↑A 어퍼컷)"],["B","킥  (↑B 백덤블링 킥)"],["Y","가드  (↓Y 하단 가드)"],["X","고유기 — 게이지 1/4 사용"],["게이지 MAX + X","초필살기"],["START","일시정지"],["선택 화면 Y / X","각성 모드 / 내 캐릭터 각성 전환"]],
   upd_h:"업데이트 소식", upd_lead:"새 버전이 올라올 때마다 여기에 변경 내용이 표시됩니다.",
   footer:"NEON CLASH · 개인 제작 비상업 홈브루 게임입니다. 판매·재배포 금지."
 },
 ja:{
   nav_dl:"ダウンロード", nav_guide:"遊び方", nav_ctrl:"操作方法", nav_upd:"アップデート",
-  tagline:"ニンテンドーDS用の2D対戦格闘ゲーム。13人のファイター、覚醒モード、超必殺技。エミュレーターやDS実機(R4)で遊べます。",
+  tagline:"ニンテンドーDS用の2D対戦格闘ゲーム。13人のファイター、覚醒モード、超必殺技。PCやスマホのエミュレーターで遊べます。",
   dl_h:"最新版ダウンロード", dl_lead:"自分の環境に合うファイルを1つだけダウンロード。zipを解凍すると .nds ファイルが出てきます。",
   loading:"読み込み中…", none:"まだ公開されたバージョンはありません。", fail:"バージョン情報を読み込めませんでした。しばらくしてから再読み込みしてください。",
   latest:"最新", older:"過去のバージョン", files:"ファイル",
@@ -238,15 +231,13 @@ ja:{
 <li>Delta → 右上の <b>+</b> → <b>ファイル</b> → <kbd>neon_clash_ja.nds</kbd> を選択。</li>
 <li>初めてDSゲームを開くとき、DS用データの準備を案内されたら従ってください。</li>
 <li><b>セーブ:</b> Delta ではゲーム内セーブが残りません。メニュー → <b>Save State</b> で保存し、<b>Load State</b> で続きから。</li></ol>`,
-  r4:`<p><b>ニンテンドーDS Lite + R4</b> (実機)</p>
-<p>R4用ファイルは韓国語版のみです。初代R4は <kbd>neon_clash_r4tf.nds</kbd>、動かない場合は <kbd>neon_clash_ak2.nds</kbd> をmicroSDに1つだけコピーしてください。</p>`,
   ctrl_h:"操作方法", ctrl:[["ボタン","動作"],["十字キー","移動 · ジャンプ(↑) · しゃがみ(↓)"],["A","パンチ  (→A,A 強パンチ / ↑A アッパー)"],["B","キック  (↑B バク宙キック)"],["Y","ガード  (↓Y 下段ガード)"],["X","固有技 — ゲージ1/4消費"],["ゲージMAX + X","超必殺技"],["START","ポーズ"],["選択画面 Y / X","覚醒モード / 自キャラの覚醒切替"]],
   upd_h:"アップデート情報", upd_lead:"新しいバージョンが公開されると、ここに変更内容が表示されます。",
   footer:"NEON CLASH · 個人制作の非商用ホームブリューゲームです。販売・再配布禁止。"
 },
 zh:{
   nav_dl:"下载", nav_guide:"运行方法", nav_ctrl:"操作说明", nav_upd:"更新动态",
-  tagline:"任天堂DS 2D对战格斗游戏。13名角色、觉醒模式、超必杀技。可用模拟器或DS实机(R4)游玩。",
+  tagline:"任天堂DS 2D对战格斗游戏。13名角色、觉醒模式、超必杀技。可在电脑或手机模拟器上游玩。",
   dl_h:"下载最新版本", dl_lead:"只需下载适合你设备的一个文件。解压zip后会得到 .nds 文件。",
   loading:"加载中…", none:"还没有发布任何版本。", fail:"无法读取版本信息，请稍后刷新。",
   latest:"最新", older:"查看旧版本", files:"文件",
@@ -279,8 +270,6 @@ zh:{
 <li>Delta → 右上角 <b>+</b> → <b>文件</b> → 选择 <kbd>neon_clash_zh.nds</kbd>。</li>
 <li>首次打开DS游戏时，如提示准备DS组件，请按提示操作。</li>
 <li><b>存档:</b> Delta 不保留游戏内存档。请在游戏菜单中用 <b>Save State</b> 保存，<b>Load State</b> 继续。</li></ol>`,
-  r4:`<p><b>任天堂DS Lite + R4</b> (实机)</p>
-<p>R4 文件只有韩语版。原版R4用 <kbd>neon_clash_r4tf.nds</kbd>，无法运行时用 <kbd>neon_clash_ak2.nds</kbd>，microSD 卡里只放一个。</p>`,
   ctrl_h:"操作说明", ctrl:[["按键","动作"],["方向键","移动 · 跳跃(↑) · 蹲下(↓)"],["A","拳  (→A,A 重拳 / ↑A 上勾拳)"],["B","踢  (↑B 后空翻踢)"],["Y","防御  (↓Y 下段防御)"],["X","专属技 — 消耗1/4能量"],["能量MAX + X","超必杀技"],["START","暂停"],["选择画面 Y / X","觉醒模式 / 切换我方觉醒"]],
   upd_h:"更新动态", upd_lead:"每次发布新版本，这里都会显示更新内容。",
   footer:"NEON CLASH · 个人制作的非商业自制游戏。禁止贩卖与转载。"
@@ -365,7 +354,7 @@ function render(){
   document.querySelectorAll("[data-t]").forEach(el => el.textContent = t[el.dataset.t]);
   document.querySelector("footer .wrap").textContent = t.footer;
   document.querySelectorAll(".langs button").forEach(b => b.classList.toggle("on", b.dataset.l === lang));
-  for (const p of ["win","android","ios","r4"]) document.getElementById("p-"+p).innerHTML = t[p];
+  for (const p of ["win","android","ios"]) document.getElementById("p-"+p).innerHTML = t[p];
   document.getElementById("ctrl").innerHTML = t.ctrl.map((r,i)=> i ? `<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>` : `<tr><th>${r[0]}</th><th>${r[1]}</th></tr>`).join("");
   renderReleases();
 }
