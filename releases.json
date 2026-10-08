@@ -1,0 +1,35 @@
+[
+  {
+    "name": "v1.0 — 첫 공개 버전",
+    "tag_name": "v1.0",
+    "published_at": "2026-10-08T07:05:00Z",
+    "body": "- 13명의 파이터, 스토리 모드 / CPU 대전 / 기록\n- 각성 모드, 고유기(X), 초필살기(게이지 MAX + X)\n- 일본어판 / 중국어판 추가 (캐릭터 이름은 영어)\n- 에뮬레이터(melonDS · Delta)와 DS Lite + R4 실기 지원\n",
+    "assets": [
+      {
+        "name": "neon_clash_emulator.zip",
+        "size": 22681506,
+        "browser_download_url": "downloads/neon_clash_emulator.zip"
+      },
+      {
+        "name": "neon_clash_emulator_ja.zip",
+        "size": 22681979,
+        "browser_download_url": "downloads/neon_clash_emulator_ja.zip"
+      },
+      {
+        "name": "neon_clash_emulator_zh.zip",
+        "size": 22681805,
+        "browser_download_url": "downloads/neon_clash_emulator_zh.zip"
+      },
+      {
+        "name": "neon_clash_R4.zip",
+        "size": 22681865,
+        "browser_download_url": "downloads/neon_clash_R4.zip"
+      },
+      {
+        "name": "neon_clash_R4_ak2.zip",
+        "size": 22682843,
+        "browser_download_url": "downloads/neon_clash_R4_ak2.zip"
+      }
+    ]
+  }
+]

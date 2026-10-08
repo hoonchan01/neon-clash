@@ -383,13 +383,22 @@ tab(/iPhone|iPad|iPod/.test(ua) ? "ios" : /Android/.test(ua) ? "android" : "win"
 render();
 
 (async () => {
+  /* Versions come from GitHub Releases; if there are none (or the API is unreachable)
+     the page falls back to releases.json + the files in downloads/ of this repository. */
   const R = repo();
-  if (!R){ loadErr = true; render(); return; }
   try {
-    const res = await fetch(`https://api.github.com/repos/${R}/releases?per_page=30`, {headers:{Accept:"application/vnd.github+json"}});
-    if (!res.ok) throw new Error(res.status);
-    releases = (await res.json()).filter(r => !r.draft);
-  } catch(e){ loadErr = true; }
+    if (R) {
+      const res = await fetch(`https://api.github.com/repos/${R}/releases?per_page=30`, {headers:{Accept:"application/vnd.github+json"}});
+      if (res.ok) releases = (await res.json()).filter(r => !r.draft);
+    }
+  } catch(e) {}
+  if (!releases || !releases.length) {
+    try {
+      const res = await fetch("releases.json", {cache:"no-cache"});
+      if (res.ok) releases = await res.json();
+    } catch(e) {}
+  }
+  if (!releases) loadErr = true;
   render();
 })();
 </script>
