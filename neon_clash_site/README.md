@@ -1,7 +1,7 @@
 # NEON CLASH
 
 닌텐도 DS용 2D 대전 격투 게임 배포 페이지.
-👉 다운로드/실행 방법: 이 저장소의 GitHub Pages 주소 (`https://<아이디>.github.io/neon-clash/`)
+다운로드/실행 방법: 이 저장소의 GitHub Pages 주소 (`https://hoonchan01.github.io/neon-clash/`)
 
 ## 새 버전 올리는 법 (저장소 주인만)
 1. 저장소 → 오른쪽 **Releases** → **Draft a new release**
