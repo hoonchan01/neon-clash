@@ -11,3 +11,5 @@
    - `neon_clash_emulator.zip`, `neon_clash_emulator_ja.zip`, `neon_clash_emulator_zh.zip`
    - `neon_clash_R4.zip`, `neon_clash_R4_ak2.zip`
 5. **Publish release** → 사이트에 자동으로 최신 버전으로 표시됩니다.
+
+> 참고: Releases가 하나도 없으면 사이트는 이 저장소의 `releases.json`과 `downloads/` 폴더의 파일을 보여줍니다. Releases를 올리기 시작하면 그쪽이 우선 표시돼요.
