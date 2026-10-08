@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEON CLASH</title>
+<meta name="description" content="NEON CLASH — Nintendo DS homebrew fighting game. Download & emulator guide.">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0816; --panel:#151026; --panel2:#1d1634; --line:#2e2550;
+  --text:#ece8ff; --dim:#a69cc9; --pink:#ff3fb4; --cyan:#33d6ff; --yellow:#ffd34d; --green:#5df2a0;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Noto Sans KR","Noto Sans JP","Noto Sans SC",system-ui,sans-serif;line-height:1.6}
+body[data-lang=ja]{font-family:"Noto Sans JP","Noto Sans KR",system-ui,sans-serif}
+body[data-lang=zh]{font-family:"Noto Sans SC","Noto Sans KR",system-ui,sans-serif}
+a{color:var(--cyan)}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header.top{position:sticky;top:0;z-index:5;background:rgba(11,8,22,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:16px;height:56px}
+.brand{font-weight:900;letter-spacing:.06em;font-size:18px;white-space:nowrap}
+.brand b{color:var(--pink)} .brand i{font-style:normal;color:var(--cyan)}
+nav.links{display:flex;gap:14px;flex:1;overflow-x:auto;scrollbar-width:none}
+nav.links a{color:var(--dim);text-decoration:none;font-size:14px;white-space:nowrap}
+nav.links a:hover{color:var(--text)}
+.langs{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.langs button{background:none;border:0;color:var(--dim);padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.langs button.on{background:var(--panel2);color:var(--text)}
+
+.hero{padding:48px 0 24px;display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
+.hero h1{font-size:clamp(40px,8vw,72px);line-height:1;margin:0 0 12px;font-weight:900;letter-spacing:.02em}
+.hero h1 .n{color:var(--pink);text-shadow:0 0 18px rgba(255,63,180,.7)}
+.hero h1 .c{color:var(--cyan);text-shadow:0 0 18px rgba(51,214,255,.7)}
+.hero p{color:var(--dim);margin:0 0 20px}
+.shots{display:flex;gap:12px;justify-content:center}
+.shots img{width:48%;max-width:220px;image-rendering:pixelated;border-radius:10px;border:2px solid var(--line);background:#000}
+.roster{margin:8px 0 0;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.roster img{display:block;width:100%;height:auto}
+
+section{padding:36px 0;border-top:1px solid var(--line)}
+section h2{font-size:24px;margin:0 0 6px}
+section .lead{color:var(--dim);margin:0 0 20px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.release-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:6px}
+.tag{font-weight:900;font-size:22px;color:var(--yellow)}
+.date{color:var(--dim);font-size:14px}
+.badge{font-size:12px;background:var(--pink);color:#fff;border-radius:999px;padding:2px 10px;font-weight:700}
+.notes{color:var(--text);font-size:15px;margin:10px 0 16px;white-space:normal}
+.notes ul{margin:6px 0;padding-left:20px}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.dl a{display:block;text-decoration:none;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .15s,transform .15s}
+.dl a:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.dl a.main{border-color:var(--pink);background:linear-gradient(135deg,rgba(255,63,180,.18),rgba(51,214,255,.12))}
+.dl .t{font-weight:700;display:block}
+.dl .s{font-size:12px;color:var(--dim)}
+.muted{color:var(--dim)}
+.err{color:#ff8a8a}
+details.older{margin-top:16px}
+details.older summary{cursor:pointer;color:var(--dim)}
+.old{border-top:1px solid var(--line);padding:14px 0}
+.old:first-of-type{border-top:0}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:8px 16px;font:inherit;font-size:14px;cursor:pointer}
+.tabs button.on{color:#fff;border-color:var(--pink);background:rgba(255,63,180,.15)}
+.pane{display:none}.pane.on{display:block}
+.pane ol{padding-left:22px;margin:10px 0}
+.pane li{margin:6px 0}
+.pane .get{display:inline-block;margin:4px 8px 4px 0;padding:8px 14px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);text-decoration:none;color:var(--text);font-weight:700;font-size:14px}
+.pane .get:hover{border-color:var(--cyan)}
+.note{background:rgba(255,211,77,.08);border:1px solid rgba(255,211,77,.35);border-radius:10px;padding:10px 14px;font-size:14px;margin-top:12px}
+kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-family:inherit;font-size:.9em}
+
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-weight:400;font-size:13px}
+footer{padding:28px 0 48px;color:var(--dim);font-size:13px;border-top:1px solid var(--line)}
+
+@media (max-width:760px){
+  .hero{grid-template-columns:1fr;padding-top:28px}
+  nav.links{display:none}
+  header.top .wrap{justify-content:space-between}
+}
+</style>
+</head>
+<body data-lang="ko">
+<header class="top"><div class="wrap">
+  <div class="brand"><b>NEON</b> <i>CLASH</i></div>
+  <nav class="links">
+    <a href="#download" data-t="nav_dl"></a>
+    <a href="#guide" data-t="nav_guide"></a>
+    <a href="#controls" data-t="nav_ctrl"></a>
+    <a href="#updates" data-t="nav_upd"></a>
+  </nav>
+  <div class="langs" role="group" aria-label="language">
+    <button data-l="ko">한국어</button><button data-l="ja">日本語</button><button data-l="zh">中文</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <h1><span class="n">NEON</span><br><span class="c">CLASH</span></h1>
+      <p data-t="tagline"></p>
+      <div class="roster"><img src="assets/roster.jpg" alt="roster"></div>
+    </div>
+    <div class="shots">
+      <img src="assets/title.png" alt="title screen">
+      <img src="assets/fight.png" alt="fight screen">
+    </div>
+  </div>
+
+  <section id="download">
+    <h2 data-t="dl_h"></h2>
+    <p class="lead" data-t="dl_lead"></p>
+    <div id="latest" class="card"><span class="muted" data-t="loading"></span></div>
+  </section>
+
+  <section id="guide">
+    <h2 data-t="guide_h"></h2>
+    <p class="lead" data-t="guide_lead"></p>
+    <div class="tabs" id="tabs">
+      <button data-p="win">Windows</button>
+      <button data-p="android">Android</button>
+      <button data-p="ios">iPhone</button>
+      <button data-p="r4">DS Lite + R4</button>
+    </div>
+    <div class="card">
+      <div class="pane" id="p-win"></div>
+      <div class="pane" id="p-android"></div>
+      <div class="pane" id="p-ios"></div>
+      <div class="pane" id="p-r4"></div>
+    </div>
+  </section>
+
+  <section id="controls">
+    <h2 data-t="ctrl_h"></h2>
+    <div class="card" style="overflow-x:auto"><table id="ctrl"></table></div>
+  </section>
+
+  <section id="updates">
+    <h2 data-t="upd_h"></h2>
+    <p class="lead" data-t="upd_lead"></p>
+    <div id="history" class="card"><span class="muted" data-t="loading"></span></div>
+  </section>
+</main>
+
+<footer><div class="wrap" data-t="footer"></div></footer>
+
+<script>
+/* Where the releases live. On GitHub Pages (<owner>.github.io/<repo>/) this is detected
+   automatically; set it by hand ("owner/repo") only if the page is hosted somewhere else. */
+const REPO_OVERRIDE = "";
+
+const I18N = {
+ko:{
+  nav_dl:"다운로드", nav_guide:"실행 방법", nav_ctrl:"조작법", nav_upd:"업데이트 소식",
+  tagline:"닌텐도 DS용 2D 대전 격투 게임. 13명의 파이터, 각성 모드, 초필살기. 에뮬레이터나 DS 실기(R4)로 플레이하세요.",
+  dl_h:"최신 버전 다운로드", dl_lead:"내 기기에 맞는 파일 하나만 받으면 됩니다. zip을 풀면 .nds 파일이 나와요.",
+  loading:"불러오는 중…", none:"아직 올라온 버전이 없어요.", fail:"버전 정보를 불러오지 못했어요. 잠시 후 새로고침해 주세요.",
+  latest:"최신", older:"이전 버전 보기", files:"파일",
+  a_emu:["에뮬레이터용 (한국어)","Windows · Android · iPhone"],
+  a_ja:["エミュレーター用 (日本語)","日本語版 · キャラ名は英語"],
+  a_zh:["模拟器用 (中文)","简体中文版 · 角色名为英文"],
+  a_r4:["DS Lite + 원조 R4","SD 카드에 이 파일 하나만"],
+  a_ak2:["R4 SDHC / R4i 클론","원조 R4용이 안 될 때"],
+  a_other:["기타 파일",""],
+  guide_h:"에뮬레이터 설치 & 실행 방법", guide_lead:"기기를 고르세요. 처음 한 번만 설정하면 됩니다.",
+  win:`<p><b>melonDS</b> (무료, 가장 정확함)</p>
+<a class="get" href="https://melonds.kuribo64.net/downloads.php" target="_blank" rel="noopener">melonDS 다운로드 ↗</a>
+<ol><li>위 링크에서 <b>Windows x64</b> 버전을 받아 압축을 풀고 <kbd>melonDS.exe</kbd> 실행.</li>
+<li>이 페이지에서 <b>에뮬레이터용 zip</b>을 받아 압축 풀기.</li>
+<li>melonDS에서 <b>File → Open ROM…</b> → <kbd>neon_clash.nds</kbd> 선택.</li>
+<li><b>기록 저장 켜기 (한 번만):</b> Config → Emu settings → <b>DLDI</b> 탭 → <b>Enable DLDI (for homebrew)</b> 체크 → OK → 게임 다시 열기.</li>
+<li>키 설정: Config → <b>Input and hotkeys</b>에서 A/B/X/Y/L/R/Start/방향키를 원하는 키로 지정.</li></ol>
+<div class="note">추천 키: 방향키 = 화살표, A = <kbd>X</kbd>, B = <kbd>Z</kbd>, X = <kbd>S</kbd>, Y = <kbd>A</kbd>, Start = <kbd>Enter</kbd>. 게임패드도 같은 메뉴에서 지정할 수 있어요.</div>`,
+  android:`<p><b>melonDS Android</b> (무료)</p>
+<a class="get" href="https://play.google.com/store/apps/details?id=me.magnum.melonds" target="_blank" rel="noopener">Google Play ↗</a>
+<a class="get" href="https://github.com/rafaelvcaetano/melonDS-android/releases" target="_blank" rel="noopener">GitHub (APK) ↗</a>
+<ol><li>앱 설치 후 실행 → ROM 폴더를 고르라고 하면 <b>Download</b> 같은 폴더 하나를 지정.</li>
+<li>에뮬레이터용 zip을 받아 <b>내 파일</b> 앱에서 압축 풀기 → <kbd>neon_clash.nds</kbd>를 그 폴더에 두기.</li>
+<li>앱 목록에서 NEON CLASH 실행. 화면 버튼으로 조작해요.</li>
+<li><b>기록 저장:</b> 설정 → 고급(Advanced)/DLDI 항목이 있으면 켜 두세요. 없으면 메뉴의 <b>Save state</b>로 저장.</li></ol>`,
+  ios:`<p><b>Delta</b> (무료, App Store)</p>
+<a class="get" href="https://apps.apple.com/app/id1048524688" target="_blank" rel="noopener">App Store ↗</a>
+<ol><li>Delta 설치.</li>
+<li>Safari로 에뮬레이터용 zip 다운로드 → <b>파일</b> 앱에서 zip을 눌러 압축 풀기.</li>
+<li>Delta → 오른쪽 위 <b>+</b> → <b>파일</b> → <kbd>neon_clash.nds</kbd> 선택.</li>
+<li>처음 DS 게임을 열 때 Delta가 DS용 구성요소를 받도록 안내하면 따라 주세요.</li>
+<li><b>기록 저장:</b> Delta에서는 게임 안 저장이 유지되지 않아요. 게임 중 메뉴 버튼 → <b>Save State</b>로 저장하고, <b>Load State</b>로 이어하세요.</li></ol>`,
+  r4:`<p><b>닌텐도 DS Lite + R4 카트</b> (실기)</p>
+<ol><li>R4용 zip을 받아 압축 풀기. <b>원조 R4(R4DS)</b>는 <kbd>neon_clash_r4tf.nds</kbd>, 안 되면 <b>R4 SDHC / R4i 클론</b>용 <kbd>neon_clash_ak2.nds</kbd>.</li>
+<li>microSD 카드 아무 위치에 .nds 파일 <b>하나만</b> 복사 (예전 버전은 지우기).</li>
+<li>R4 메뉴에서 실행. 음악이 나오고 기록은 SD 카드에 자동 저장됩니다.</li></ol>
+<div class="note">타이틀 화면에 빨간 글씨로 "음악 없음"이 뜨면 다른 R4 파일(ak2)을 써 보세요.</div>`,
+  ctrl_h:"조작법", ctrl:[["버튼","동작"],["방향키","이동 · 점프(↑) · 앉기(↓)"],["A","펀치  (→A,A 강펀치 / ↑A 어퍼컷)"],["B","킥  (↑B 백덤블링 킥)"],["Y","가드  (↓Y 하단 가드)"],["X","고유기 — 게이지 1/4 사용"],["게이지 MAX + X","초필살기"],["START","일시정지"],["선택 화면 Y / X","각성 모드 / 내 캐릭터 각성 전환"]],
+  upd_h:"업데이트 소식", upd_lead:"새 버전이 올라올 때마다 여기에 변경 내용이 표시됩니다.",
+  footer:"NEON CLASH · 개인 제작 비상업 홈브루 게임입니다. 판매·재배포 금지."
+},
+ja:{
+  nav_dl:"ダウンロード", nav_guide:"遊び方", nav_ctrl:"操作方法", nav_upd:"アップデート",
+  tagline:"ニンテンドーDS用の2D対戦格闘ゲーム。13人のファイター、覚醒モード、超必殺技。エミュレーターやDS実機(R4)で遊べます。",
+  dl_h:"最新版ダウンロード", dl_lead:"自分の環境に合うファイルを1つだけダウンロード。zipを解凍すると .nds ファイルが出てきます。",
+  loading:"読み込み中…", none:"まだ公開されたバージョンはありません。", fail:"バージョン情報を読み込めませんでした。しばらくしてから再読み込みしてください。",
+  latest:"最新", older:"過去のバージョン", files:"ファイル",
+  a_emu:["エミュレーター用 (韓国語)","Windows · Android · iPhone"],
+  a_ja:["エミュレーター用 (日本語)","日本語版 · キャラ名は英語"],
+  a_zh:["エミュレーター用 (中国語)","簡体字中国語版"],
+  a_r4:["DS Lite + 初代R4","SDカードにこのファイルだけ"],
+  a_ak2:["R4 SDHC / R4i 互換","初代R4用で動かない時"],
+  a_other:["その他のファイル",""],
+  guide_h:"エミュレーターの導入と起動", guide_lead:"お使いの端末を選んでください。設定は最初の1回だけです。",
+  win:`<p><b>melonDS</b> (無料・高精度)</p>
+<a class="get" href="https://melonds.kuribo64.net/downloads.php" target="_blank" rel="noopener">melonDS ダウンロード ↗</a>
+<ol><li><b>Windows x64</b> 版をダウンロードして解凍し、<kbd>melonDS.exe</kbd> を起動。</li>
+<li>このページから <b>日本語版zip</b> をダウンロードして解凍。</li>
+<li>melonDS の <b>File → Open ROM…</b> で <kbd>neon_clash_ja.nds</kbd> を選択。</li>
+<li><b>セーブを有効にする (1回だけ):</b> Config → Emu settings → <b>DLDI</b> タブ → <b>Enable DLDI (for homebrew)</b> にチェック → OK → ゲームを開き直す。</li>
+<li>キー設定: Config → <b>Input and hotkeys</b> で A/B/X/Y/L/R/Start/十字キーを割り当て。</li></ol>
+<div class="note">おすすめ: 十字キー = 矢印キー, A = <kbd>X</kbd>, B = <kbd>Z</kbd>, X = <kbd>S</kbd>, Y = <kbd>A</kbd>, Start = <kbd>Enter</kbd>。ゲームパッドも同じ画面で設定できます。</div>`,
+  android:`<p><b>melonDS Android</b> (無料)</p>
+<a class="get" href="https://play.google.com/store/apps/details?id=me.magnum.melonds" target="_blank" rel="noopener">Google Play ↗</a>
+<a class="get" href="https://github.com/rafaelvcaetano/melonDS-android/releases" target="_blank" rel="noopener">GitHub (APK) ↗</a>
+<ol><li>アプリをインストールして起動し、ROMフォルダ(例: <b>Download</b>)を指定。</li>
+<li>zipをファイルアプリで解凍し、<kbd>neon_clash_ja.nds</kbd> をそのフォルダへ。</li>
+<li>一覧から NEON CLASH を起動。画面上のボタンで操作します。</li>
+<li><b>セーブ:</b> 設定に DLDI 項目があればオン。なければメニューの <b>Save state</b> を使用。</li></ol>`,
+  ios:`<p><b>Delta</b> (無料・App Store)</p>
+<a class="get" href="https://apps.apple.com/app/id1048524688" target="_blank" rel="noopener">App Store ↗</a>
+<ol><li>Delta をインストール。</li>
+<li>Safari で zip をダウンロード → <b>ファイル</b> アプリで解凍。</li>
+<li>Delta → 右上の <b>+</b> → <b>ファイル</b> → <kbd>neon_clash_ja.nds</kbd> を選択。</li>
+<li>初めてDSゲームを開くとき、DS用データの準備を案内されたら従ってください。</li>
+<li><b>セーブ:</b> Delta ではゲーム内セーブが残りません。メニュー → <b>Save State</b> で保存し、<b>Load State</b> で続きから。</li></ol>`,
+  r4:`<p><b>ニンテンドーDS Lite + R4</b> (実機)</p>
+<p>R4用ファイルは韓国語版のみです。初代R4は <kbd>neon_clash_r4tf.nds</kbd>、動かない場合は <kbd>neon_clash_ak2.nds</kbd> をmicroSDに1つだけコピーしてください。</p>`,
+  ctrl_h:"操作方法", ctrl:[["ボタン","動作"],["十字キー","移動 · ジャンプ(↑) · しゃがみ(↓)"],["A","パンチ  (→A,A 強パンチ / ↑A アッパー)"],["B","キック  (↑B バク宙キック)"],["Y","ガード  (↓Y 下段ガード)"],["X","固有技 — ゲージ1/4消費"],["ゲージMAX + X","超必殺技"],["START","ポーズ"],["選択画面 Y / X","覚醒モード / 自キャラの覚醒切替"]],
+  upd_h:"アップデート情報", upd_lead:"新しいバージョンが公開されると、ここに変更内容が表示されます。",
+  footer:"NEON CLASH · 個人制作の非商用ホームブリューゲームです。販売・再配布禁止。"
+},
+zh:{
+  nav_dl:"下载", nav_guide:"运行方法", nav_ctrl:"操作说明", nav_upd:"更新动态",
+  tagline:"任天堂DS 2D对战格斗游戏。13名角色、觉醒模式、超必杀技。可用模拟器或DS实机(R4)游玩。",
+  dl_h:"下载最新版本", dl_lead:"只需下载适合你设备的一个文件。解压zip后会得到 .nds 文件。",
+  loading:"加载中…", none:"还没有发布任何版本。", fail:"无法读取版本信息，请稍后刷新。",
+  latest:"最新", older:"查看旧版本", files:"文件",
+  a_emu:["模拟器用 (韩语)","Windows · Android · iPhone"],
+  a_ja:["模拟器用 (日语)","日语版 · 角色名为英文"],
+  a_zh:["模拟器用 (中文)","简体中文版 · 角色名为英文"],
+  a_r4:["DS Lite + 原版R4","SD卡里只放这一个文件"],
+  a_ak2:["R4 SDHC / R4i 兼容卡","原版R4文件无法运行时"],
+  a_other:["其他文件",""],
+  guide_h:"模拟器安装与运行", guide_lead:"选择你的设备。只需首次设置一次。",
+  win:`<p><b>melonDS</b> (免费，精度最高)</p>
+<a class="get" href="https://melonds.kuribo64.net/downloads.php" target="_blank" rel="noopener">下载 melonDS ↗</a>
+<ol><li>下载 <b>Windows x64</b> 版并解压，运行 <kbd>melonDS.exe</kbd>。</li>
+<li>在本页下载 <b>中文版zip</b> 并解压。</li>
+<li>melonDS 中 <b>File → Open ROM…</b> → 选择 <kbd>neon_clash_zh.nds</kbd>。</li>
+<li><b>开启存档 (仅一次):</b> Config → Emu settings → <b>DLDI</b> 选项卡 → 勾选 <b>Enable DLDI (for homebrew)</b> → OK → 重新打开游戏。</li>
+<li>按键设置: Config → <b>Input and hotkeys</b> 中设置 A/B/X/Y/L/R/Start/方向键。</li></ol>
+<div class="note">推荐: 方向键 = 方向键, A = <kbd>X</kbd>, B = <kbd>Z</kbd>, X = <kbd>S</kbd>, Y = <kbd>A</kbd>, Start = <kbd>Enter</kbd>。手柄也可在同一界面设置。</div>`,
+  android:`<p><b>melonDS Android</b> (免费)</p>
+<a class="get" href="https://play.google.com/store/apps/details?id=me.magnum.melonds" target="_blank" rel="noopener">Google Play ↗</a>
+<a class="get" href="https://github.com/rafaelvcaetano/melonDS-android/releases" target="_blank" rel="noopener">GitHub (APK) ↗</a>
+<ol><li>安装并打开应用，选择一个ROM文件夹(例如 <b>Download</b>)。</li>
+<li>用文件管理器解压zip，把 <kbd>neon_clash_zh.nds</kbd> 放进该文件夹。</li>
+<li>在列表中启动 NEON CLASH，用屏幕按键操作。</li>
+<li><b>存档:</b> 设置里有 DLDI 选项就打开；没有的话用菜单里的 <b>Save state</b>。</li></ol>`,
+  ios:`<p><b>Delta</b> (免费，App Store)</p>
+<a class="get" href="https://apps.apple.com/app/id1048524688" target="_blank" rel="noopener">App Store ↗</a>
+<ol><li>安装 Delta。</li>
+<li>用 Safari 下载zip → 在 <b>文件</b> App 中点击解压。</li>
+<li>Delta → 右上角 <b>+</b> → <b>文件</b> → 选择 <kbd>neon_clash_zh.nds</kbd>。</li>
+<li>首次打开DS游戏时，如提示准备DS组件，请按提示操作。</li>
+<li><b>存档:</b> Delta 不保留游戏内存档。请在游戏菜单中用 <b>Save State</b> 保存，<b>Load State</b> 继续。</li></ol>`,
+  r4:`<p><b>任天堂DS Lite + R4</b> (实机)</p>
+<p>R4 文件只有韩语版。原版R4用 <kbd>neon_clash_r4tf.nds</kbd>，无法运行时用 <kbd>neon_clash_ak2.nds</kbd>，microSD 卡里只放一个。</p>`,
+  ctrl_h:"操作说明", ctrl:[["按键","动作"],["方向键","移动 · 跳跃(↑) · 蹲下(↓)"],["A","拳  (→A,A 重拳 / ↑A 上勾拳)"],["B","踢  (↑B 后空翻踢)"],["Y","防御  (↓Y 下段防御)"],["X","专属技 — 消耗1/4能量"],["能量MAX + X","超必杀技"],["START","暂停"],["选择画面 Y / X","觉醒模式 / 切换我方觉醒"]],
+  upd_h:"更新动态", upd_lead:"每次发布新版本，这里都会显示更新内容。",
+  footer:"NEON CLASH · 个人制作的非商业自制游戏。禁止贩卖与转载。"
+}};
+
+function repo(){
+  if (REPO_OVERRIDE) return REPO_OVERRIDE;
+  const h = location.hostname, m = h.match(/^([^.]+)\.github\.io$/i);
+  if (!m) return "";
+  const seg = location.pathname.split("/").filter(Boolean)[0];
+  return m[1] + "/" + (seg || h);           // user site (owner.github.io) uses the host as repo name
+}
+
+let lang = "ko", releases = null, loadErr = false, saved = null;
+try { saved = localStorage.getItem("nc_lang"); } catch(e) {}
+if (I18N[saved]) lang = saved;
+else {
+  const n = (navigator.language || "").toLowerCase();
+  if (n.startsWith("ja")) lang = "ja"; else if (n.startsWith("zh")) lang = "zh";
+}
+
+function kind(name){
+  const n = name.toLowerCase();
+  if (/_ja\b|_ja\.|ja\.zip/.test(n)) return "a_ja";
+  if (/_zh\b|_zh\.|zh\.zip/.test(n)) return "a_zh";
+  if (n.includes("ak2")) return "a_ak2";
+  if (n.includes("r4")) return "a_r4";
+  if (n.includes("emulator") || n.endsWith(".nds") || n.endsWith(".zip")) return "a_emu";
+  return "a_other";
+}
+const ORDER = {a_emu:0,a_ja:1,a_zh:2,a_r4:3,a_ak2:4,a_other:5};
+const MAIN_FOR = {ko:"a_emu", ja:"a_ja", zh:"a_zh"};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mb = b => (b/1048576).toFixed(1) + " MB";
+const fmtDate = d => new Date(d).toLocaleDateString({ko:"ko-KR",ja:"ja-JP",zh:"zh-CN"}[lang], {year:"numeric",month:"long",day:"numeric"});
+
+function md(text){                     // tiny markdown: headings, bullets, bold, links
+  if (!text) return "";
+  const lines = esc(text).split(/\r?\n/); let out = "", inList = false;
+  for (let l of lines){
+    l = l.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\[(.+?)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    const li = l.match(/^\s*[-*]\s+(.*)/);
+    if (li){ if(!inList){out+="<ul>";inList=true} out+="<li>"+li[1]+"</li>"; continue; }
+    if (inList){ out+="</ul>"; inList=false; }
+    const h = l.match(/^#{1,6}\s+(.*)/);
+    if (h) out += "<p><b>"+h[1]+"</b></p>"; else if (l.trim()) out += "<p style='margin:4px 0'>"+l+"</p>";
+  }
+  return out + (inList ? "</ul>" : "");
+}
+
+function assetsHTML(r){
+  const t = I18N[lang];
+  const list = (r.assets||[]).slice().sort((a,b)=>ORDER[kind(a.name)]-ORDER[kind(b.name)]);
+  if (!list.length) return "";
+  return '<div class="dl">' + list.map(a=>{
+    const k = kind(a.name), [title, sub] = t[k];
+    return `<a class="${k===MAIN_FOR[lang]?"main":""}" href="${esc(a.browser_download_url)}">
+      <span class="t">⬇ ${esc(title)}</span>
+      <span class="s">${esc(sub ? sub + " · " : "")}${esc(a.name)} · ${mb(a.size)}</span></a>`;
+  }).join("") + "</div>";
+}
+
+function renderReleases(){
+  const t = I18N[lang], L = document.getElementById("latest"), H = document.getElementById("history");
+  if (loadErr){ L.innerHTML = H.innerHTML = `<span class="err">${t.fail}</span>`; return; }
+  if (!releases){ return; }
+  if (!releases.length){ L.innerHTML = H.innerHTML = `<span class="muted">${t.none}</span>`; return; }
+  const r = releases[0];
+  L.innerHTML = `<div class="release-head"><span class="tag">${esc(r.name||r.tag_name)}</span>
+     <span class="badge">${t.latest}</span><span class="date">${fmtDate(r.published_at)}</span></div>
+     <div class="notes">${md(r.body)}</div>${assetsHTML(r)}`;
+  const post = (x, withFiles) => `<div class="old"><div class="release-head"><span class="tag" style="font-size:18px">${esc(x.name||x.tag_name)}</span>
+     <span class="date">${fmtDate(x.published_at)}</span></div><div class="notes">${md(x.body)}</div>${withFiles?assetsHTML(x):""}</div>`;
+  const older = releases.slice(1);
+  H.innerHTML = releases.slice(0, 5).map(x=>post(x,false)).join("") +
+    (older.length ? `<details class="older"><summary>${t.older} (${older.length})</summary>${older.map(x=>post(x,true)).join("")}</details>` : "");
+}
+
+function render(){
+  const t = I18N[lang];
+  document.body.dataset.lang = lang; document.documentElement.lang = {ko:"ko",ja:"ja",zh:"zh-CN"}[lang];
+  document.querySelectorAll("[data-t]").forEach(el => el.textContent = t[el.dataset.t]);
+  document.querySelector("footer .wrap").textContent = t.footer;
+  document.querySelectorAll(".langs button").forEach(b => b.classList.toggle("on", b.dataset.l === lang));
+  for (const p of ["win","android","ios","r4"]) document.getElementById("p-"+p).innerHTML = t[p];
+  document.getElementById("ctrl").innerHTML = t.ctrl.map((r,i)=> i ? `<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>` : `<tr><th>${r[0]}</th><th>${r[1]}</th></tr>`).join("");
+  renderReleases();
+}
+
+document.querySelectorAll(".langs button").forEach(b => b.onclick = () => {
+  lang = b.dataset.l; try { localStorage.setItem("nc_lang", lang); } catch(e) {} render();
+});
+function tab(p){
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.p === p));
+  document.querySelectorAll(".pane").forEach(el => el.classList.toggle("on", el.id === "p-"+p));
+}
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => tab(b.dataset.p));
+const ua = navigator.userAgent;
+tab(/iPhone|iPad|iPod/.test(ua) ? "ios" : /Android/.test(ua) ? "android" : "win");
+render();
+
+(async () => {
+  const R = repo();
+  if (!R){ loadErr = true; render(); return; }
+  try {
+    const res = await fetch(`https://api.github.com/repos/${R}/releases?per_page=30`, {headers:{Accept:"application/vnd.github+json"}});
+    if (!res.ok) throw new Error(res.status);
+    releases = (await res.json()).filter(r => !r.draft);
+  } catch(e){ loadErr = true; }
+  render();
+})();
+</script>
+</body>
+</html>
