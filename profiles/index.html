@@ -64,6 +64,10 @@ dt{color:var(--muted);white-space:nowrap} dd{margin:0;min-width:0;overflow-wrap:
 .form textarea{min-height:130px;resize:vertical}
 @media (max-width:520px){.form{grid-template-columns:minmax(0,1fr)} .form .h{display:none}}
 .err{color:var(--neon);font-size:13px;margin:0}
+.mystery{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;background:var(--panel);border:1px solid var(--line);border-radius:14px;text-align:center}
+.mystery .q{font-family:var(--display);font-size:120px;line-height:1;color:var(--neon);text-shadow:0 0 30px rgba(255,61,129,.5)}
+.mystery .t{font-family:var(--display);font-size:22px;font-weight:700}
+.strip .lock{display:flex;align-items:center;justify-content:center;background:var(--panel2);font-family:var(--display);font-size:24px;color:var(--muted)}
 .empty{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:28px;color:var(--muted);text-align:center}
 </style>
 
@@ -75,7 +79,7 @@ dt{color:var(--muted);white-space:nowrap} dd{margin:0;min-width:0;overflow-wrap:
     <span class="status" id="status" role="status"></span>
   </div>
   <div class="tabs" role="group" aria-label="장 선택">
-    <button type="button" data-ch="0">전체 (すべて)</button><button type="button" data-ch="1">1장 (第1章)</button><button type="button" data-ch="2">2장 (第2章)</button><button type="button" data-ch="3">3장 (第3章)</button>
+    <button type="button" data-ch="0">전체 (すべて)</button><button type="button" data-ch="1">1장 (第1章)</button><button type="button" data-ch="2">2장 (第2章)</button><button type="button" data-ch="3">3장 (第3章)</button><button type="button" data-ch="4">4장 (第4章)</button><button type="button" data-ch="5">5장 (第5章)</button><button type="button" data-ch="6">6장 (第6章)</button>
   </div>
   <div class="strip" id="strip" aria-label="캐릭터 목록"></div>
   <div id="main"></div>
@@ -138,6 +142,13 @@ function view(p) {
 function filtered() { return rows.filter(p => !ch || p.ch === ch).sort((a, b) => a.ch - b.ch || a.order - b.order); }
 function render(keepKey) {
   document.querySelectorAll('[data-ch]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.ch === ch));
+  if (ch >= 4) {
+    document.getElementById('strip').innerHTML = Array.from({length: 8}, () => '<button type="button" class="lock" disabled>?</button>').join('');
+    document.getElementById('main').innerHTML = `<div class="mystery"><div class="q">?</div><div class="t">${ch}장 (第${ch}章)</div><div class="status">??? · 공개 예정 (近日公開)</div></div>`;
+    document.getElementById('count').textContent = '? / ?';
+    document.getElementById('prev').disabled = true; document.getElementById('next').disabled = true;
+    return;
+  }
   if (!rows.length) return;
   const key = keepKey || (list[idx] && list[idx].key);
   list = filtered();
