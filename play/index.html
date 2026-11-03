@@ -1,0 +1,466 @@
+<meta charset="utf-8">
+<title>NEON CLASH</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+KR:wght@500;700&display=swap">
+<style>
+/* Layout: one 16:9 game canvas centred and letterboxed; touch pad overlay on coarse pointers. Single dark arcade look on purpose. */
+:root{--bg:#07060c;--fg:#f1eeff;--neon:#ff3d81;--cyan:#3fd8ff;color-scheme:dark}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+body{display:flex;align-items:center;justify-content:center;padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+#wrap{position:relative;width:min(100vw,177.78vh);aspect-ratio:16/9;max-width:100%}
+canvas{width:100%;height:100%;display:block;background:#000}
+.pad{position:absolute;inset:0;pointer-events:none;display:none}
+@media (pointer:coarse){.pad{display:block}}
+.pad button{pointer-events:auto;position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(10,8,20,.45);color:#fff;font:700 clamp(14px,3.2vh,26px) "Chakra Petch",system-ui;display:flex;align-items:center;justify-content:center;touch-action:none}
+.pad button.on{background:rgba(255,61,129,.6)}
+#bl{left:3%;bottom:6%;width:12%;aspect-ratio:1}
+#br{left:17%;bottom:6%;width:12%;aspect-ratio:1}
+#bF{right:15%;bottom:4%;width:10%;aspect-ratio:1}
+#bK{right:3%;bottom:16%;width:10%;aspect-ratio:1}
+#bD{right:27%;bottom:14%;width:10%;aspect-ratio:1}
+#bX{right:15%;bottom:28%;width:10%;aspect-ratio:1}
+#rot{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;font:600 18px "IBM Plex Sans KR",system-ui;padding:24px;background:var(--bg)}
+@media (orientation:portrait) and (pointer:coarse){#rot{display:flex}}
+</style>
+<div id="wrap">
+  <canvas id="c" width="1280" height="720" aria-label="NEON CLASH 게임 화면"></canvas>
+  <div class="pad" id="pad">
+    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button>
+    <button id="bF" data-k="F">F</button><button id="bK" data-k="K">K</button><button id="bD" data-k="D">D</button><button id="bX" data-k="X">X</button>
+  </div>
+</div>
+<div id="rot">화면을 가로로 돌려 주세요<br>横向きにしてください</div>
+<script>
+'use strict';
+const R = [{"key":"ryohei","ch":1,"ko":"료헤이","ja":"リョウヘイ","en":"RYOHEI","X":"리프 게일","S":"녹풍선","col":[[235,255,220],[60,200,80]],"reach":0,"real":true,"f":{"idle1":[0,0,154,374,61.8,371.4],"idle2":[156,0,154,374,61.4,371.4],"walk1":[312,0,179,364,90.1,356.4],"walk2":[493,0,197,364,93.6,360.5],"jab1":[692,0,207,366,86.9,362.5],"jab2":[901,0,275,366,99.3,362.8],"kick1":[1178,0,118,365,43.5,359.9],"kick2":[1298,0,259,360,66.1,358.1],"guard":[1559,0,157,363,62.9,359.9],"special1":[1718,0,212,349,102.4,345.6],"special2":[1932,0,255,343,96.5,339.9],"super1":[2189,0,214,366,117.7,361.9],"super2":[2405,0,177,366,47.9,363.2],"hit":[2584,0,189,350,88.2,346.5],"down1":[2775,0,256,301,119.9,298.1],"down2":[3033,0,544,108,250.8,104.7],"win":[3579,0,154,374,61.8,371.4],"cutin":[0,376,472,300,0,0]},"looks":"hot"},{"key":"hattori","ch":1,"ko":"핫토리","ja":"ハットリ","en":"HATTORI","X":"육수 블래스터","S":"라멘 메테오","col":[[255,255,200],[255,60,0]],"reach":0,"real":true,"f":{"idle1":[0,0,235,380,81.0,377.7],"idle2":[237,0,235,380,81.0,377.7],"walk1":[474,0,230,369,88.1,377.7],"walk2":[706,0,228,371,82.3,377.7],"jab1":[936,0,237,380,81.0,377.7],"jab2":[1175,0,256,380,81.0,377.7],"kick1":[1433,0,137,376,39.1,377.7],"kick2":[1572,0,137,376,39.1,377.7],"guard":[1711,0,164,391,55.6,388.8],"special1":[1877,0,342,379,138.4,377.7],"special2":[2221,0,259,389,72.0,386.1],"super1":[2482,0,130,450,56.7,445.8],"super2":[2614,0,262,387,89.7,384.2],"hit":[2878,0,210,343,102.9,340.9],"down1":[3090,0,250,271,151.9,268.6],"down2":[3342,0,326,104,159.9,102.2],"win":[3670,0,117,391,38.0,389.0],"cutin":[3789,0,220,300,0,0]},"looks":"mid"},{"key":"noise","ch":1,"ko":"노이즈","ja":"ノイズ","en":"NOISE","X":"피드백 블래스트","S":"데스 피드백","col":[[220,255,255],[40,200,255]],"reach":0,"real":true,"f":{"idle1":[0,0,259,392,129.6,388.3],"idle2":[261,0,246,402,117.0,399.4],"walk1":[509,0,218,394,112.1,391.3],"walk2":[729,0,206,400,100.4,396.9],"jab1":[937,0,252,392,102.4,390.2],"jab2":[1191,0,373,400,193.0,398.0],"kick1":[1566,0,187,406,68.0,402.1],"kick2":[1755,0,270,392,64.1,389.4],"guard":[2027,0,209,400,78.6,396.1],"special1":[2238,0,232,401,80.0,397.6],"special2":[2472,0,357,401,123.9,398.7],"super1":[2831,0,150,396,86.9,392.8],"super2":[2983,0,285,400,142.4,396.1],"hit":[3270,0,207,398,115.9,394.8],"down1":[3479,0,318,352,148.2,348.4],"down2":[0,408,607,155,286.7,151.9],"win":[609,408,157,408,73.0,404.8],"cutin":[768,408,266,300,0,0]},"looks":"ugly"},{"key":"shunsuke","ch":1,"ko":"슌스케","ja":"シュンスケ","en":"SHUNSUKE","X":"흑백 일격","S":"축머리 묘수","col":[[255,255,255],[150,150,170]],"reach":0,"real":true,"f":{"idle1":[0,0,136,373,53.8,372.0],"idle2":[138,0,124,373,42.9,371.3],"walk1":[264,0,152,365,75.9,361.7],"walk2":[418,0,147,365,74.1,363.0],"jab1":[567,0,123,373,44.1,371.3],"jab2":[692,0,256,372,100.3,369.3],"kick1":[950,0,140,370,44.9,366.4],"kick2":[1092,0,271,367,88.3,364.5],"guard":[1365,0,133,372,52.0,369.4],"special1":[1500,0,98,373,33.2,371.3],"special2":[1600,0,178,375,30.7,373.3],"super1":[1780,0,295,339,146.4,336.8],"super2":[2077,0,169,377,35.5,373.9],"hit":[2248,0,204,345,103.4,342.6],"down1":[2454,0,216,329,126.4,326.6],"down2":[2672,0,575,101,268.6,98.5],"win":[3249,0,126,367,47.5,365.6],"cutin":[3377,0,227,300,0,0]},"looks":"mid"},{"key":"shigeru","ch":1,"ko":"시게루","ja":"シゲル","en":"SHIGERU","X":"단도 투척","S":"사도처형","col":[[255,230,230],[200,20,40]],"reach":0,"real":true,"f":{"idle1":[0,0,199,401,85.0,398.9],"idle2":[201,0,165,400,57.6,398.9],"walk1":[368,0,205,391,98.1,389.3],"walk2":[575,0,215,399,114.2,396.7],"jab1":[792,0,186,400,81.7,398.9],"jab2":[980,0,331,399,115.4,398.3],"kick1":[1313,0,187,393,62.8,389.4],"kick2":[1502,0,324,394,99.7,391.2],"guard":[1828,0,183,401,73.2,399.0],"special1":[2013,0,176,399,68.2,397.6],"special2":[2191,0,323,395,133.1,393.2],"super1":[2516,0,281,397,128.2,395.4],"super2":[2799,0,376,396,110.3,394.8],"hit":[3177,0,190,378,112.1,375.6],"down1":[3369,0,266,361,175.4,358.6],"down2":[0,403,615,133,280.0,129.8],"win":[617,403,105,400,59.8,398.9],"cutin":[724,403,499,300,0,0]},"looks":"ugly"},{"key":"kei","ch":1,"ko":"Dr.케이","ja":"Dr.ケイ","en":"DR. KEI","X":"비커 투척","S":"바이오 디토네이션","col":[[240,255,220],[90,220,40]],"reach":0,"real":true,"f":{"idle1":[0,0,183,388,78.5,386.9],"idle2":[185,0,179,388,77.8,386.9],"walk1":[366,0,188,377,94.8,375.5],"walk2":[556,0,193,389,91.0,388.2],"jab1":[751,0,184,388,79.3,386.9],"jab2":[937,0,299,388,106.3,386.9],"kick1":[1238,0,174,385,49.8,382.6],"kick2":[1414,0,239,383,63.0,381.2],"guard":[1655,0,148,388,56.0,386.9],"special1":[1805,0,141,387,50.1,385.5],"special2":[1948,0,268,389,91.0,386.6],"super1":[2218,0,155,388,102.7,385.6],"super2":[2375,0,288,377,107.8,374.2],"hit":[2665,0,203,364,117.0,361.4],"down1":[2870,0,368,291,181.8,287.8],"down2":[3240,0,568,133,274.7,129.9],"win":[3810,0,207,391,129.9,388.2],"cutin":[0,393,490,300,0,0]},"looks":"ugly"},{"key":"matsuhiro","ch":1,"ko":"마츠히로","ja":"マツヒロ","en":"MATSUHIRO","X":"다이코 웨이브","S":"다이코 크래시","col":[[255,250,230],[230,150,40]],"reach":20,"real":true,"f":{"idle1":[0,0,265,373,117.7,371.3],"idle2":[267,0,265,373,117.7,371.3],"walk1":[534,0,198,373,85.2,369.9],"walk2":[734,0,188,375,57.7,372.6],"jab1":[924,0,203,377,67.8,374.6],"jab2":[1129,0,272,378,67.2,375.3],"kick1":[1403,0,148,373,52.3,371.2],"kick2":[1553,0,311,372,88.5,369.3],"guard":[1866,0,226,376,66.6,374.1],"special1":[2094,0,236,372,92.1,369.4],"special2":[2332,0,361,361,107.7,359.1],"super1":[2695,0,109,379,40.1,376.6],"super2":[2806,0,297,369,97.7,366.3],"hit":[3105,0,227,356,102.9,352.7],"down1":[3334,0,418,300,220.4,297.7],"down2":[0,381,538,191,245.7,188.5],"win":[540,381,131,375,55.2,372.7],"cutin":[673,381,378,300,0,0]},"looks":"hot"},{"key":"iroha","ch":1,"ko":"이로하","ja":"イロハ","en":"IROHA","X":"미러볼 샷","S":"앵콜 하트","col":[[230,255,245],[60,230,180]],"reach":0,"real":true,"f":{"idle1":[0,0,163,360,54.4,356.5],"idle2":[165,0,163,359,54.5,356.5],"walk1":[330,0,181,353,115.3,349.8],"walk2":[513,0,178,356,98.0,353.2],"jab1":[693,0,191,359,91.0,355.8],"jab2":[886,0,244,352,79.1,349.6],"kick1":[1132,0,139,356,51.5,353.2],"kick2":[1273,0,320,350,133.8,347.0],"guard":[1595,0,151,356,56.3,353.2],"special1":[1748,0,110,357,54.8,355.1],"special2":[1860,0,233,368,58.1,356.1],"super1":[2095,0,177,363,72.0,360.5],"super2":[2274,0,133,356,55.1,353.9],"hit":[2409,0,234,336,152.3,333.3],"down1":[2645,0,412,232,197.0,230.4],"down2":[3059,0,609,113,297.3,109.6],"win":[3670,0,156,357,102.1,354.5],"cutin":[0,370,301,300,0,0]},"looks":"f"},{"key":"haruhiko","ch":1,"ko":"하루히코","ja":"ハルヒコ","en":"HARUHIKO","X":"골든 스타","S":"골든 스타피어스","col":[[255,255,220],[240,190,30]],"reach":0,"real":true,"f":{"idle1":[0,0,172,380,75.0,377.1],"idle2":[174,0,151,376,62.8,373.8],"walk1":[327,0,192,378,87.6,374.4],"walk2":[521,0,199,375,94.5,372.4],"jab1":[722,0,194,374,88.3,372.0],"jab2":[918,0,230,380,68.6,376.4],"kick1":[1150,0,143,374,46.2,372.9],"kick2":[1295,0,143,374,46.2,372.9],"guard":[1440,0,135,378,53.8,375.7],"special1":[1577,0,271,380,136.5,377.1],"special2":[1850,0,337,369,143.9,365.5],"super1":[2189,0,252,353,113.1,349.9],"super2":[2443,0,247,376,93.7,373.2],"hit":[2692,0,216,364,124.9,362.0],"down1":[2910,0,380,249,201.3,246.5],"down2":[3292,0,587,105,272.4,101.6],"win":[3881,0,121,380,64.1,376.4],"cutin":[0,382,398,300,0,0]},"looks":"hot"},{"key":"heart","ch":1,"ko":"하트","ja":"ハート","en":"HEART","X":"더블 카드","S":"로열 스트레이트","col":[[255,240,240],[220,30,60]],"reach":0,"real":true,"f":{"idle1":[0,0,160,378,62.5,375.6],"idle2":[162,0,151,378,62.9,375.6],"walk1":[315,0,164,377,93.5,373.4],"walk2":[481,0,161,377,74.0,374.1],"jab1":[644,0,163,373,63.8,369.5],"jab2":[809,0,294,378,102.4,376.2],"kick1":[1105,0,129,373,41.3,370.1],"kick2":[1236,0,269,366,77.7,363.5],"guard":[1507,0,166,376,64.9,373.7],"special1":[1675,0,128,379,35.1,376.2],"special2":[1805,0,193,378,40.1,375.6],"super1":[2000,0,141,378,37.9,375.5],"super2":[2143,0,177,381,35.5,378.3],"hit":[2322,0,188,362,123.0,360.4],"down1":[2512,0,344,303,171.0,300.5],"down2":[2858,0,545,103,262.3,100.7],"win":[3405,0,282,339,105.1,336.9],"cutin":[3689,0,275,300,0,0]},"looks":"mid"},{"key":"max","ch":1,"ko":"맥스","ja":"マックス","en":"MAX","X":"썬더 볼","S":"뇌신붕괴파","col":[[255,255,220],[255,220,0]],"reach":0,"real":true,"f":{"idle1":[0,0,172,384,73.9,381.3],"idle2":[174,0,172,384,74.3,381.3],"walk1":[348,0,189,379,87.6,375.6],"walk2":[539,0,189,379,88.0,375.6],"jab1":[730,0,173,384,73.6,381.3],"jab2":[905,0,285,381,102.2,378.4],"kick1":[1192,0,139,376,46.9,373.4],"kick2":[1333,0,246,375,47.7,372.8],"guard":[1581,0,165,369,75.1,365.6],"special1":[1748,0,178,372,82.8,369.4],"special2":[1928,0,297,366,97.1,364.0],"super1":[2227,0,145,357,37.4,354.4],"super2":[2374,0,301,273,139.0,271.2],"hit":[2677,0,194,379,94.6,377.0],"down1":[2873,0,181,334,103.1,331.7],"down2":[3056,0,575,119,276.7,116.4],"win":[3633,0,164,384,74.7,382.0],"cutin":[0,386,345,300,0,0]},"looks":"hot"},{"key":"hiroki","ch":1,"ko":"히로키","ja":"ヒロキ","en":"HIROKI","X":"더블 샷","S":"제독참·쌍룡","col":[[220,235,255],[20,50,160]],"reach":25,"real":true,"f":{"idle1":[0,0,209,384,94.7,382.0],"idle2":[211,0,209,387,94.6,385.2],"walk1":[422,0,184,384,113.3,381.8],"walk2":[608,0,198,387,94.6,385.2],"jab1":[808,0,185,388,112.9,386.0],"jab2":[995,0,385,384,135.1,381.9],"kick1":[1382,0,125,376,50.3,374.1],"kick2":[1509,0,288,382,76.0,379.8],"guard":[1799,0,163,362,62.5,359.2],"special1":[1964,0,176,363,76.6,359.8],"special2":[2142,0,364,349,121.7,347.1],"super1":[2508,0,137,389,36.6,386.6],"super2":[2647,0,267,318,113.3,316.0],"hit":[2916,0,215,351,124.2,348.0],"down1":[3133,0,203,329,127.7,326.6],"down2":[3338,0,545,123,254.3,120.7],"win":[3885,0,148,389,46.1,386.6],"cutin":[0,391,371,300,0,0]},"looks":"hot"},{"key":"daisuke","ch":1,"ko":"다이스케","ja":"ダイスケ","en":"DAISUKE","X":"오렌지 스파이럴","S":"오렌지 이퀘이션","col":[[255,250,220],[255,130,0]],"reach":0,"real":true,"f":{"idle1":[0,0,162,362,70.0,359.2],"idle2":[164,0,143,361,61.2,358.0],"walk1":[309,0,172,360,103.1,357.3],"walk2":[483,0,170,360,89.8,356.6],"jab1":[655,0,165,365,81.5,363.9],"jab2":[822,0,264,362,96.3,359.8],"kick1":[1088,0,140,356,43.0,353.3],"kick2":[1230,0,140,356,43.0,353.3],"guard":[1372,0,141,362,51.4,359.3],"special1":[1515,0,120,362,45.1,359.9],"special2":[1637,0,244,362,75.0,358.7],"super1":[1883,0,131,365,30.3,361.6],"super2":[2016,0,273,364,103.1,361.0],"hit":[2291,0,165,336,104.7,332.6],"down1":[2458,0,184,300,113.6,297.5],"down2":[2644,0,524,103,245.3,100.2],"win":[3170,0,99,362,37.7,358.6],"cutin":[3271,0,352,300,0,0]},"looks":"ugly"},{"key":"hiroshi","ch":2,"ko":"히로시","ja":"ヒロシ","en":"HIROSHI","X":"도끼 충격파","S":"대도끼 회전베기","col":[[255,245,220],[160,120,70]],"reach":40,"real":true,"f":{"idle1":[0,0,209,372,55.6,369.9],"idle2":[211,0,210,371,55.6,368.6],"walk1":[423,0,224,353,77.6,350.8],"walk2":[649,0,256,354,90.4,353.1],"jab1":[907,0,240,379,87.8,376.9],"jab2":[1149,0,444,351,131.7,348.9],"kick1":[1595,0,182,369,65.3,366.4],"kick2":[1779,0,342,367,131.6,364.2],"guard":[2123,0,256,355,82.3,352.8],"special1":[2381,0,228,373,90.0,370.2],"special2":[2611,0,433,292,220.8,289.6],"super1":[3046,0,352,345,204.0,342.4],"super2":[3400,0,383,361,108.1,358.5],"hit":[3785,0,241,356,104.2,354.3],"down1":[0,381,306,311,147.2,308.5],"down2":[308,381,484,123,230.3,121.9],"win":[794,381,137,374,75.6,371.1],"cutin":[933,381,420,300,0,0]},"looks":"ugly"},{"key":"hayato","ch":2,"ko":"하야토","ja":"ハヤト","en":"HAYATO","X":"창 돌진 찌르기","S":"백련창","col":[[255,235,235],[200,30,40]],"reach":110,"real":true,"f":{"idle1":[0,0,450,380,174.8,377.1],"idle2":[452,0,450,380,174.7,377.1],"walk1":[904,0,450,380,176.7,377.1],"walk2":[1356,0,450,374,176.3,371.3],"jab1":[1808,0,402,376,58.4,373.9],"jab2":[2212,0,557,338,147.7,334.7],"kick1":[2771,0,244,374,125.8,371.0],"kick2":[3017,0,403,374,194.6,371.0],"guard":[3422,0,364,374,165.4,371.4],"special1":[0,382,453,348,246.6,345.3],"special2":[455,382,575,356,125.4,353.3],"super1":[1032,382,357,368,166.1,365.6],"super2":[1391,382,564,359,155.4,355.6],"hit":[1957,382,285,365,163.6,362.0],"down1":[2244,382,407,258,199.5,255.7],"down2":[2653,382,557,135,257.7,120.4],"win":[3212,382,150,387,71.1,384.3],"cutin":[3364,382,490,300,0,0]},"looks":"mid"},{"key":"hidetoshi","ch":2,"ko":"히데토시","ja":"ヒデトシ","en":"HIDETOSHI","X":"쌍검 교차베기","S":"이도류 난무","col":[[240,245,255],[150,160,190]],"reach":30,"real":true,"f":{"idle1":[0,0,199,376,54.7,374.1],"idle2":[201,0,198,376,54.3,374.1],"walk1":[401,0,234,374,97.1,371.2],"walk2":[637,0,232,369,70.0,366.2],"jab1":[871,0,181,375,58.2,372.8],"jab2":[1054,0,306,376,59.4,374.0],"kick1":[1362,0,404,361,195.0,358.8],"kick2":[1768,0,411,354,218.2,351.3],"guard":[2181,0,137,384,37.6,382.3],"special1":[2320,0,254,372,194.8,370.2],"special2":[2576,0,216,373,44.1,371.6],"super1":[2794,0,209,347,36.2,344.4],"super2":[3005,0,350,334,231.1,331.2],"hit":[3357,0,192,343,107.9,340.4],"down1":[3551,0,236,291,130.3,288.4],"down2":[0,386,598,121,303.3,117.8],"win":[600,386,170,376,97.9,373.3],"cutin":[772,386,351,300,0,0]},"looks":"mid"},{"key":"shinken","ch":2,"ko":"신켄","ja":"シンケン","en":"SHINKEN","X":"기합 정권","S":"백년정권","col":[[255,250,230],[240,170,60]],"reach":0,"real":true,"f":{"idle1":[0,0,230,406,88.3,403.2],"idle2":[232,0,229,406,86.8,403.2],"walk1":[463,0,160,407,68.2,404.6],"walk2":[625,0,218,406,100.2,403.1],"jab1":[845,0,280,380,105.2,378.0],"jab2":[1127,0,522,401,133.0,398.5],"kick1":[1651,0,183,390,75.4,386.9],"kick2":[1836,0,302,389,78.1,386.9],"guard":[2140,0,216,399,60.4,397.0],"special1":[2358,0,245,407,79.3,404.6],"special2":[2605,0,379,394,102.3,391.8],"super1":[2986,0,126,409,60.1,406.1],"super2":[3114,0,382,406,109.8,403.1],"hit":[3498,0,182,395,83.1,392.1],"down1":[0,411,430,335,251.2,332.2],"down2":[432,411,616,174,285.8,170.7],"win":[1050,411,234,383,90.4,380.0],"cutin":[1286,411,490,300,0,0]},"looks":"mid"},{"key":"hideo","ch":2,"ko":"히데오","ja":"ヒデオ","en":"HIDEO","X":"돌개차기","S":"풍신각","col":[[230,255,240],[60,180,120]],"reach":0,"real":true,"f":{"idle1":[0,0,159,383,20.5,380.7],"idle2":[161,0,135,387,47.1,384.6],"walk1":[298,0,140,380,22.5,376.5],"walk2":[440,0,196,381,86.0,378.7],"jab1":[638,0,169,375,67.8,371.6],"jab2":[809,0,297,375,59.0,371.6],"kick1":[1108,0,149,377,47.3,374.3],"kick2":[1259,0,354,369,129.1,366.3],"guard":[1615,0,140,375,47.9,373.7],"special1":[1757,0,168,375,59.0,374.4],"special2":[1927,0,335,375,108.5,372.5],"super1":[2264,0,121,302,20.8,299.4],"super2":[2387,0,364,347,13.9,343.9],"hit":[2753,0,209,368,103.7,364.0],"down1":[2964,0,367,262,168.2,258.4],"down2":[3333,0,588,121,266.5,117.7],"win":[3923,0,138,379,40.5,375.8],"cutin":[0,389,499,300,0,0]},"looks":"mid"},{"key":"ojonokata","ch":2,"ko":"오죠노카타","ja":"オジョウノカタ","en":"OJO-NO-KATA","X":"단도 투척","S":"백의 참","col":[[255,255,255],[200,200,230]],"reach":20,"real":true,"f":{"idle1":[0,0,164,348,66.8,345.9],"idle2":[166,0,158,347,63.4,343.9],"walk1":[326,0,180,325,73.5,323.6],"walk2":[508,0,183,325,92.7,323.6],"jab1":[693,0,334,344,165.6,341.7],"jab2":[1029,0,460,325,167.9,323.0],"kick1":[1491,0,337,348,174.7,345.1],"kick2":[1830,0,388,343,188.8,342.1],"guard":[2220,0,177,340,68.4,337.9],"special1":[2399,0,341,345,163.4,344.5],"special2":[2742,0,340,345,162.7,344.5],"super1":[3084,0,318,348,138.5,346.2],"super2":[3404,0,357,289,183.7,286.9],"hit":[3763,0,269,329,172.2,326.4],"down1":[0,350,409,279,201.0,276.6],"down2":[411,350,621,115,289.7,112.7],"win":[1034,350,161,350,47.3,347.6],"cutin":[1197,350,438,300,0,0]},"looks":"f"},{"key":"marushige","ch":2,"ko":"마루시게","ja":"マルシゲ","en":"MARUSHIGE","X":"짓테 걸어 넘기기","S":"포박술","col":[[230,240,255],[60,100,200]],"reach":30,"real":true,"f":{"idle1":[0,0,179,369,38.2,366.5],"idle2":[181,0,135,368,41.6,366.4],"walk1":[318,0,208,368,76.2,365.0],"walk2":[528,0,277,366,97.1,363.8],"jab1":[807,0,167,371,60.9,368.5],"jab2":[976,0,395,349,123.1,346.5],"kick1":[1373,0,180,361,65.0,358.4],"kick2":[1555,0,310,353,94.9,352.0],"guard":[1867,0,246,367,70.1,365.1],"special1":[2115,0,327,350,119.8,347.9],"special2":[2444,0,400,351,57.3,348.5],"super1":[2846,0,182,312,52.1,308.8],"super2":[3030,0,356,354,122.2,352.5],"hit":[3388,0,236,343,130.6,340.3],"down1":[3626,0,287,285,141.1,281.8],"down2":[0,373,538,105,263.3,104.1],"win":[540,373,119,369,78.4,366.5],"cutin":[661,373,371,300,0,0]},"looks":"hot"},{"key":"shogun","ch":2,"ko":"쇼군","ja":"将軍","en":"SHOGUN","X":"발도 참격파","S":"천하일섬","col":[[255,240,220],[200,40,30]],"reach":60,"real":true,"f":{"idle1":[0,0,376,391,73.9,387.5],"idle2":[378,0,375,395,72.9,392.2],"walk1":[755,0,354,391,73.3,388.2],"walk2":[1111,0,371,388,78.9,385.4],"jab1":[1484,0,252,387,101.6,384.1],"jab2":[1738,0,419,387,94.9,383.8],"kick1":[2159,0,280,394,180.5,391.3],"kick2":[2441,0,335,381,130.9,378.1],"guard":[2778,0,264,385,87.3,382.6],"special1":[3044,0,209,393,87.6,391.2],"special2":[3255,0,490,398,94.4,394.7],"super1":[3747,0,219,391,148.8,388.3],"super2":[0,400,358,379,230.7,375.5],"hit":[360,400,216,365,94.3,362.4],"down1":[578,400,252,338,152.5,335.3],"down2":[832,400,245,398,100.6,394.9],"win":[1079,400,118,392,62.6,389.6],"cutin":[1199,400,498,300,0,0]},"looks":"mid"},{"key":"kouji","ch":3,"ko":"코우지","ja":"コウジ","en":"KOUJI","X":"화염구","S":"불기둥","col":[[255,250,200],[255,80,0]],"reach":0,"real":true,"f":{"idle1":[0,0,137,363,40.0,360.7],"idle2":[139,0,138,363,40.7,360.7],"walk1":[279,0,158,363,49.0,360.7],"walk2":[439,0,119,362,63.1,360.1],"jab1":[560,0,147,363,67.5,360.8],"jab2":[709,0,262,348,95.0,346.6],"kick1":[973,0,134,355,59.8,351.8],"kick2":[1109,0,280,334,99.8,331.8],"guard":[1391,0,118,358,45.6,355.8],"special1":[1511,0,112,363,39.5,360.7],"special2":[1625,0,227,350,95.1,347.9],"super1":[1854,0,227,321,123.7,318.9],"super2":[2083,0,272,250,134.8,247.4],"hit":[2357,0,211,332,129.5,329.2],"down1":[2570,0,196,307,109.1,303.8],"down2":[2768,0,519,111,239.2,109.7],"win":[3289,0,97,363,52.8,360.7],"cutin":[3388,0,240,300,0,0]},"looks":"mid"},{"key":"kuma","ch":3,"ko":"쿠마","ja":"クマ","en":"KUMA","X":"폭발 펀치","S":"대폭발","col":[[255,240,200],[255,120,0]],"reach":0,"real":false,"f":{"idle1":[0,0,225,401,112.5,401],"cutin":[227,0,482,300,0,0]},"looks":"ugly"},{"key":"psyco","ch":3,"ko":"사이코","ja":"サイコ","en":"PSYCO","X":"블루 에너지","S":"블루 빔","col":[[220,240,255],[40,100,255]],"reach":0,"real":false,"f":{"idle1":[0,0,230,380,115.0,380],"cutin":[232,0,518,300,0,0]},"looks":"hot"},{"key":"hex","ch":3,"ko":"헥스","ja":"ヘックス","en":"HEX","X":"별 폭탄","S":"별 폭격","col":[[240,240,240],[140,140,150]],"reach":0,"real":false,"f":{"idle1":[0,0,226,376,113.0,376],"cutin":[228,0,517,300,0,0]},"looks":"mid"},{"key":"yuki","ch":3,"ko":"유키","ja":"ユキ","en":"YUKI","X":"노란 섬광 찌르기","S":"시스템 다운","col":[[255,255,210],[255,230,40]],"reach":0,"real":false,"f":{"idle1":[0,0,146,350,73.0,350],"cutin":[148,0,359,300,0,0]},"looks":"f"},{"key":"mars","ch":3,"ko":"마스","ja":"マーズ","en":"MARS","X":"무지개 연타","S":"레인보우 러시","col":[[255,220,255],[200,60,255]],"reach":0,"real":false,"f":{"idle1":[0,0,215,382,107.5,382],"cutin":[217,0,484,300,0,0]},"looks":"hot"},{"key":"andromeda","ch":3,"ko":"안드로메다","ja":"アンドロメダ","en":"ANDROMEDA","X":"빛 파동","S":"은하 퍼레이드","col":[[255,230,255],[255,80,200]],"reach":0,"real":false,"f":{"idle1":[0,0,264,369,132.0,369],"cutin":[266,0,613,300,0,0]},"looks":"ugly"},{"key":"rox","ch":3,"ko":"록스","ja":"ロックス","en":"ROX","X":"하늘색 전격구","S":"천둥 폭풍","col":[[220,250,255],[60,200,255]],"reach":0,"real":false,"f":{"idle1":[0,0,205,363,102.5,363],"cutin":[207,0,484,300,0,0]},"looks":"f"}];
+const BY = Object.fromEntries(R.map(r => [r.key, r]));
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const W = 1280, H = 720, FLOOR = 640;
+const FONT = '"IBM Plex Sans KR","Chakra Petch",system-ui,sans-serif', DFONT = '"Chakra Petch","IBM Plex Sans KR",system-ui,sans-serif';
+
+// ---------- assets ----------
+const IMG = {};
+function img(key) { if (!IMG[key]) { const i = new Image(); i.src = 'assets/' + key + '.webp'; IMG[key] = i; } return IMG[key]; }
+R.forEach(r => img(r.key));
+
+// ---------- save ----------
+const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
+SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0;
+function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} }
+
+// ---------- input ----------
+const held = {}, pressed = {};
+const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', ArrowA: 'left', f: 'F', k: 'K', d: 'D', x: 'X', j: 'F', l: 'D', i: 'X', Enter: 'ok', ' ': 'ok', Escape: 'back', z: 'ok' };
+addEventListener('keydown', e => { const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (!k) return; e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; audio(); });
+addEventListener('keyup', e => { const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (k) held[k] = false; });
+document.querySelectorAll('.pad button').forEach(b => {
+  const k = b.dataset.k;
+  const on = e => { e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; b.classList.add('on'); audio(); };
+  const off = e => { e.preventDefault(); held[k] = false; b.classList.remove('on'); };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+});
+let tap = null;
+cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); tap = { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; audio(); });
+function take(k) { const v = pressed[k]; pressed[k] = false; return v; }
+
+// ---------- sound (tiny synth) ----------
+let AC = null;
+function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)() } catch (e) {} } }
+function sfx(type) {
+  if (!AC) return; const t = AC.currentTime, o = AC.createOscillator(), v = AC.createGain();
+  const P = { hit: [180, 60, .25, .12, 'square'], heavy: [120, 40, .35, .22, 'sawtooth'], guard: [500, 300, .12, .06, 'triangle'], shot: [600, 200, .15, .2, 'sawtooth'], super: [90, 400, .3, .6, 'sawtooth'], ko: [200, 40, .4, .8, 'square'], sel: [700, 900, .08, .06, 'triangle'] }[type];
+  o.type = P[4]; o.frequency.setValueAtTime(P[0], t); o.frequency.exponentialRampToValueAtTime(P[1], t + P[3]);
+  v.gain.setValueAtTime(P[2], t); v.gain.exponentialRampToValueAtTime(.001, t + P[3]); o.connect(v).connect(AC.destination); o.start(t); o.stop(t + P[3] + .02);
+}
+
+// ---------- stages (pre-rendered) ----------
+function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+const STAGES = {};
+function stage(ch) {
+  if (STAGES[ch]) return STAGES[ch];
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const s = c.getContext('2d'), r = rng(7 + ch);
+  if (ch === 1) {
+    let gr = s.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#120c22'); gr.addColorStop(1, '#2a1838'); s.fillStyle = gr; s.fillRect(0, 0, W, H);
+    for (let i = 0; i < 16; i++) { const x = r() * W, w = 80 + r() * 160, top = 120 + r() * 300; s.fillStyle = '#171327'; s.fillRect(x, top, w, FLOOR - top);
+      for (let k = 0; k < 22; k++) { s.fillStyle = ['#ffbe5a', '#3c3c5a', '#5ac8ff'][Math.floor(r() * 3)]; s.fillRect(x + 6 + r() * (w - 14), top + 8 + r() * (FLOOR - top - 30), 6, 10); } }
+    [[160, 250, 'ラーメン', '#ff3a6e', true], [1100, 200, '居酒屋', '#3cd2ff', true], [480, 230, 'BAR', '#ffc83c', false], [820, 170, 'NEON', '#ff5ac8', false]].forEach(([x, y, t, c2, v]) => {
+      s.font = `700 ${v ? 52 : 64}px ${FONT}`; s.fillStyle = c2; s.shadowColor = c2; s.shadowBlur = 24;
+      if (v) [...t].forEach((ch2, j) => s.fillText(ch2, x, y + j * 56)); else s.fillText(t, x, y); s.shadowBlur = 0; });
+    s.fillStyle = '#1c1a28'; s.fillRect(0, FLOOR, W, H - FLOOR);
+    s.strokeStyle = '#2c2a3c'; s.lineWidth = 2; for (let x = -200; x < W + 200; x += 140) { s.beginPath(); s.moveTo(x, FLOOR); s.lineTo(x - 160, H); s.stroke(); }
+  } else if (ch === 2) {
+    let gr = s.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#2b1830'); gr.addColorStop(.55, '#c9653c'); gr.addColorStop(1, '#3a2418'); s.fillStyle = gr; s.fillRect(0, 0, W, H);
+    s.fillStyle = 'rgba(255,220,160,.9)'; s.beginPath(); s.arc(980, 300, 70, 0, 7); s.fill();
+    s.fillStyle = '#1e1216';
+    const roof = (cx, y, w) => { s.beginPath(); s.moveTo(cx - w, y); s.quadraticCurveTo(cx, y - w * .35, cx + w, y); s.lineTo(cx + w * .8, y + 14); s.lineTo(cx - w * .8, y + 14); s.fill(); };
+    s.fillRect(520, 330, 240, 260); roof(640, 330, 170); s.fillRect(560, 230, 160, 110); roof(640, 230, 120); s.fillRect(590, 160, 100, 80); roof(640, 160, 80);
+    s.fillRect(380, 470, 520, 120);
+    for (let i = 0; i < 14; i++) { s.fillStyle = '#2a1a14'; s.fillRect(i * 100 - 20, 520 + (i % 2) * 12, 6, 120); }
+    s.fillStyle = '#3d2a1c'; s.fillRect(0, FLOOR, W, H - FLOOR); s.strokeStyle = '#4e3826'; for (let x = 0; x < W; x += 80) { s.beginPath(); s.moveTo(x, FLOOR); s.lineTo(x, H); s.stroke(); }
+  } else {
+    let gr = s.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#05101e'); gr.addColorStop(1, '#14324a'); s.fillStyle = gr; s.fillRect(0, 0, W, H);
+    for (let i = 0; i < 120; i++) { s.fillStyle = `rgba(255,255,255,${r() * .8})`; s.fillRect(r() * W, r() * 300, 2, 2); }
+    s.fillStyle = '#0b1c2c'; s.beginPath(); s.moveTo(0, 520); [[180, 280], [360, 420], [560, 220], [760, 400], [980, 260], [1280, 450]].forEach(([x, y]) => s.lineTo(x, y)); s.lineTo(W, FLOOR); s.lineTo(0, FLOOR); s.fill();
+    s.fillStyle = '#1a2e40'; s.fillRect(420, 360, 440, 280); s.fillRect(600, 200, 24, 170); s.fillStyle = '#3fd8ff'; s.shadowColor = '#3fd8ff'; s.shadowBlur = 20; s.beginPath(); s.arc(612, 196, 10, 0, 7); s.fill(); s.shadowBlur = 0;
+    for (let i = 0; i < 18; i++) { s.fillStyle = r() > .5 ? '#3fd8ff' : '#ffd23f'; s.fillRect(440 + (i % 9) * 46, 400 + Math.floor(i / 9) * 60, 26, 8); }
+    s.fillStyle = '#26323c'; s.fillRect(0, FLOOR, W, H - FLOOR); s.strokeStyle = '#3a4a56'; for (let x = 0; x < W; x += 120) { s.beginPath(); s.moveTo(x, FLOOR); s.lineTo(x - 60, H); s.stroke(); }
+    s.fillStyle = '#ffd23f'; for (let x = 0; x < W; x += 120) s.fillRect(x, FLOOR + 4, 60, 4);
+  }
+  return STAGES[ch] = c;
+}
+
+// ---------- fighter ----------
+const FR = { // frames: [startup, active, recovery], damage, reach
+  jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185] };
+function mk(key, x, face, isCpu, lvl) {
+  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, gauge: isCpu ? 0 : 25, st: 'idle', t: 0, vx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1 };
+}
+function frame(f) {
+  const t = f.t;
+  switch (f.st) {
+    case 'idle': return Math.floor(t / 30) % 2 ? 'idle2' : 'idle1';
+    case 'walk': case 'back': return Math.floor(t / 10) % 2 ? 'walk2' : 'walk1';
+    case 'jab': return t < FR.jab[0] ? 'jab1' : 'jab2';
+    case 'kick': return t < FR.kick[0] ? 'kick1' : 'kick2';
+    case 'guard': return 'guard';
+    case 'special': return t < 18 ? 'special1' : 'special2';
+    case 'super': return t < 22 ? 'super1' : 'super2';
+    case 'hit': return 'hit';
+    case 'ko': return f.lift > 2 || t < 24 ? 'down1' : 'down2';
+    case 'win': return 'win';
+  }
+  return 'idle1';
+}
+function drawF(f) {
+  const r = f.r, name = frame(f); let m = r.f[name] || r.f.idle1;
+  const im = img(r.key); if (!im.complete || !im.naturalWidth) return;
+  const [sx, sy, sw, sh, ax, ay] = m;
+  g.save();
+  // shadow
+  g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90, 14, 0, 0, 7); g.fill();
+  g.translate(f.x, FLOOR - f.lift);
+  if (!r.real) { // placeholder: fake motion with tilt / lunge
+    const lean = { jab: .12, kick: .18, special: .1, super: .2, hit: -.2, guard: -.05 }[f.st] || 0;
+    if (f.st === 'ko') g.rotate(-f.face * Math.min(1.5, f.t / 16));
+    g.rotate(f.face * lean);
+  }
+  g.scale(f.face, 1);
+  if (f.flash > 0) { g.filter = 'brightness(2.2)'; f.flash--; }
+  g.drawImage(im, sx, sy, sw, sh, -ax, -ay, sw, sh);
+  g.restore();
+}
+
+// ---------- fight ----------
+let F = null; // current fight
+const SHOTS = [], FX = [];
+function startFight(p1, p2, opts) {
+  const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
+  b.dmgMul = opts.dmg || 1;
+  F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
+  SHOTS.length = FX.length = 0;
+  scene = 'fight';
+}
+function resetRound() {
+  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 }); Object.assign(b, { x: 880, face: -1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 });
+  a.gauge = Math.max(a.gauge, 25); F.timer = 3600; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = 0;
+}
+function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard'; }
+function act(f, o, cmd) {
+  if (!canAct(f)) return;
+  if (cmd === 'F') { f.st = 'jab'; f.t = 0; f.hitDone = false; }
+  else if (cmd === 'K') { f.st = 'kick'; f.t = 0; f.hitDone = false; }
+  else if (cmd === 'X') {
+    if (f.gauge >= 100) { f.st = 'super'; f.t = 0; f.hitDone = false; f.gauge = 0; F.freeze = 70; F.superBy = f; sfx('super'); }
+    else if (f.gauge >= 25) { f.st = 'special'; f.t = 0; f.hitDone = false; f.gauge -= 25; }
+  }
+}
+function damage(att, def, amt, kind) {
+  if (def.st === 'ko') return;
+  const guarding = def.st === 'guard' && kind !== 'super-unblock';
+  let d = amt * att.dmgMul;
+  // looks affinity
+  const L = def.r.looks;
+  if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
+  if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
+  if (guarding) { d *= kind === 'super' ? .4 : .15; def.gauge = Math.min(100, def.gauge + 2); sfx('guard'); spark(def.x - def.face * 60, FLOOR - 250, '#9fe7ff', 30); }
+  else {
+    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : 7); def.flash = 4;
+    att.gauge = Math.min(100, att.gauge + 8); def.gauge = Math.min(100, def.gauge + 5);
+    sfx(amt > 80 ? 'heavy' : 'hit'); spark(def.x - def.face * 40, FLOOR - 260, '#fff2a0', amt > 80 ? 70 : 45);
+    F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
+  }
+  def.hp = Math.max(0, def.hp - Math.round(d));
+  if (def.hp <= 0) { def.st = 'ko'; def.t = 0; def.vx = -def.face * 9; def.lift = 1; def.vy = 9; sfx('ko'); F.shake = 16; }
+}
+function spark(x, y, c, r) { FX.push({ k: 'spark', x, y, c, r, t: 0 }); }
+function stepF(f, o) {
+  f.t++;
+  const dist = Math.abs(o.x - f.x), inFront = Math.sign(o.x - f.x) === f.face;
+  if (f.st === 'jab' || f.st === 'kick') {
+    const [su, ac, re, dmg, reach] = FR[f.st];
+    if (f.t === su) f.x += f.face * 10;
+    if (!f.hitDone && f.t >= su && f.t < su + ac && inFront && dist <= reach + f.r.reach + 60) { f.hitDone = true; damage(f, o, dmg, f.st); }
+    if (f.t >= su + ac + re) { f.st = 'idle'; f.t = 0; }
+  } else if (f.st === 'special') {
+    if (f.t === 18) { SHOTS.push({ by: f, x: f.x + f.face * 120, y: FLOOR - 250, vx: f.face * 15, t: 0, c: f.r.col }); sfx('shot'); }
+    if (f.t >= 48) { f.st = 'idle'; f.t = 0; }
+  } else if (f.st === 'super') {
+    if (f.t === 22) { FX.push({ k: 'bomb', x: o.x, y: -100, c: f.r.col, t: 0, by: f, to: o }); }
+    if (f.t >= 70) { f.st = 'idle'; f.t = 0; }
+  } else if (f.st === 'hit') {
+    f.x += f.vx; f.vx *= .85; if (f.t >= 18) { f.st = 'idle'; f.t = 0; }
+  } else if (f.st === 'ko') {
+    f.x += f.vx; f.vx *= .96; if (f.lift > 0) { f.lift += f.vy; f.vy -= .9; if (f.lift <= 0) { f.lift = 0; f.vx *= .3; F.shake = 8; } }
+  }
+  f.x = Math.max(90, Math.min(W - 90, f.x));
+}
+function control(f, o) {
+  if (f.st === 'ko' || f.st === 'win') return;
+  const towards = Math.sign(o.x - f.x) || f.face;
+  if (canAct(f)) f.face = towards;
+  let move = 0, guard = false, cmd = null;
+  if (!f.cpu) {
+    if (held.left) move = -1; if (held.right) move = 1; guard = held.D;
+    for (const k of ['F', 'K', 'X']) if (take(k)) cmd = k;
+  } else {
+    const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl;
+    if (--A.t <= 0) {
+      A.t = Math.max(6, 30 - lv * 3) + Math.random() * 12;
+      const threat = (o.st === 'jab' || o.st === 'kick' || o.st === 'special') && d < 330;
+      const roll = Math.random();
+      if (threat && roll < .12 + lv * .07) A.act = 'guard';
+      else if (f.gauge >= 100 && roll < .5) A.act = 'X';
+      else if (d > 420 && f.gauge >= 25 && roll < .25 + lv * .03) A.act = 'X';
+      else if (d > 230 + f.r.reach) A.act = roll < .85 ? 'fwd' : 'idle';
+      else A.act = roll < .4 ? 'F' : roll < .7 ? 'K' : roll < .82 ? 'back' : 'guard';
+    }
+    if (A.act === 'fwd') move = towards; else if (A.act === 'back') move = -towards; else if (A.act === 'guard') guard = true;
+    else if (A.act === 'F' || A.act === 'K' || A.act === 'X') { cmd = A.act; A.act = 'idle'; }
+  }
+  if (canAct(f)) {
+    if (cmd) { act(f, o, cmd); return; }
+    if (guard) { if (f.st !== 'guard') { f.st = 'guard'; f.t = 0; } return; }
+    if (move) { const fwd = move === f.face; const st = fwd ? 'walk' : 'back'; if (f.st !== st) { f.st = st; f.t = 0; } f.x += move * (fwd ? 5 : 4); }
+    else if (f.st !== 'idle') { f.st = 'idle'; f.t = 0; }
+  }
+}
+function push(a, b) { const d = b.x - a.x, min = 120; if (Math.abs(d) < min && a.st !== 'ko' && b.st !== 'ko') { const p = (min - Math.abs(d)) / 2 * Math.sign(d || 1); a.x -= p; b.x += p; } }
+function updateFight() {
+  const { a, b } = F;
+  F.pt++;
+  if (F.phase === 'intro') { if (F.pt > 100) { F.phase = 'fight'; F.pt = 0; } return; }
+  if (F.phase === 'end') { stepF(a, b); stepF(b, a); if (F.pt > 170 || (F.pt > 40 && (take('ok') || take('F')))) endRound(); return; }
+  if (F.freeze > 0) { F.freeze--; return; }
+  control(a, b); control(b, a); stepF(a, b); stepF(b, a); push(a, b);
+  for (const s of SHOTS) { s.x += s.vx; s.t++; const o = s.by === a ? b : a; if (!s.dead && Math.abs(s.x - o.x) < 70 && o.st !== 'ko') { s.dead = true; damage(s.by, o, 110, 'special'); } if (s.x < -100 || s.x > W + 100) s.dead = true; }
+  for (let i = SHOTS.length - 1; i >= 0; i--) if (SHOTS[i].dead) SHOTS.splice(i, 1);
+  for (const e of FX) { e.t++; if (e.k === 'bomb') { e.y += 34; e.x = e.to.x; if (e.y >= FLOOR - 230 && !e.hit) { e.hit = true; e.boom = 0; damage(e.by, e.to, 280, 'super'); F.shake = 20; } } }
+  for (let i = FX.length - 1; i >= 0; i--) if (FX[i].t > (FX[i].k === 'bomb' ? 60 : 16)) FX.splice(i, 1);
+  if (F.timer > 0) F.timer--;
+  if (a.hp <= 0 || b.hp <= 0 || F.timer <= 0) {
+    F.phase = 'end'; F.pt = 0;
+    const w = a.hp === b.hp ? null : a.hp > b.hp ? a : b; F.rw = w;
+    if (w) { w.wins++; w.st = 'win'; w.t = 0; }
+    F.banner = a.hp > 0 && b.hp > 0 ? 'TIME' : 'K.O.';
+  }
+}
+function endRound() {
+  const { a, b } = F;
+  if (a.wins >= 2 || b.wins >= 2 || F.round >= 3) { const won = a.wins > b.wins; F.onEnd(won); return; }
+  F.round++; resetRound();
+}
+function glow(x, y, rad, col) {
+  const [c1, c2] = col, gr = g.createRadialGradient(x, y, 0, x, y, rad);
+  gr.addColorStop(0, `rgba(${c1},1)`); gr.addColorStop(.35, `rgba(${c2},.9)`); gr.addColorStop(1, `rgba(${c2},0)`);
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+}
+function bar(x, y, w, h, v, right, col) {
+  g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x - 3, y - 3, w + 6, h + 6); g.fillStyle = '#3a1020'; g.fillRect(x, y, w, h);
+  g.fillStyle = col; const vw = w * v; g.fillRect(right ? x + w - vw : x, y, vw, h);
+}
+function drawFight() {
+  const { a, b } = F;
+  g.save();
+  if (F.shake > 0) { g.translate((Math.random() - .5) * F.shake, (Math.random() - .5) * F.shake); F.shake *= .85; if (F.shake < .5) F.shake = 0; }
+  g.drawImage(stage(F.ch), 0, 0);
+  if (F.superBy && F.freeze > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
+  const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
+  order.forEach(drawF);
+  for (const s of SHOTS) glow(s.x, s.y, 60, s.c.map(v => v.join(',')));
+  for (const e of FX) {
+    if (e.k === 'spark') { const p = e.t / 16; g.strokeStyle = e.c; g.globalAlpha = 1 - p; g.lineWidth = 6; for (let i = 0; i < 8; i++) { const an = i * .785; g.beginPath(); g.moveTo(e.x + Math.cos(an) * e.r * p * .4, e.y + Math.sin(an) * e.r * p * .4); g.lineTo(e.x + Math.cos(an) * e.r * (p + .3), e.y + Math.sin(an) * e.r * (p + .3)); g.stroke(); } g.globalAlpha = 1; }
+    if (e.k === 'bomb') { if (!e.hit) glow(e.x, e.y, 110, e.c.map(v => v.join(','))); else { const p = (e.t - (e.boomT || (e.boomT = e.t))) / 25; g.globalAlpha = Math.max(0, 1 - p); glow(e.x, FLOOR - 230, 140 + p * 220, e.c.map(v => v.join(','))); g.globalAlpha = 1; } }
+  }
+  // super cut-in
+  if (F.superBy && F.freeze > 0) {
+    const f = F.superBy, m = f.r.f.cutin, k = 70 - F.freeze, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
+    g.fillStyle = 'rgba(10,5,20,.85)'; g.fillRect(0, 230, W, 300);
+    if (m && img(f.key).complete) g.drawImage(img(f.key), m[0], m[1], m[2], m[3], sx, 230, m[2] * 1.0, 300);
+    g.font = `700 54px ${FONT}`; g.fillStyle = '#ffd23f'; g.textAlign = f === a ? 'left' : 'right'; g.fillText(f.r.S, f === a ? 80 : W - 80, 500);
+  }
+  g.restore();
+  // HUD
+  bar(60, 40, 500, 30, a.hp / 1000, true, '#ffd23f'); bar(720, 40, 500, 30, b.hp / 1000, false, '#ffd23f');
+  g.font = `700 26px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(a.r.ko, 60, 104); g.textAlign = 'right'; g.fillText(b.r.ko, 1220, 104);
+  for (let i = 0; i < 2; i++) { g.fillStyle = a.wins > i ? '#ff3d81' : '#333'; g.fillRect(470 - i * 26, 86, 18, 18); g.fillStyle = b.wins > i ? '#ff3d81' : '#333'; g.fillRect(792 + i * 26, 86, 18, 18); }
+  g.font = `700 52px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
+  [[a, 60, false], [b, 920, true]].forEach(([f, x, rt]) => { bar(x, 120, 300, 14, f.gauge / 100, rt, f.gauge >= 100 ? '#ff3d81' : '#3fd8ff'); g.fillStyle = 'rgba(0,0,0,.6)'; for (let i = 1; i < 4; i++) g.fillRect(x + i * 75, 120, 2, 14); g.font = `700 14px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = rt ? 'right' : 'left'; g.fillText(f.gauge >= 100 ? 'MAX! X = 필살기' : 'X 고유기 (1/4)', rt ? x + 300 : x, 152); });
+  g.textAlign = 'center';
+  if (F.phase === 'intro') { big(F.pt < 60 ? `ROUND ${F.round}` : 'FIGHT!'); }
+  if (F.phase === 'end') { big(F.banner); if (F.pt > 60 && F.rw) { g.font = `700 32px ${FONT}`; g.fillStyle = '#fff'; g.fillText(`${F.rw.r.ko} WIN`, W / 2, 440); } }
+}
+function big(t) { g.font = `700 120px ${DFONT}`; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#3a0820'; g.strokeText(t, W / 2, 360); g.fillStyle = '#ffd23f'; g.fillText(t, W / 2, 360); }
+
+// ---------- story ----------
+const STORY = {
+  1: { title: '1장 · 동네의 숨은 고수들', fights: [
+    { k: 'ryohei', lv: 1, pre: [['ryohei', '다이스케, 주먹 쥐는 법부터 다시 가르쳐 주마. 덤벼!'], ['ryohei', '←→ 이동 · F 주먹 · K 킥 · D 방어 · X 고유기 (게이지 1/4) · 게이지 MAX면 X로 필살기!']], post: [['ryohei', '좋아. 이 동네엔 숨은 고수들이 있다. 하나씩 만나러 가자.']] },
+    { k: 'hattori', lv: 1.5, pre: [['hattori', '무도인으로서 당신과의 대결은 영광이요.']] },
+    { k: 'noise', lv: 2, pre: [['noise', '이 지역 파칭코는 내가 꽉 쥐고 있지. 너도 덤비거라.']] },
+    { k: 'shunsuke', lv: 2.5, pre: [['shunsuke', '바둑판 위엔 한 수 앞을 보는 자가 이긴다. 네 수는 다 읽혔다.']] },
+    { k: 'shigeru', lv: 3, pre: [['shigeru', '이 골목에서 내 허락 없이 주먹 쓰는 놈은 없다. 각오는 됐겠지?']] },
+    { k: 'kei', lv: 3, pre: [['kei', '흥미로운 샘플이군. 네 근육 데이터, 실험에 좀 쓰겠다.']] },
+    { k: 'matsuhiro', lv: 3.5, pre: [['matsuhiro', '북소리는 거짓말을 안 해. 네 심장 박자, 내 장단에 맞춰 봐라.']] },
+    { k: 'iroha', lv: 3.5, pre: [['iroha', '지하 무대 팬들이 보고 있어! 오늘 앵콜은 네가 쓰러지는 거야!']] },
+    { k: 'haruhiko', lv: 4, pre: [['haruhiko', '셔터보다 빠른 주먹을 보여 주지. 전직 챔피언의 펀치다.']] },
+    { k: 'heart', lv: 4, pre: [['heart', '자, 카드를 한 장 골라 봐. 어느 걸 골라도 네 패배야.']] },
+    { k: 'max', lv: 4.5, pre: [['max', '너의 힘, 흥미롭군. 본국 연구소에 보고할 가치가 있겠어.']] },
+    { k: 'hiroki', lv: 5, boss: 1, pre: [['ryohei', '히로키…! 다이스케, 저 녀석이 내 숙적이다.'], ['hiroki', '료헤이의 제자라고? 그 녀석이 지키는 동네, 오늘 내가 산다.']], post: [['ryohei', '잘했다. 하지만 히로키가 이대로 물러설 놈이 아니지.']] } ] },
+  2: { title: '2장 · 과거의 성', dmg: 1.15, intro: [['kei', '타임머신 완성이다! 악의 뿌리는 과거에 있다. 그 조직을 지금 뽑아 버리자.'], ['ryohei', '과거라… 좋다, 다이스케. 가자.']], fights: [
+    { k: 'hiroshi', lv: 5, pre: [['hiroshi', '밭을 짓밟는 자는 이 도끼가 용서치 않는다!']] },
+    { k: 'hayato', lv: 5, pre: [['hayato', '이 창끝을 넘어야 성에 닿을 수 있다.']] },
+    { k: 'hidetoshi', lv: 5.5, pre: [['hidetoshi', '칼 두 자루를 상대로 맨손이라니, 배짱 한번 좋구나.']] },
+    { k: 'shinken', lv: 5.5, pre: [['shinken', '칼 따위 필요 없다. 이 주먹 하나로 평생을 단련했다.']] },
+    { k: 'hideo', lv: 6, pre: [['hideo', '내 발끝은 바람보다 빠르다. 보이기나 할까?']] },
+    { k: 'ojonokata', lv: 6, pre: [['ojonokata', '성주님의 성을 더럽히는 자, 이 칼끝으로 정리해 드리지요.']] },
+    { k: 'marushige', lv: 6.5, pre: [['marushige', '짓테 앞에선 어떤 칼도 멈춘다. 순순히 포박당하라.']] },
+    { k: 'shogun', lv: 7, boss: 1, pre: [['shogun', '미래에서 온 자들인가. 이 성의 주인은 나다. 베어 주마.']] } ] },
+  3: { title: '3장 · 산속의 초능력자들', dmg: 1.3, intro: [['ryohei', '이 산… 심상치 않은 기운이 느껴진다. 요즘 이 근처에 재앙이 잦다지?']], fights: [
+    { k: 'kouji', lv: 6, pre: [['kouji', '불장난 좀 해 볼까? 등산로가 좀 뜨거워질 거야!']] },
+    { k: 'kuma', lv: 6, pre: [['kuma', '길 막지 마라. 다 터뜨려 버리기 전에.']] },
+    { k: 'psyco', lv: 6.5, pre: [['max', '선배들…?! 이게 다 선배들 짓이었다고?'], ['psyco', '하나, 둘! 내 리듬에 맞춰 날아가 버려!']] },
+    { k: 'hex', lv: 6.5, pre: [['hex', '계산은 끝났다. 너희가 이길 확률은 0.3%다.']] },
+    { k: 'yuki', lv: 7, pre: [['yuki', '시스템에 침입자 확인. 손가락 하나로 정리할게요.']] },
+    { k: 'mars', lv: 7, pre: [['mars', '무지개는 일곱 빛깔, 내 주먹도 일곱 방이다.']] },
+    { k: 'andromeda', lv: 7.5, pre: [['andromeda', '우주의 신호가 말하고 있어! 너희는 여기서 끝이라고!']] },
+    { k: 'rox', lv: 8, boss: 1, pre: [['rox', '안테나가 켜지면 이 나라의 통신은 끝이야. 동생 친구라도 봐주지 않아.']], post: [['rox', '맥스에게 전해. 누나는 아직 포기 안 했다고.']] } ] }
+};
+let scene = 'title', dlg = null, menu = 0, sel = { p: 'daisuke', o: 'hattori', side: 0 };
+function say(lines, then) { dlg = { lines, i: 0, then }; scene = 'dialog'; }
+function storyNext() {
+  const C = STORY[SAVE.ch];
+  if (!C) { scene = 'ending'; return; }
+  if (SAVE.stage === 0 && C.intro && !SAVE.introSeen) { SAVE.introSeen = SAVE.ch; save(); scene = 'chtitle'; ctT = 0; return; }
+  if (SAVE.stage === 0 && !C.intro && SAVE.introSeen !== SAVE.ch) { SAVE.introSeen = SAVE.ch; save(); scene = 'chtitle'; ctT = 0; return; }
+  const fi = C.fights[SAVE.stage];
+  say(fi.pre, () => startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, onEnd: won => {
+    if (won) {
+      SAVE.beat[fi.k] = 1; SAVE.stage++;
+      const done = SAVE.stage >= C.fights.length;
+      const after = () => { if (done) { SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNext(); } };
+      save(); if (fi.post) say(fi.post, after); else after();
+    } else { scene = 'lose'; ctT = 0; }
+  } }));
+}
+let ctT = 0;
+
+// ---------- screens ----------
+function txt(t, x, y, size, col, align, font) { g.font = `700 ${size}px ${font || FONT}`; g.fillStyle = col || '#fff'; g.textAlign = align || 'center'; g.fillText(t, x, y); }
+function face(key, x, y, h, flip) { const r = BY[key], m = r.f.cutin, im = img(key); if (!m || !im.complete) return; const w = m[2] * h / m[3]; g.save(); g.translate(x, y); if (flip) { g.scale(-1, 1); } g.drawImage(im, m[0], m[1], m[2], m[3], flip ? -w : 0, 0, w, h); g.restore(); }
+function menuList(items, y0) {
+  if (take('up') || take('left')) { menu = (menu + items.length - 1) % items.length; sfx('sel'); }
+  if (take('down') || take('right')) { menu = (menu + 1) % items.length; sfx('sel'); }
+  items.forEach((it, i) => { const y = y0 + i * 70, on = i === menu; g.fillStyle = on ? 'rgba(255,61,129,.85)' : 'rgba(255,255,255,.08)'; g.fillRect(W / 2 - 260, y - 44, 520, 58); txt(it, W / 2, y - 5, 30, on ? '#1a0612' : '#fff');
+    if (tap && tap.x > W / 2 - 260 && tap.x < W / 2 + 260 && tap.y > y - 44 && tap.y < y + 14) { menu = i; pressed.ok = true; } });
+  if (take('ok') || take('F')) { sfx('sel'); return menu; }
+  return -1;
+}
+function draw() {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+  if (scene === 'fight') { updateFight(); drawFight(); }
+  else if (scene === 'title') {
+    g.drawImage(stage(1), 0, 0); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
+    face('daisuke', 120, 160, 360); face('hiroki', 860, 160, 360, true);
+    g.font = `700 130px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#ff3d81'; g.shadowColor = '#ff3d81'; g.shadowBlur = 30; g.textAlign = 'right'; g.fillText('NEON', W / 2 - 10, 240); g.fillStyle = '#3fd8ff'; g.shadowColor = '#3fd8ff'; g.textAlign = 'left'; g.fillText('CLASH', W / 2 + 10, 240); g.textAlign = 'center'; g.shadowBlur = 0;
+    txt('웹 체험판 · 1~3장', W / 2, 300, 26, '#ccc');
+    const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
+    const c = menuList([prog, '대전 모드', '처음부터 다시'], 420);
+    if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; } storyNext(); }
+    if (c === 1) { scene = 'select'; sel.side = 0; }
+    if (c === 2) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; save(); storyNext(); }
+    txt('←→↑↓ 이동 · F 주먹 · K 킥 · D 방어 · X 고유기/필살기 · Enter 결정', W / 2, 690, 18, '#999');
+  }
+  else if (scene === 'chtitle') {
+    ctT++; const C = STORY[SAVE.ch]; g.drawImage(stage(SAVE.ch), 0, 0); g.fillStyle = `rgba(0,0,0,${.6})`; g.fillRect(0, 0, W, H);
+    txt(C.title, W / 2, 380, 64, '#ffd23f');
+    if (ctT > 60 && (take('ok') || take('F') || tap)) { if (C.intro) say(C.intro, () => { SAVE.introSeen = SAVE.ch; save(); const fi = C.fights[0]; storyNextFight(); }); else storyNextFight(); }
+  }
+  else if (scene === 'dialog') {
+    const fi = currentBg(); g.drawImage(stage(fi), 0, 0); g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, 0, W, H);
+    const [who, line] = dlg.lines[dlg.i]; const r = BY[who];
+    face(who, 80, 120, 380);
+    g.fillStyle = 'rgba(8,6,18,.92)'; g.fillRect(40, 500, W - 80, 180); g.strokeStyle = '#ff3d81'; g.lineWidth = 3; g.strokeRect(40, 500, W - 80, 180);
+    txt(r.ko, 80, 545, 30, '#ffd23f', 'left'); wrap(line, 80, 595, W - 160, 34);
+    txt('▶', W - 80, 660, 24, '#ff3d81', 'right');
+    if (take('ok') || take('F') || take('K') || tap) { dlg.i++; if (dlg.i >= dlg.lines.length) { const t = dlg.then; dlg = null; t(); } }
+  }
+  else if (scene === 'select') drawSelect();
+  else if (scene === 'lose') { ctT++; g.fillStyle = '#100810'; g.fillRect(0, 0, W, H); txt('패배…', W / 2, 300, 80, '#ff3d81'); const c = menuList(['다시 도전', '타이틀로'], 440); if (c === 0) storyNext(); if (c === 1) { scene = 'title'; menu = 0; } }
+  else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
+  else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
+  else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const c = menuList(['다시 대전', '캐릭터 선택', '타이틀로'], 420); if (c === 0) vsStart(); if (c === 1) scene = 'select'; if (c === 2) { scene = 'title'; menu = 1; } }
+  if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
+  tap = null; for (const k in pressed) pressed[k] = false;
+}
+function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
+function storyNextGo() { SAVE.introSeen = SAVE.ch; save(); const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage]; dlg = null; startFightStory(C, fi); }
+function startFightStory(C, fi) {
+  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, onEnd: won => {
+    if (won) {
+      SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
+      const after = () => { if (done) { SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
+      save(); if (fi.post) say(fi.post, after); else after();
+    } else { scene = 'lose'; ctT = 0; menu = 0; }
+  } });
+}
+// route story starts through the chapter title once, then fights
+storyNext = function () {
+  const C = STORY[SAVE.ch]; if (!C) { scene = 'ending'; return; }
+  if (SAVE.introSeen !== SAVE.ch && SAVE.stage === 0) { scene = 'chtitle'; ctT = 0; return; }
+  storyNextFight();
+};
+function currentBg() { return Math.min(3, Math.max(1, (F && scene !== 'dialog') ? F.ch : SAVE.ch)); }
+function wrap(t, x, y, mw, lh) { g.font = `500 28px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; let line = ''; for (const ch of t) { if (g.measureText(line + ch).width > mw) { g.fillText(line, x, y); y += lh; line = ch; } else line += ch; } g.fillText(line, x, y); }
+
+// ---------- versus select ----------
+let vsWon = false;
+function unlocked(k) { return k === 'daisuke' || k === 'ryohei' || SAVE.beat[k]; }
+function drawSelect() {
+  g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H);
+  txt(sel.side === 0 ? '내 캐릭터 선택' : '상대 선택', W / 2, 60, 36, '#ffd23f');
+  const list = R, cols = 10, cw = 112, ch = 112, x0 = (W - cols * cw) / 2, y0 = 100;
+  let cur = list.findIndex(r => r.key === (sel.side === 0 ? sel.p : sel.o));
+  if (take('left')) cur = (cur + list.length - 1) % list.length; if (take('right')) cur = (cur + 1) % list.length;
+  if (take('up')) cur = (cur + list.length - cols) % list.length; if (take('down')) cur = (cur + cols) % list.length;
+  list.forEach((r, i) => {
+    const x = x0 + (i % cols) * cw, y = y0 + Math.floor(i / cols) * ch, ok = sel.side === 1 || unlocked(r.key);
+    if (tap && tap.x > x && tap.x < x + cw - 8 && tap.y > y && tap.y < y + ch - 8) { if (cur === i) pressed.ok = true; cur = i; }
+    g.fillStyle = i === cur ? '#ff3d81' : '#1c1830'; g.fillRect(x, y, cw - 8, ch - 8);
+    g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 14, ch - 14); g.clip(); if (ok) face(r.key, x + 3, y + 3, (ch - 14) * 1.15); else txt('?', x + cw / 2 - 4, y + ch / 2 + 14, 40, '#555'); g.restore();
+    if (!r.real) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y + ch - 30, cw - 8, 22); txt('모션 준비중', x + cw / 2 - 4, y + ch - 14, 13, '#ffd23f'); }
+  });
+  const pick = list[cur];
+  if (sel.side === 0) sel.p = pick.key; else sel.o = pick.key;
+  face(sel.p, 60, 470, 220); face(sel.o, W - 60 - 220 * 0.9, 470, 220, true);
+  txt(BY[sel.p].ko, 300, 560, 34, '#fff', 'left'); txt('VS', W / 2, 600, 60, '#ff3d81', 'center', DFONT); txt(BY[sel.o].ko, W - 300, 560, 34, '#fff', 'right');
+  txt(unlocked(pick.key) || sel.side === 1 ? 'Enter / F 로 결정 · Esc 뒤로' : '스토리에서 이기면 열려요', W / 2, 690, 20, '#aaa');
+  if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
+  if (take('back')) { if (sel.side === 1) sel.side = 0; else { scene = 'title'; menu = 1; } }
+}
+function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; scene = 'vsend'; ctT = 0; menu = 0; } }); }
+
+// ---------- loop ----------
+let last = 0, acc = 0;
+function loop(t) { requestAnimationFrame(loop); acc += Math.min(100, t - last); last = t; if (acc < 1000 / 60 - 1) return; acc = 0; draw(); }
+requestAnimationFrame(loop);
+</script>
