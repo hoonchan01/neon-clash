@@ -14,8 +14,11 @@ body.mobile.infight .pad{display:block}
 .pad button{pointer-events:auto;position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(10,8,20,.5);color:#fff;font:700 clamp(12px,2.6vh,22px) "IBM Plex Sans KR",system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none;-webkit-tap-highlight-color:transparent}
 .pad button small{font:600 clamp(9px,1.8vh,14px) "Chakra Petch",system-ui;opacity:.7}
 .pad button.on{background:rgba(255,61,129,.65);border-color:#fff}
-#bl{left:3%;bottom:8%;width:13%;aspect-ratio:1;font-size:clamp(18px,4vh,34px)}
-#br{left:18%;bottom:8%;width:13%;aspect-ratio:1;font-size:clamp(18px,4vh,34px)}
+#bl{left:2%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
+#br{left:22%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
+#bu{left:12%;bottom:33%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
+#bdn{left:12%;bottom:2%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
+#bI{right:2%;bottom:62%;width:8%;aspect-ratio:1;border-color:#ffd23f;font-size:clamp(10px,2vh,16px)}
 #bW{right:13%;bottom:40%;width:11%;aspect-ratio:1;border-color:#ff3d81}
 #bD{right:25%;bottom:22%;width:11%;aspect-ratio:1;border-color:#3fd8ff}
 #bS{right:1.5%;bottom:22%;width:11%;aspect-ratio:1}
@@ -42,6 +45,11 @@ body.mobile .keys{display:none}
 .box button.pri{background:#ff3d81;border-color:#ff3d81;color:#1a0612}
 .box button[aria-pressed="true"]{background:#3fd8ff;border-color:#3fd8ff;color:#06121a}
 .msg{min-height:1.2em;color:#ffd23f;font-size:13px}
+.box h3{margin:6px 0 0;font:700 16px "IBM Plex Sans KR",system-ui;color:#ffd23f}
+.it{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #2c2748;border-radius:10px;background:#100d20}
+.it div{flex:1;min-width:0}.it b{display:block}.it small{color:#9a93bd;font-size:12.5px}
+.it button{padding:8px 12px;font-size:14px;white-space:nowrap}.it button:disabled{opacity:.4;cursor:default}
+.coin{font:700 18px "Chakra Petch",system-ui;color:#ffd23f}
 .rk{width:100%;border-collapse:collapse;font-size:14px}
 .rk td,.rk th{padding:7px 6px;border-bottom:1px solid #2c2748;text-align:left}
 .rk th{color:#9a93bd;font-weight:600}
@@ -54,17 +62,18 @@ body:not(.mobile) .mhint{display:none}
 <div id="wrap">
   <canvas id="c" width="1280" height="720" aria-label="NEON CLASH 게임 화면"></canvas>
   <div class="pad" id="pad">
-    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button>
+    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button><button id="bu" data-k="up" aria-label="점프">▲</button><button id="bdn" data-k="down" aria-label="숙이기">▼</button><button id="bI" data-k="I">아이템</button>
     <button id="bW" data-k="X">기술<small>필살</small></button><button id="bD" data-k="D">방어</button><button id="bS" data-k="K">킥</button><button id="bA" data-k="F">주먹</button>
   </div>
 </div>
 <div class="panel" id="acct" role="dialog" aria-modal="true" aria-labelledby="acctT"><div class="box" id="acctBox"></div></div>
+<div class="panel" id="shop" role="dialog" aria-modal="true" aria-labelledby="shopT"><div class="box" id="shopBox"></div></div>
 <div class="panel" id="rank" role="dialog" aria-modal="true" aria-labelledby="rankT"><div class="box" id="rankBox"></div></div>
 <div id="start">
   <h1><b>NEON</b> <i>CLASH</i></h1>
-  <p>웹 체험판 · 1~3장 스토리와 대전</p>
+  <p>웹 체험판 · 1~3장 스토리와 대전 · 코인 모아서 아이템과 단련</p>
   <button id="go" type="button">게임 시작</button>
-  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
+  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>↑</kbd></span><span>점프 (점프 중 A·S 점프 공격)</span><span><kbd>↓</kbd></span><span>숙이기 (↓+A·S 하단 킥 · ↓+D 앉아 방어)</span><span><kbd>Q</kbd></span><span>아이템 사용 (라운드마다 1번)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
   <p class="mhint">가로 화면으로 돌려서 하세요. 싸울 때 화면 아래에 이동 버튼과 주먹·킥·방어·기술 버튼이 나와요.</p>
 </div>
 <div id="rot">화면을 가로로 돌려 주세요<br>横向きにしてください</div>
@@ -88,9 +97,11 @@ function portrait(k, x, y, w, h) { const i = faceImg(k); if (!i.complete || !i.n
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
 SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0;
 SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {};
+function fixSave() { SAVE.coin = SAVE.coin || 0; SAVE.inv = SAVE.inv || {}; SAVE.up = SAVE.up || {}; if (SAVE.equip === undefined) SAVE.equip = 'potion'; }
+fixSave();
 function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} if (window.Cloud && Cloud.sync) Cloud.sync(SAVE); }
 window.SAVE_REF = () => SAVE;
-window.LOAD_SAVE = s => { for (const k of Object.keys(SAVE)) delete SAVE[k]; Object.assign(SAVE, s); SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0; SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {}; try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} };
+window.LOAD_SAVE = s => { for (const k of Object.keys(SAVE)) delete SAVE[k]; Object.assign(SAVE, s); SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0; SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {}; fixSave(); try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} };
 function fmt(ms) { if (!ms) return '-'; const s = ms / 1000, h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60); return h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}.${Math.floor(s * 10 % 10)}`; }
 function recordClear(ch) {
   const t = SAVE.run[ch] || 0; if (!t) return;
@@ -101,7 +112,7 @@ function resetRun() { SAVE.run = {}; }
 
 // ---------- input ----------
 const held = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', Enter: 'ok', ' ': 'ok', Escape: 'back' };
+const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', q: 'I', Enter: 'ok', ' ': 'ok', Escape: 'back' };
 const MOBILE = matchMedia('(pointer:coarse)').matches;
 document.body.classList.toggle('mobile', MOBILE);
 let started = false;
@@ -168,11 +179,17 @@ function stage(ch) {
   return STAGES[ch] = c;
 }
 
+// painted stage backgrounds: assets/bg/<opponent key>.webp, falling back to the drawn chapter stage
+const BGI = {}; let bgKey = null;
+function bgImg(k) { if (!k) return null; if (!(k in BGI)) { const i = new Image(); i.onerror = () => { BGI[k] = null; }; i.src = 'assets/bg/' + k + '.webp'; BGI[k] = i; } const i = BGI[k]; return i && i.complete && i.naturalWidth ? i : null; }
+function bgDraw(ch, k) { const i = bgImg(k); if (i) { g.drawImage(i, 0, 0, W, H); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); } else g.drawImage(stage(ch), 0, 0); }
+
 // ---------- fighter ----------
 const FR = { // frames: [startup, active, recovery], damage, reach
-  jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185] };
+  jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185], lowkick: [7, 5, 13, 55, 175] };
+const LOWST = { crouch: 1, cguard: 1, lowkick: 1, land: 1 };
 function mk(key, x, face, isCpu, lvl) {
-  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1 };
+  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, maxhp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, vy: 0, jvx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1, gMul: 1, buff: {}, itemUsed: 0 };
 }
 function frame(f) {
   const t = f.t;
@@ -187,16 +204,23 @@ function frame(f) {
     case 'hit': return 'hit';
     case 'ko': return f.lift > 2 || t < 24 ? 'down1' : 'down2';
     case 'win': return 'win';
+    case 'jump': return 'jump';
+    case 'jumpatk': return 'jumpatk';
+    case 'crouch': case 'land': return 'crouch';
+    case 'cguard': return 'cguard';
+    case 'lowkick': return t < FR.lowkick[0] ? 'lowkick1' : 'lowkick2';
   }
   return 'idle1';
 }
 function drawF(f) {
-  const r = f.r, name = frame(f); let m = r.f[name] || r.f.idle1;
+  const r = f.r, name = frame(f); let m = r.f[name], syn = null;
+  if (!m && SYN[name]) { syn = SYN[name]; m = r.f[syn[0]] || r.f.idle1; } else if (!m) m = r.f.idle1;
   const im = img(r.key); if (!im.complete || !im.naturalWidth) return;
   const [sx, sy, sw, sh, ax, ay] = m;
   g.save();
   // shadow
-  g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90, 14, 0, 0, 7); g.fill();
+  const sh0 = Math.max(.4, 1 - f.lift / 400); g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90 * sh0, 14 * sh0, 0, 0, 7); g.fill();
+  if (f.buff.rage > 0 || f.buff.charm > 0) { const bc = f.buff.rage > 0 ? [255, 70, 40] : [120, 210, 255]; glowC(f.x, FLOOR - f.lift - 30, 120 + Math.sin(f.t * .3) * 10, bc, bc, .35); }
   g.translate(f.x, FLOOR - f.lift);
   if (!r.real) { // placeholder: fake motion with tilt / lunge
     const lean = { jab: .12, kick: .18, special: .1, super: .2, hit: -.2, guard: -.05 }[f.st] || 0;
@@ -205,9 +229,17 @@ function drawF(f) {
   }
   g.scale(f.face, 1);
   if (f.flash > 0) { g.filter = 'brightness(2.2)'; f.flash--; }
-  g.drawImage(im, sx, sy, sw, sh, -ax, -ay, sw, sh);
+  if (!syn) g.drawImage(im, sx, sy, sw, sh, -ax, -ay, sw, sh);
+  else if (syn[1] === 'legs') { // fold the legs: lower half squashed, upper body lowered onto it
+    const k = syn[2], sp = Math.round(sh * .5), bot = sh - ay, legH = (sh - sp) * k, top = bot - legH;
+    g.drawImage(im, sx, sy + sp, sw, sh - sp, -ax * 1.06, top, sw * 1.06, legH);
+    g.drawImage(im, sx, sy, sw, sp + 1, -ax, top - sp, sw, sp + 1);
+  } else if (syn[1] === 'squash') { const k = syn[2]; g.drawImage(im, sx, sy, sw, sh, -ax * 1.1, -ay * k, sw * 1.1, sh * k); }
+  else if (syn[1] === 'dive') { g.translate(0, -sh * .45); g.rotate(.55); g.drawImage(im, sx, sy, sw, sh, -ax, -sh * .55, sw, sh); }
   g.restore();
 }
+// placeholder poses until real jump / crouch frames exist: [source frame, method, amount]
+const SYN = { jump: ['kick1', 'legs', .7], jumpatk: ['kick2', 'dive'], crouch: ['idle1', 'legs', .45], cguard: ['guard', 'legs', .45], lowkick1: ['kick1', 'legs', .5], lowkick2: ['kick2', 'squash', .62] };
 
 // ---------- effects: per-character specials (X) and supers (MAX+X) ----------
 // x: projectile/special kind, s: super kind, h: hit-spark style (blunt | slash | pierce)
@@ -296,7 +328,7 @@ function bolt(x1, y1, x2, y2, c, w, jag = 30) {
 }
 function starPath(x, y, r, rot) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = rot + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.closePath(); }
 function heartPath(x, y, s) { g.beginPath(); g.moveTo(x, y + s * .3); g.bezierCurveTo(x - s, y - s * .5, x - s * .5, y - s * 1.1, x, y - s * .45); g.bezierCurveTo(x + s * .5, y - s * 1.1, x + s, y - s * .5, x, y + s * .3); g.closePath(); }
-const bodyY = f => FLOOR - f.lift - 250;
+const bodyY = f => FLOOR - f.lift - (LOWST[f.st] ? 170 : 250);
 
 // --- specials ---
 function launchSpecial(f, o) {
@@ -337,11 +369,13 @@ function landBurst(s) {
   if (s.k === 'flask') { burst(s.x, FLOOR - 30, [120, 255, 80], 30, 7, { g: .2 }); FX.push({ k: 'cloud', x: s.x, y: FLOOR - 90, c: [100, 220, 60], t: 0 }); }
   else { burst(s.x, FLOOR - 40, c[1], 34, 9, { k: 'star' }); FX.push({ k: 'ring', x: s.x, y: FLOOR - 60, c, t: 0, r: 160 }); }
   F.shake = Math.max(F.shake, 8);
-  if (Math.abs(o.x - s.x) < 150 && o.st !== 'ko') damage(s.by, o, s.dmg, 'special');
+  if (Math.abs(o.x - s.x) < 150 && o.lift < 60 && o.st !== 'ko') damage(s.by, o, s.dmg, 'special');
 }
 function shotHit(s, o) {
   const dy = Math.abs(s.y - bodyY(o)), near = Math.abs(s.x - o.x) < 60 + s.r * .4;
-  return near && (s.ground || dy < 170) && o.st !== 'ko';
+  if (s.ground && o.lift > 40) return false; // jumped over a ground wave
+  if (LOWST[o.st] && !s.ground && !s.lob && s.k !== 'tornado') return false; // ducked under
+  return near && (s.ground || dy < 140) && o.st !== 'ko';
 }
 function onShotHit(s, o) {
   s.dead = true; const c = s.c;
@@ -514,17 +548,19 @@ const SHOTS = [], FX = [];
 function startFight(p1, p2, opts) {
   const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
   b.dmgMul = opts.dmg || 1;
+  const U = SAVE.up; a.maxhp = a.hp = Math.round(1000 * (1 + .05 * (U.hp || 0))); a.dmgMul = 1 + .05 * (U.atk || 0); a.gMul = 1 + .1 * (U.gauge || 0); bgKey = p2;
   F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
   SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
 function resetRound() {
-  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 }); Object.assign(b, { x: 880, face: -1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 });
+  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0 });
   F.timer = 3600; F.cut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
-function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard'; }
-function act(f, o, cmd) {
+function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard' || f.st === 'crouch' || f.st === 'cguard'; }
+function act(f, o, cmd, down) {
   if (!canAct(f)) return;
+  if ((cmd === 'F' || cmd === 'K') && (down || f.st === 'crouch' || f.st === 'cguard')) { f.st = 'lowkick'; f.t = 0; f.hitDone = false; return; }
   if (cmd === 'F') { f.st = 'jab'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'K') { f.st = 'kick'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'X') {
@@ -534,17 +570,18 @@ function act(f, o, cmd) {
 }
 function damage(att, def, amt, kind) {
   if (def.st === 'ko') return;
-  const guarding = def.st === 'guard' && kind !== 'super-unblock';
-  let d = amt * att.dmgMul;
+  const low = kind === 'low', air = kind === 'air';
+  const guarding = ((def.st === 'guard' && !low) || (def.st === 'cguard' && !air)) && kind !== 'super-unblock';
+  let d = amt * att.dmgMul * (att.buff.rage > 0 ? 1.3 : 1) * (def.buff.charm > 0 ? .6 : 1);
   // looks affinity
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
   if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def); }
   else {
-    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4;
-    if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' ? 4 : kind === 'special' ? 2 : 3)); def.gauge = Math.min(100, def.gauge + 3); }
-    sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, kind, amt);
+    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
+    if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
+    sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, low || air ? 'kick' : kind, amt);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
   }
   def.hp = Math.max(0, def.hp - Math.round(d));
@@ -553,13 +590,23 @@ function damage(att, def, amt, kind) {
 function spark(x, y, c, r, h, d) { FX.push({ k: 'spark', x, y, c, r, t: 0, h: h || 'blunt', d: d || 1 }); }
 function stepF(f, o) {
   f.t++;
+  for (const k in f.buff) if (f.buff[k] > 0) f.buff[k]--;
   const dist = Math.abs(o.x - f.x), inFront = Math.sign(o.x - f.x) === f.face;
   if (f.st === 'jab' || f.st === 'kick') {
     const [su, ac, re, dmg, reach] = FR[f.st];
     if (f.t === su) f.x += f.face * 10;
-    if (!f.hitDone && f.t >= su && f.t < su + ac && inFront && dist <= reach + f.r.reach + 60) { f.hitDone = true; damage(f, o, dmg, f.st); }
+    if (!f.hitDone && f.t >= su && f.t < su + ac && inFront && dist <= reach + f.r.reach + 60 && o.lift < 110) { f.hitDone = true; damage(f, o, dmg, f.st); }
     if (f.t >= su + ac + re) { f.st = 'idle'; f.t = 0; }
-  } else if (f.st === 'special') {
+  } else if (f.st === 'lowkick') {
+    const [su, ac, re, dmg, reach] = FR.lowkick;
+    if (f.t === su) { f.x += f.face * 8; part(f.x + f.face * 120, FLOOR - 8, { vx: f.face * 3, vy: -2, g: .2, c: [200, 190, 170], life: 16, r: 6 }); }
+    if (!f.hitDone && f.t >= su && f.t < su + ac && inFront && dist <= reach + f.r.reach + 60 && o.lift < 30) { f.hitDone = true; damage(f, o, dmg, 'low'); }
+    if (f.t >= su + ac + re) { f.st = 'crouch'; f.t = 0; }
+  } else if (f.st === 'jump' || f.st === 'jumpatk') {
+    f.x += f.jvx; f.lift += f.vy; f.vy -= .9;
+    if (f.st === 'jumpatk' && !f.hitDone && f.t >= 3 && inFront && dist <= 160 + f.r.reach && f.lift - o.lift < 230) { f.hitDone = true; damage(f, o, 70, 'air'); f.jvx *= .3; }
+    if (f.lift <= 0) { f.lift = 0; f.vy = 0; f.st = 'land'; f.t = 0; }
+  } else if (f.st === 'land') { if (f.t >= 5) { f.st = 'idle'; f.t = 0; } } else if (f.st === 'special') {
     if (f.t === 18) launchSpecial(f, o);
     if (f.dash && f.t > 18 && f.t < 36) { f.x += f.face * 19; part(f.x - f.face * 60, bodyY(f) + (Math.random() - .5) * 140, { vx: -f.face * 6, c: f.r.col[1], life: 12, r: 8 });
       if (!f.hitDone && inFront && Math.abs(o.x - f.x) < 170) { f.hitDone = true; f.dash = 0; damage(f, o, 115, 'special'); } }
@@ -568,7 +615,7 @@ function stepF(f, o) {
     if (f.t === 22) launchSuper(f, o);
     if (f.t >= 70) { f.st = 'idle'; f.t = 0; }
   } else if (f.st === 'hit') {
-    f.x += f.vx; f.vx *= .85; if (f.t >= 18) { f.st = 'idle'; f.t = 0; }
+    f.x += f.vx; f.vx *= .85; if (f.lift > 0) { f.lift += f.vy; f.vy -= .9; if (f.lift <= 0) { f.lift = 0; f.vy = 0; } } if (f.t >= 18 && f.lift === 0) { f.st = 'idle'; f.t = 0; }
   } else if (f.st === 'ko') {
     f.x += f.vx; f.vx *= .96; if (f.lift > 0) { f.lift += f.vy; f.vy -= .9; if (f.lift <= 0) { f.lift = 0; f.vx *= .3; F.shake = 8; } }
   }
@@ -578,17 +625,22 @@ function control(f, o) {
   if (f.st === 'ko' || f.st === 'win') return;
   const towards = Math.sign(o.x - f.x) || f.face;
   if (canAct(f)) f.face = towards;
-  let move = 0, guard = false, cmd = null;
+  let move = 0, guard = false, cmd = null, down = false, jump = false;
   if (!f.cpu) {
-    if (held.left) move = -1; if (held.right) move = 1; guard = held.D;
+    if (held.left) move = -1; if (held.right) move = 1; guard = held.D; down = held.down; jump = take('up');
     for (const k of ['F', 'K', 'X']) if (take(k)) cmd = k;
+    if (take('I')) useItem(f);
   } else {
     const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl;
     if (--A.t <= 0) {
       A.t = Math.max(6, 30 - lv * 3) + Math.random() * 12;
       const threat = (o.st === 'jab' || o.st === 'kick' || o.st === 'special') && d < 330;
-      const roll = Math.random();
-      if (threat && roll < .12 + lv * .07) A.act = 'guard';
+      const roll = Math.random(), inc = SHOTS.find(s => s.by === o && Math.sign(s.vx) === Math.sign(f.x - s.x) && Math.abs(s.x - f.x) < 420);
+      if (inc && roll < .15 + lv * .07) A.act = inc.ground || inc.lob ? 'jump' : 'crouch';
+      else if (threat && o.st === 'lowkick' && roll < .1 + lv * .06) A.act = 'cguard';
+      else if (o.st === 'guard' && d < 250 && roll < .3) A.act = 'low';
+      else if (d > 250 && d < 430 && roll < .1 + lv * .015) A.act = 'jumpin';
+      else if (threat && roll < .12 + lv * .07) A.act = 'guard';
       else if (f.gauge >= 100 && roll < .5) A.act = 'X';
       else if (d > 420 && f.gauge >= 25 && roll < .25 + lv * .03) A.act = 'X';
       else if (d > 230 + f.r.reach) A.act = roll < .85 ? 'fwd' : 'idle';
@@ -596,15 +648,23 @@ function control(f, o) {
     }
     if (A.act === 'fwd') move = towards; else if (A.act === 'back') move = -towards; else if (A.act === 'guard') guard = true;
     else if (A.act === 'F' || A.act === 'K' || A.act === 'X') { cmd = A.act; A.act = 'idle'; }
+    else if (A.act === 'jump' || A.act === 'jumpin') { jump = true; if (A.act === 'jumpin') { move = towards; A.air = 1; } A.act = 'idle'; }
+    else if (A.act === 'crouch') down = true;
+    else if (A.act === 'cguard') { down = true; guard = true; }
+    else if (A.act === 'low') { down = true; cmd = 'K'; A.act = 'crouch'; }
+    if (f.st === 'jump' && A.air && d < 220) { cmd = 'F'; A.air = 0; }
   }
+  if (f.st === 'jump' && (cmd === 'F' || cmd === 'K')) { f.st = 'jumpatk'; f.t = 0; f.hitDone = false; return; }
   if (canAct(f)) {
-    if (cmd) { act(f, o, cmd); return; }
+    if (cmd) { act(f, o, cmd, down); return; }
+    if (jump) { f.st = 'jump'; f.t = 0; f.vy = 17; f.lift = 1; f.jvx = move * 6; return; }
+    if (down) { const st = guard ? 'cguard' : 'crouch'; if (f.st !== st) { f.st = st; f.t = 0; } return; }
     if (guard) { if (f.st !== 'guard') { f.st = 'guard'; f.t = 0; } return; }
     if (move) { const fwd = move === f.face; const st = fwd ? 'walk' : 'back'; if (f.st !== st) { f.st = st; f.t = 0; } f.x += move * (fwd ? 5 : 4); }
     else if (f.st !== 'idle') { f.st = 'idle'; f.t = 0; }
   }
 }
-function push(a, b) { const d = b.x - a.x, min = 120; if (Math.abs(d) < min && a.st !== 'ko' && b.st !== 'ko') { const p = (min - Math.abs(d)) / 2 * Math.sign(d || 1); a.x -= p; b.x += p; } }
+function push(a, b) { const d = b.x - a.x, min = 120; if (a.lift > 60 || b.lift > 60) return; if (Math.abs(d) < min && a.st !== 'ko' && b.st !== 'ko') { const p = (min - Math.abs(d)) / 2 * Math.sign(d || 1); a.x -= p; b.x += p; } }
 function updateFight() {
   const { a, b } = F;
   F.pt++;
@@ -646,7 +706,7 @@ function drawFight() {
   const { a, b } = F;
   g.save();
   if (F.shake > 0) { g.translate((Math.random() - .5) * F.shake, (Math.random() - .5) * F.shake); F.shake *= .85; if (F.shake < .5) F.shake = 0; }
-  g.drawImage(stage(F.ch), 0, 0);
+  bgDraw(F.ch, F.b.key);
   if (F.superBy && F.cut > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
   const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
   order.forEach(drawF);
@@ -670,7 +730,8 @@ function drawFight() {
   }
   g.restore();
   // HUD
-  bar(60, 40, 500, 30, a.hp / 1000, true, '#ffd23f'); bar(720, 40, 500, 30, b.hp / 1000, false, '#ffd23f');
+  bar(60, 40, 500, 30, a.hp / a.maxhp, true, '#ffd23f'); bar(720, 40, 500, 30, b.hp / b.maxhp, false, '#ffd23f');
+  drawItemHud(a);
   g.font = `700 26px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(a.r.ko, 60, 104); g.textAlign = 'right'; g.fillText(b.r.ko, 1220, 104);
   for (let i = 0; i < 2; i++) { g.fillStyle = a.wins > i ? '#ff3d81' : '#333'; g.fillRect(470 - i * 26, 86, 18, 18); g.fillStyle = b.wins > i ? '#ff3d81' : '#333'; g.fillRect(792 + i * 26, 86, 18, 18); }
   g.font = `700 52px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
@@ -684,7 +745,7 @@ function big(t) { g.font = `700 120px ${DFONT}`; g.textAlign = 'center'; g.lineW
 // ---------- story ----------
 const STORY = {
   1: { title: '1장 · 동네의 숨은 고수들', fights: [
-    { k: 'ryohei', lv: 1, pre: [['ryohei', '다이스케, 주먹 쥐는 법부터 다시 가르쳐 주마. 덤벼!'], ['ryohei', MOBILE ? '◀▶ 이동 · 주먹 · 킥 · 방어 · 기술 버튼 (게이지 1/4) · 게이지 MAX면 기술 버튼으로 필살기!' : '←→ 이동 · A 주먹 · S 킥 · D 방어 · W 고유기 (게이지 1/4) · 게이지 MAX면 W로 필살기!']], post: [['ryohei', '좋아. 이 동네엔 숨은 고수들이 있다. 하나씩 만나러 가자.']] },
+    { k: 'ryohei', lv: 1, pre: [['ryohei', '다이스케, 주먹 쥐는 법부터 다시 가르쳐 주마. 덤벼!'], ['ryohei', MOBILE ? '◀▶ 이동 · 주먹 · 킥 · 방어 · 기술 버튼 (게이지 1/4) · 게이지 MAX면 기술 버튼으로 필살기!' : '←→ 이동 · A 주먹 · S 킥 · D 방어 · W 고유기 (게이지 1/4) · 게이지 MAX면 W로 필살기!'], ['ryohei', MOBILE ? '▲ 점프 (점프 중 주먹·킥 = 점프 공격) · ▼ 숙이기 (▼+킥 = 하단 킥, ▼+방어 = 앉아 방어) · 아이템 버튼은 라운드마다 1번!' : '↑ 점프 (점프 중 A·S = 점프 공격) · ↓ 숙이기 (↓+A·S = 하단 킥, ↓+D = 앉아 방어) · Q 아이템 (라운드마다 1번)'], ['ryohei', '서서 막으면 하단 킥을, 앉아서 막으면 점프 공격을 못 막는다. 원거리 기술은 숙이거나 뛰어서 피해라!']], post: [['ryohei', '좋아. 이 동네엔 숨은 고수들이 있다. 하나씩 만나러 가자.']] },
     { k: 'hattori', lv: 1.5, pre: [['hattori', '무도인으로서 당신과의 대결은 영광이요.']] },
     { k: 'noise', lv: 2, pre: [['noise', '이 지역 파칭코는 내가 꽉 쥐고 있지. 너도 덤비거라.']] },
     { k: 'shunsuke', lv: 2.5, pre: [['shunsuke', '바둑판 위엔 한 수 앞을 보는 자가 이긴다. 네 수는 다 읽혔다.']] },
@@ -740,8 +801,9 @@ function face(key, x, y, h, flip) { const r = BY[key], m = r.f.cutin, im = img(k
 function menuList(items, y0) {
   if (take('up') || take('left')) { menu = (menu + items.length - 1) % items.length; sfx('sel'); }
   if (take('down') || take('right')) { menu = (menu + 1) % items.length; sfx('sel'); }
-  items.forEach((it, i) => { const y = y0 + i * 70, on = i === menu; g.fillStyle = on ? 'rgba(255,61,129,.85)' : 'rgba(255,255,255,.08)'; g.fillRect(W / 2 - 260, y - 44, 520, 58); txt(it, W / 2, y - 5, 30, on ? '#1a0612' : '#fff');
-    if (tap && tap.x > W / 2 - 260 && tap.x < W / 2 + 260 && tap.y > y - 44 && tap.y < y + 14) { menu = i; pressed.ok = true; } });
+  const gap = items.length > 5 ? 54 : 70, bh = gap - 10;
+  items.forEach((it, i) => { const y = y0 + i * gap, on = i === menu; g.fillStyle = on ? 'rgba(255,61,129,.85)' : 'rgba(255,255,255,.08)'; g.fillRect(W / 2 - 260, y - 44, 520, bh); txt(it, W / 2, y - 44 + bh / 2 + 10, gap < 70 ? 26 : 30, on ? '#1a0612' : '#fff');
+    if (tap && tap.x > W / 2 - 260 && tap.x < W / 2 + 260 && tap.y > y - 44 && tap.y < y - 44 + bh) { menu = i; pressed.ok = true; } });
   if (take('ok') || take('F')) { sfx('sel'); return menu; }
   return -1;
 }
@@ -756,14 +818,15 @@ function draw() {
     txt('웹 체험판 · 1~3장', W / 2, 296, 26, '#ccc');
     const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
     const CLu = window.Cloud && Cloud.user;
-    const c = menuList([prog, '대전 모드', '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 370);
+    const c = menuList([prog, '대전 모드', `상점 · ${SAVE.coin} 코인`, '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 362);
     if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; }
-    if (c === 2) openRank('total');
-    if (c === 3) openAcct();
-    if (c === 4) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
-    txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
-    txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · ←→ 이동 · A 주먹 · S 킥 · D 방어 · W 기술', W / 2, 690, 18, '#999');
+    if (c === 2) openShop();
+    if (c === 3) openRank('total');
+    if (c === 4) openAcct();
+    if (c === 5) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
+    txt(`🪙 ${SAVE.coin}`, 20, 34, 20, '#ffd23f', 'left'); txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
+    txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · 싸울 때 ←→ 이동 ↑ 점프 ↓ 숙이기 · A 주먹 · S 킥 · D 방어 · W 기술 · Q 아이템', W / 2, 690, 18, '#999');
   }
   else if (scene === 'chtitle') {
     ctT++; const C = STORY[SAVE.ch]; g.drawImage(stage(SAVE.ch), 0, 0); g.fillStyle = `rgba(0,0,0,${.6})`; g.fillRect(0, 0, W, H);
@@ -771,7 +834,7 @@ function draw() {
     if (ctT > 60 && (take('ok') || take('F') || tap)) { if (C.intro) say(C.intro, () => { SAVE.introSeen = SAVE.ch; save(); const fi = C.fights[0]; storyNextFight(); }); else storyNextFight(); }
   }
   else if (scene === 'dialog') {
-    const fi = currentBg(); g.drawImage(stage(fi), 0, 0); g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, 0, W, H);
+    const fi = currentBg(); bgDraw(fi, bgKey); g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, 0, W, H);
     const [who, line] = dlg.lines[dlg.i]; const r = BY[who];
     face(who, 80, 120, 380);
     g.fillStyle = 'rgba(8,6,18,.92)'; g.fillRect(40, 500, W - 80, 180); g.strokeStyle = '#ff3d81'; g.lineWidth = 3; g.strokeRect(40, 500, W - 80, 180);
@@ -784,18 +847,21 @@ function draw() {
   else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
   else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); txt(`이번 클리어 타임 ${fmt((SAVE.run[1] || 0) + (SAVE.run[2] || 0) + (SAVE.run[3] || 0))} · 최고 ${fmt(SAVE.best.total)}`, W / 2, 500, 26, '#ffd23f'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
   else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const c = menuList(['다시 대전', '캐릭터 선택', '타이틀로'], 420); if (c === 0) vsStart(); if (c === 1) scene = 'select'; if (c === 2) { scene = 'title'; menu = 1; } }
+  drawToasts();
   if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
   tap = null; for (const k in pressed) pressed[k] = false;
 }
-function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
+function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; bgKey = fi.k; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
 function storyNextGo() { SAVE.introSeen = SAVE.ch; save(); const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage]; dlg = null; startFightStory(C, fi); }
 function startFightStory(C, fi) {
   startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, onEnd: won => {
     if (won) {
+      const first = !SAVE.beat[fi.k], base = Math.round(30 + fi.lv * 14) * (fi.boss ? 2 : 1), hpB = Math.round(F.a.hp / F.a.maxhp * 30);
+      reward(base + hpB, `${BY[fi.k].ko} 격파`); if (first) reward(50, '첫 승리 보너스');
       SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
-      const after = () => { if (done) { recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
+      const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
       save(); if (fi.post) say(fi.post, after); else after();
-    } else { scene = 'lose'; ctT = 0; menu = 0; }
+    } else { reward(10, '위로금'); save(); scene = 'lose'; ctT = 0; menu = 0; }
   } });
 }
 // route story starts through the chapter title once, then fights
@@ -833,8 +899,62 @@ function drawSelect() {
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
   if (take('back')) { if (sel.side === 1) sel.side = 0; else { scene = 'title'; menu = 1; } }
 }
-function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; scene = 'vsend'; ctT = 0; menu = 0; } }); }
+function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; reward(w ? 25 : 5, w ? '대전 승리' : '대전 참가'); save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
+
+// ---------- coins, items, training ----------
+const ITEMS = {
+  potion: { ko: '회복 드링크', price: 80, desc: '체력 25% 회복' },
+  candy: { ko: '기력 캔디', price: 60, desc: '게이지 +50' },
+  charm: { ko: '강철 부적', price: 100, desc: '10초 동안 받는 피해 40% 감소' },
+  rage: { ko: '분노 캡슐', price: 120, desc: '10초 동안 주는 피해 30% 증가' } };
+const UPS = { hp: { ko: '체력 단련', desc: '최대 체력 +5%' }, atk: { ko: '공격 단련', desc: '주는 피해 +5%' }, gauge: { ko: '기력 단련', desc: '게이지 충전 +10%' } };
+const UPMAX = 5, upCost = lv => 150 * (lv + 1);
+const TOASTS = [];
+function toast(t) { TOASTS.push({ t, n: 0 }); if (TOASTS.length > 4) TOASTS.shift(); }
+function reward(n, why) { SAVE.coin = (SAVE.coin || 0) + n; toast(`+${n} 코인 · ${why}`); }
+function drawToasts() {
+  for (let i = TOASTS.length - 1; i >= 0; i--) if (++TOASTS[i].n > 170) TOASTS.splice(i, 1);
+  TOASTS.forEach((o, i) => { const a = Math.min(1, (170 - o.n) / 20), y = (scene === 'fight' ? 200 : 330) + i * 44; g.globalAlpha = a; g.font = `700 22px ${FONT}`; const w = g.measureText(o.t).width + 40;
+    g.fillStyle = 'rgba(10,8,20,.85)'; g.fillRect(W / 2 - w / 2, y - 28, w, 38); g.strokeStyle = '#ffd23f'; g.lineWidth = 2; g.strokeRect(W / 2 - w / 2, y - 28, w, 38); txt(o.t, W / 2, y - 2, 22, '#ffd23f'); g.globalAlpha = 1; });
+}
+function useItem(f) {
+  if (f.cpu || !F || F.phase !== 'fight') return;
+  const k = SAVE.equip, it = ITEMS[k];
+  if (!it || !(SAVE.inv[k] > 0)) { toast('장착한 아이템이 없어요 · 타이틀의 상점에서 사고 장착하세요'); return; }
+  if (f.itemUsed) { toast('아이템은 라운드마다 1번만 쓸 수 있어요'); return; }
+  SAVE.inv[k]--; f.itemUsed = 1; save(); sfx('sel');
+  if (k === 'potion') f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .25));
+  if (k === 'candy') f.gauge = Math.min(100, f.gauge + 50);
+  if (k === 'charm') f.buff.charm = 600;
+  if (k === 'rage') f.buff.rage = 600;
+  FX.push({ k: 'ring', x: f.x, y: bodyY(f), c: [[255, 255, 255], k === 'rage' ? [255, 70, 40] : k === 'potion' ? [90, 255, 130] : [120, 210, 255]], t: 0, r: 160 });
+  toast(`${it.ko} 사용!`);
+}
+function drawItemHud(f) {
+  const k = SAVE.equip, it = ITEMS[k], n = it ? (SAVE.inv[k] || 0) : 0;
+  g.font = `700 16px ${FONT}`; g.textAlign = 'left'; g.fillStyle = f.itemUsed || !n ? '#6c6690' : '#ffd23f';
+  g.fillText(it ? `${MOBILE ? '아이템' : 'Q'} ${it.ko} ×${n}${f.itemUsed ? ' (사용함)' : ''}` : `${MOBILE ? '아이템' : 'Q'} 없음`, 60, 178);
+  let x = 60; for (const [b, l, c] of [['rage', '분노', '#ff6a4a'], ['charm', '부적', '#8fd6ff']]) if (f.buff[b] > 0) { g.fillStyle = c; g.fillText(`${l} ${Math.ceil(f.buff[b] / 60)}초`, x, 200); x += 90; }
+}
+function openShop() {
+  const box = $('shopBox'); $('shop').classList.add('open');
+  const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it"><div><b>${it.ko} · 보유 ${SAVE.inv[k] || 0}</b><small>${it.desc}</small></div>
+    <button type="button" data-buy="${k}" ${SAVE.coin < it.price ? 'disabled' : ''}>구매 ${it.price}</button>
+    <button type="button" data-eq="${k}" aria-pressed="${SAVE.equip === k}">${SAVE.equip === k ? '장착됨' : '장착'}</button></div>`).join('');
+  const ups = Object.entries(UPS).map(([k, u]) => { const lv = SAVE.up[k] || 0, max = lv >= UPMAX, c = upCost(lv);
+    return `<div class="it"><div><b>${u.ko} · Lv ${lv}/${UPMAX}</b><small>${u.desc} (지금 +${k === 'gauge' ? lv * 10 : lv * 5}%)</small></div>
+    <button type="button" data-up="${k}" ${max || SAVE.coin < c ? 'disabled' : ''}>${max ? '최대' : '단련 ' + c}</button></div>`; }).join('');
+  box.innerHTML = `<h2 id="shopT">상점</h2><p>보유 코인 <span class="coin">${SAVE.coin}</span> · 스토리와 대전에서 이기면 모여요</p>
+    <h3>전투 아이템</h3><p>장착한 아이템을 싸울 때 ${MOBILE ? '아이템 버튼' : 'Q 키'}로 써요. 라운드마다 1번.</p>${items}
+    <h3>단련 (영구)</h3><p>내 캐릭터에 계속 적용돼요.</p>${ups}
+    <p class="msg" id="sMsg" role="status"></p><div class="row"><button type="button" data-close>닫기</button></div>`;
+  const msg = t => { const m = $('sMsg'); if (m) m.textContent = t; };
+  box.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const k = b.dataset.buy, it = ITEMS[k]; if (SAVE.coin < it.price) return; SAVE.coin -= it.price; SAVE.inv[k] = (SAVE.inv[k] || 0) + 1; if (!ITEMS[SAVE.equip]) SAVE.equip = k; save(); openShop(); msg(`${it.ko}을(를) 샀어요`); });
+  box.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { SAVE.equip = b.dataset.eq; save(); openShop(); msg(`${ITEMS[SAVE.equip].ko} 장착`); });
+  box.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const k = b.dataset.up, lv = SAVE.up[k] || 0, c = upCost(lv); if (lv >= UPMAX || SAVE.coin < c) return; SAVE.coin -= c; SAVE.up[k] = lv + 1; save(); openShop(); msg(`${UPS[k].ko} Lv ${lv + 1}`); });
+  box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
+}
 
 // ---------- account & ranking panels ----------
 const $ = id => document.getElementById(id);
@@ -845,19 +965,19 @@ function openAcct() {
   const C = window.Cloud, box = $('acctBox'); $('acct').classList.add('open');
   const close = '<button type="button" data-close>닫기</button>';
   if (!C || !C.enabled) { box.innerHTML = `<h2 id="acctT">계정</h2><p>${escH(C ? C.status : '로그인 기능 준비 전 (브라우저에만 저장)')}</p><p>지금은 이 브라우저에만 진행이 저장돼요. 로그인은 GitHub 페이지 버전에서 Firebase 설정을 마치면 켜져요.</p><div class="row">${close}</div>`; }
-  else if (C.user) { box.innerHTML = `<h2 id="acctT">${escH(C.nick)} 님</h2><p>${escH(C.user.email)}</p><p>진행 상황(장·이긴 상대·클리어 타임·플레이 시간)이 이 계정에 저장돼요.</p><p>총 플레이 ${fmt(SAVE.playMs)} · 최고 클리어 ${fmt(SAVE.best.total)}</p><div class="row"><button type="button" id="aOut">로그아웃</button>${close}</div>`;
+  else if (C.user) { box.innerHTML = `<h2 id="acctT">${escH(C.nick)} 님</h2><p>아이디 ${escH(C.id)}</p><p>진행 상황(장·이긴 상대·코인·아이템·단련·클리어 타임·플레이 시간)이 이 계정에 저장돼요.</p><p>총 플레이 ${fmt(SAVE.playMs)} · 최고 클리어 ${fmt(SAVE.best.total)}</p><div class="row"><button type="button" id="aOut">로그아웃</button>${close}</div>`;
     $('aOut').onclick = async () => { await C.signOut(); closePanels(); }; }
   else {
     box.innerHTML = `<h2 id="acctT">로그인 / 가입</h2><p>${escH(C.status)}</p>
-      <label>이메일<input id="aEm" type="email" autocomplete="email"></label>
+      <label>아이디 (영문 소문자·숫자·_ 4~16자)<input id="aEm" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="16"></label>
       <label>비밀번호 (6자 이상)<input id="aPw" type="password" autocomplete="current-password"></label>
-      <label>닉네임 (가입할 때만, 랭킹에 보여요)<input id="aNk" maxlength="12" autocomplete="nickname"></label>
+      <label>닉네임 (가입할 때만, 랭킹에 보여요 · 비우면 아이디)<input id="aNk" maxlength="12" autocomplete="nickname"></label>
+      <p>비밀번호를 잊으면 되찾을 수 없으니 잘 기억해 두세요.</p>
       <p class="msg" id="aMsg" role="status"></p>
-      <div class="row"><button type="button" class="pri" id="aIn">로그인</button><button type="button" id="aUp">가입</button><button type="button" id="aRs">비밀번호 재설정 메일</button>${close}</div>`;
+      <div class="row"><button type="button" class="pri" id="aIn">로그인</button><button type="button" id="aUp">가입</button>${close}</div>`;
     const run = async (fn) => { $('aMsg').textContent = '처리 중…'; const err = await fn(); if (err) $('aMsg').textContent = err; else closePanels(); };
     $('aIn').onclick = () => run(() => C.signIn($('aEm').value.trim(), $('aPw').value));
     $('aUp').onclick = () => run(() => C.signUp($('aEm').value.trim(), $('aPw').value, $('aNk').value));
-    $('aRs').onclick = async () => { const err = await C.reset($('aEm').value.trim()); $('aMsg').textContent = err || '재설정 메일을 보냈어요'; };
     setTimeout(() => $('aEm').focus(), 30);
   }
   box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
@@ -891,7 +1011,7 @@ function loop(t) { requestAnimationFrame(loop); const dt = Math.min(100, t - las
 requestAnimationFrame(loop);
 </script>
 <script type="module">
-// Firebase login (email/password), per-account save, and play-time rankings.
+// Firebase login (game ID + password), per-account save (progress, coins, items, training), and rankings.
 // Fill FIREBASE_CONFIG with the web app config from the Firebase console. Left as null, the game keeps saving in the browser only.
 const FIREBASE_CONFIG = null;
 const V = '10.12.2', BASE = `https://www.gstatic.com/firebasejs/${V}/`;
@@ -903,13 +1023,16 @@ if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !/claude\.ai|claudeusercontent/
       const [{ initializeApp }, A, S] = await Promise.all([import(BASE + 'firebase-app.js'), import(BASE + 'firebase-auth.js'), import(BASE + 'firebase-firestore.js')]);
       const app = initializeApp(FIREBASE_CONFIG), auth = A.getAuth(app), db = S.getFirestore(app);
       Cloud.enabled = true; Cloud.status = '로그인하면 진행이 계정에 저장돼요';
-      const errKo = e => ({ 'auth/invalid-email': '이메일 형식이 맞지 않아요', 'auth/missing-password': '비밀번호를 입력해 주세요', 'auth/weak-password': '비밀번호는 6자 이상이어야 해요',
-        'auth/email-already-in-use': '이미 가입된 이메일이에요', 'auth/invalid-credential': '이메일 또는 비밀번호가 틀렸어요', 'auth/wrong-password': '이메일 또는 비밀번호가 틀렸어요',
-        'auth/user-not-found': '가입되지 않은 이메일이에요', 'auth/too-many-requests': '시도가 너무 많아요. 잠시 후 다시 해 주세요', 'auth/network-request-failed': '인터넷 연결을 확인해 주세요' }[e && e.code] || '처리하지 못했어요. 잠시 후 다시 해 주세요');
-      Cloud.signIn = async (email, pw) => { try { await A.signInWithEmailAndPassword(auth, email, pw); return null } catch (e) { return errKo(e) } };
-      Cloud.signUp = async (email, pw, nick) => {
-        nick = (nick || '').trim().slice(0, 12); if (!nick) return '닉네임을 입력해 주세요';
-        try { const c = await A.createUserWithEmailAndPassword(auth, email, pw); await A.updateProfile(c.user, { displayName: nick }); Cloud.nick = nick; await Cloud.push(window.SAVE_REF()); return null } catch (e) { return errKo(e) }
+      const errKo = e => ({ 'auth/invalid-email': '아이디 형식이 맞지 않아요', 'auth/missing-password': '비밀번호를 입력해 주세요', 'auth/weak-password': '비밀번호는 6자 이상이어야 해요',
+        'auth/email-already-in-use': '이미 있는 아이디예요', 'auth/invalid-credential': '아이디 또는 비밀번호가 틀렸어요', 'auth/wrong-password': '아이디 또는 비밀번호가 틀렸어요',
+        'auth/user-not-found': '가입되지 않은 아이디예요', 'auth/too-many-requests': '시도가 너무 많아요. 잠시 후 다시 해 주세요', 'auth/network-request-failed': '인터넷 연결을 확인해 주세요' }[e && e.code] || '처리하지 못했어요. 잠시 후 다시 해 주세요');
+      // Firebase Auth needs an e-mail, so each game ID is stored as <id>@id.neonclash.app (never mailed)
+      const ID_RE = /^[a-z0-9_]{4,16}$/, idMail = id => id.toLowerCase() + '@id.neonclash.app';
+      Cloud.signIn = async (id, pw) => { id = (id || '').trim().toLowerCase(); if (!ID_RE.test(id)) return '아이디는 영문 소문자·숫자·_ 4~16자예요'; try { await A.signInWithEmailAndPassword(auth, idMail(id), pw); return null } catch (e) { return errKo(e) } };
+      Cloud.signUp = async (id, pw, nick) => {
+        id = (id || '').trim().toLowerCase(); if (!ID_RE.test(id)) return '아이디는 영문 소문자·숫자·_ 4~16자예요';
+        nick = ((nick || '').trim() || id).slice(0, 12);
+        try { const c = await A.createUserWithEmailAndPassword(auth, idMail(id), pw); await A.updateProfile(c.user, { displayName: nick }); Cloud.nick = nick; await Cloud.push(window.SAVE_REF()); return null } catch (e) { return errKo(e) }
       };
       Cloud.signOut = () => A.signOut(auth);
       Cloud.reset = async email => { try { await A.sendPasswordResetEmail(auth, email); return null } catch (e) { return errKo(e) } };
@@ -926,7 +1049,7 @@ if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !/claude\.ai|claudeusercontent/
         const snap = await S.getDocs(q); return snap.docs.map(d => ({ uid: d.id, ...d.data() })).filter(r => r[field] > 0);
       };
       A.onAuthStateChanged(auth, async u => {
-        Cloud.user = u; Cloud.nick = u ? (u.displayName || Cloud.nick || '') : '';
+        Cloud.user = u; Cloud.nick = u ? (u.displayName || Cloud.nick || '') : ''; Cloud.id = u && u.email ? u.email.split('@')[0] : '';
         if (u) {
           try {
             const snap = await S.getDoc(S.doc(db, 'users', u.uid));
