@@ -502,22 +502,22 @@ const FLAV = { ryohei: 'leaf', hattori: 'steam', noise: 'sound', shunsuke: 'ston
   hideo: 'leaf', ojonokata: 'petal', marushige: 'steel', shogun: 'blood', kouji: 'fire', kuma: 'fire', psyco: 'energy', hex: 'star', yuki: 'glitch',
   mars: 'rainbow', andromeda: 'galaxy', rox: 'elec' };
 // ---------- painted hit sprites: assets/fx/hit/<key>_F|K.webp per fighter, c_*.webp shared ----------
-const HITI = {}, HOBJ = new Set(['shunsuke_F', 'shunsuke_K', 'heart_F', 'heart_K', 'hiroshi_F', 'hiroshi_K']);
+const HITI = {}, HOBJ = new Set();
 function hitImg(n) { if (!(n in HITI)) { const i = new Image(); i.onerror = () => { HITI[n] = null; }; i.src = 'assets/fx/hit/' + n + '.webp'; HITI[n] = i; } const i = HITI[n]; return i && i.complete && i.naturalWidth ? i : null; }
 R.forEach(r => { hitImg(r.key + '_F'); hitImg(r.key + '_K'); });
 ['c_guard', 'c_guard2', 'c_ko', 'c_lowdust', 'c_land', 'c_jump', 'c_heal', 'c_candy', 'c_rage', 'c_charm', 'c_dash', 'c_super'].forEach(hitImg);
 function hitSprite(n, x, y, w, d, life = 14, o = {}) { FX.push(Object.assign({ k: 'hitimg', n, x, y, w, d, t: 0, life }, o)); }
 function paintHit(n, x, y, w, d, a = 1, rot = 0) {
   const im = hitImg(n); if (!im) return; const h = w * im.naturalHeight / im.naturalWidth;
-  g.save(); g.globalAlpha = Math.max(0, Math.min(1, a)); g.globalCompositeOperation = HOBJ.has(n) ? 'source-over' : 'lighter';
+  g.save(); g.globalAlpha = Math.max(0, Math.min(1, a)); g.globalCompositeOperation = n.startsWith('c_') && !n.startsWith('c_guard') ? 'lighter' : 'source-over';
   g.translate(x, y); if (rot) g.rotate(rot); g.scale(d < 0 ? -1 : 1, 1); g.drawImage(im, -w / 2, -h / 2, w, h); g.restore();
 }
 function drawHitImg(e) { const p = e.t / e.life, sc = .75 + .45 * Math.min(1, p * 3), a = p < .5 ? 1 : 1 - (p - .5) * 2; paintHit(e.n, e.x, e.y, e.w * sc, e.d, a * (e.a || 1)); }
 function hitFX(att, def, kind, amt) {
-  const heavy = amt > 80 || kind === 'super', d = att.face, x = def.x - def.face * 40;
+  const heavy = amt > 80 || kind === 'super', d = att.face, x = def.x - def.face * 70;
   const n = att.key + (kind === 'jab' || kind === 'special' ? '_F' : '_K');
   const y = kind === 'kick' ? bodyY(def) + 40 : bodyY(def) - 10;
-  hitSprite(hitImg(n) ? n : 'c_super', x, y, kind === 'super' ? 360 : kind === 'superm' ? 240 : kind === 'kick' ? 260 : 200, d, heavy ? 18 : 14);
+  hitSprite(hitImg(n) ? n : 'c_super', x, y, kind === 'super' ? 420 : kind === 'superm' ? 300 : kind === 'kick' ? 340 : 260, d, heavy ? 18 : 14);
   if (kind === 'super') hitSprite('c_super', def.x, bodyY(def), 460, d, 22);
   if (heavy) F.shake = Math.max(F.shake, 12);
 }
