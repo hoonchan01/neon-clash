@@ -220,7 +220,7 @@ function drawF(f) {
   g.save();
   // shadow
   const sh0 = Math.max(.4, 1 - f.lift / 400); g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90 * sh0, 14 * sh0, 0, 0, 7); g.fill();
-  if (f.buff.rage > 0 || f.buff.charm > 0) { const bc = f.buff.rage > 0 ? [255, 70, 40] : [120, 210, 255]; glowC(f.x, FLOOR - f.lift - 30, 120 + Math.sin(f.t * .3) * 10, bc, bc, .35); }
+  if (f.buff.rage > 0 || f.buff.charm > 0) paintHit(f.buff.rage > 0 ? 'c_rage' : 'c_charm', f.x, FLOOR - f.lift - 190, 380, f.face, .55 + Math.sin(f.t * .2) * .15);
   g.translate(f.x, FLOOR - f.lift);
   if (!r.real) { // placeholder: fake motion with tilt / lunge
     const lean = { jab: .12, kick: .18, special: .1, super: .2, hit: -.2, guard: -.05 }[f.st] || 0;
@@ -294,7 +294,7 @@ function drawSuperImg(e) {
   const t = e.t, o = e.to, f = e.by, life = superLife(e), fin = Math.min(1, t / 6), fout = Math.max(0, Math.min(1, (life - t) / 12)), a = fin * fout, oy = bodyY(o), d = e.d;
   const pulse = 1 + Math.sin(t * .5) * .04;
   switch (e.s) {
-    case 'meteor': { if (t < 14) { const p = t / 14; return paint(n, o.x - d * 420 * (1 - p), -80 + (oy + 140) * p, 320, d, { a: 1 }); } glowC(o.x, oy + 60, 160 + (t - 14) * 12, [255, 240, 200], e.c[1], fout); return true; }
+    case 'meteor': { if (t < 14) { const p = t / 14; return paint(n, o.x - d * 420 * (1 - p), -80 + (oy + 140) * p, 320, d, { a: 1 }); } return true; }
     case 'lightning': if (t % 9 < 6) paint(n, o.x, 0, 0, 1, { h: FLOOR + 40, floor: true, a }); return true;
     case 'pillar': return paint(n, o.x, 0, 0, 1, { h: Math.max(1, Math.min(1, t / 8) * FLOOR), floor: true, a, sx: 1.2 });
     case 'beam': { const x0 = e.x0 + d * 100, len = d > 0 ? W - x0 + 60 : x0 + 60; return paint(n, x0 + d * len / 2, bodyY(f), len, d, { h: 230, sx: len / (230 * 1.9), a }); }
@@ -314,7 +314,7 @@ function drawSuperImg(e) {
 }
 
 const PART = [];
-function part(x, y, o) { PART.push(Object.assign({ x, y, vx: 0, vy: 0, t: 0, life: 24, r: 6, c: [255, 255, 255], g: 0, k: 'dot', rot: 0, vr: 0 }, o)); }
+function part(x, y, o) { return; PART.push(Object.assign({ x, y, vx: 0, vy: 0, t: 0, life: 24, r: 6, c: [255, 255, 255], g: 0, k: 'dot', rot: 0, vr: 0 }, o)); }
 function burst(x, y, c, n, sp, o) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = sp * (.4 + Math.random() * .8); part(x, y, Object.assign({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, c, life: 18 + Math.random() * 14, r: 3 + Math.random() * 5 }, o)); } }
 function glowC(x, y, r, core, edge, a = 1) {
   const gr = g.createRadialGradient(x, y, 0, x, y, r);
@@ -385,7 +385,7 @@ function onShotHit(s, o) {
   damage(s.by, o, s.dmg, 'special');
 }
 function drawShot(s) {
-  if (drawShotImg(s)) return;
+  drawShotImg(s); return; // painted sprites only
   const [c0, c1] = s.c, d = Math.sign(s.vx) || 1, x = s.x, y = s.y, t = s.t;
   switch (s.k) {
     case 'leaf': glowC(x, y, 55, c0, c1); g.strokeStyle = rgba(c0, .8); g.lineWidth = 4; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(x, y, 30 + i * 12, t * .3 + i * 2, t * .3 + i * 2 + 2.4); g.stroke(); } break;
@@ -443,7 +443,7 @@ function stepSuper(e) {
 }
 function superLife(e) { const [h0, st, cnt] = SUPER_HITS[e.s] || [14, 0, 1]; return h0 + st * (cnt - 1) + 26; }
 function drawSuper(e) {
-  if (drawSuperImg(e)) return;
+  drawSuperImg(e); return; // painted sprites only; the old code-drawn version below is unused
   const t = e.t, [c0, c1] = e.c, o = e.to, f = e.by, x = e.x, oy = bodyY(o), life = superLife(e), fade = Math.max(0, Math.min(1, (life - t) / 12));
   g.save(); g.globalAlpha = fade;
   switch (e.s) {
@@ -501,39 +501,28 @@ const FLAV = { ryohei: 'leaf', hattori: 'steam', noise: 'sound', shunsuke: 'ston
   haruhiko: 'star', heart: 'card', max: 'elec', hiroki: 'claw', daisuke: 'spiral', hiroshi: 'rock', hayato: 'blood', hidetoshi: 'steel', shinken: 'gold',
   hideo: 'leaf', ojonokata: 'petal', marushige: 'steel', shogun: 'blood', kouji: 'fire', kuma: 'fire', psyco: 'energy', hex: 'star', yuki: 'glitch',
   mars: 'rainbow', andromeda: 'galaxy', rox: 'elec' };
+// ---------- painted hit sprites: assets/fx/hit/<key>_F|K.webp per fighter, c_*.webp shared ----------
+const HITI = {}, HOBJ = new Set(['shunsuke_F', 'shunsuke_K', 'heart_F', 'heart_K', 'hiroshi_F', 'hiroshi_K']);
+function hitImg(n) { if (!(n in HITI)) { const i = new Image(); i.onerror = () => { HITI[n] = null; }; i.src = 'assets/fx/hit/' + n + '.webp'; HITI[n] = i; } const i = HITI[n]; return i && i.complete && i.naturalWidth ? i : null; }
+R.forEach(r => { hitImg(r.key + '_F'); hitImg(r.key + '_K'); });
+['c_guard', 'c_guard2', 'c_ko', 'c_lowdust', 'c_land', 'c_jump', 'c_heal', 'c_candy', 'c_rage', 'c_charm', 'c_dash', 'c_super'].forEach(hitImg);
+function hitSprite(n, x, y, w, d, life = 14, o = {}) { FX.push(Object.assign({ k: 'hitimg', n, x, y, w, d, t: 0, life }, o)); }
+function paintHit(n, x, y, w, d, a = 1, rot = 0) {
+  const im = hitImg(n); if (!im) return; const h = w * im.naturalHeight / im.naturalWidth;
+  g.save(); g.globalAlpha = Math.max(0, Math.min(1, a)); g.globalCompositeOperation = HOBJ.has(n) ? 'source-over' : 'lighter';
+  g.translate(x, y); if (rot) g.rotate(rot); g.scale(d < 0 ? -1 : 1, 1); g.drawImage(im, -w / 2, -h / 2, w, h); g.restore();
+}
+function drawHitImg(e) { const p = e.t / e.life, sc = .75 + .45 * Math.min(1, p * 3), a = p < .5 ? 1 : 1 - (p - .5) * 2; paintHit(e.n, e.x, e.y, e.w * sc, e.d, a * (e.a || 1)); }
 function hitFX(att, def, kind, amt) {
-  const x = def.x - def.face * 40, y = bodyY(def) + (kind === 'kick' ? 40 : -10), c = att.r.col, fl = FLAV[att.key] || 'none', heavy = amt > 80 || kind === 'super';
-  const shape = att.key === 'hiroki' || att.key === 'hiroki_old' ? 'claw' : fxOf(att.key).h;
-  FX.push({ k: 'spark', x, y, c: rgba(c[1], 1), c0: c[0], c1: c[1], r: heavy ? 80 : kind === 'kick' ? 62 : 48, t: 0, h: shape, d: def.face, kick: kind === 'kick', fl });
-  const n = heavy ? 18 : 9, sp = heavy ? 11 : 7, away = -def.face;
-  const P = o => burst(x, y, c[1], n, sp, o);
-  switch (fl) {
-    case 'leaf': case 'petal': for (let i = 0; i < n; i++) part(x, y, { vx: away * (2 + Math.random() * 6), vy: -3 + Math.random() * 4, g: .12, c: fl === 'petal' ? [255, 220, 235] : [90 + Math.random() * 80, 210, 90], life: 30, r: 7, k: 'leaf', vr: .3 }); break;
-    case 'steam': for (let i = 0; i < n; i++) part(x, y, { vx: (Math.random() - .5) * 4, vy: -1 - Math.random() * 3, c: [255, 235, 200], life: 30, r: 10 + Math.random() * 8 }); break;
-    case 'sound': FX.push({ k: 'ring', x, y, c, t: 0, r: heavy ? 150 : 90 }); break;
-    case 'stone': for (let i = 0; i < 4; i++) part(x, y, { vx: away * (3 + Math.random() * 5), vy: -4 - Math.random() * 3, g: .4, c: i % 2 ? [245, 245, 240] : [20, 20, 20], life: 28, r: 8, k: 'rock' }); break;
-    case 'blood': case 'steel': P({ k: 'dot', r: 3, c: fl === 'steel' ? [230, 240, 255] : c[1] }); break;
-    case 'toxic': for (let i = 0; i < n; i++) part(x, y, { vx: (Math.random() - .5) * 6, vy: -Math.random() * 4, g: .15, c: [110, 240, 70], life: 26, r: 6 + Math.random() * 6 }); break;
-    case 'heart': P({ k: 'heart', r: 6, c: [255, 120, 180] }); break;
-    case 'star': case 'galaxy': P({ k: 'star', r: 4, c: fl === 'galaxy' ? (Math.random() < .5 ? [255, 90, 200] : [120, 255, 160]) : c[1] }); break;
-    case 'card': for (let i = 0; i < 3; i++) part(x, y, { vx: away * (4 + Math.random() * 4), vy: -5 + Math.random() * 3, g: .25, c: [230, 30, 60], life: 26, r: 10, k: 'rock', vr: .4 }); break;
-    case 'elec': FX.push({ k: 'zap', x, y, c, t: 0 }); P({ r: 3 }); break;
-    case 'spiral': case 'energy': FX.push({ k: 'ring', x, y, c, t: 0, r: heavy ? 130 : 80 }); P({ r: 4 }); break;
-    case 'rock': for (let i = 0; i < n; i++) part(x, y + 60, { vx: away * (2 + Math.random() * 5), vy: -5 - Math.random() * 4, g: .45, c: [130, 100, 70], life: 28, r: 6, k: 'rock' }); break;
-    case 'gold': FX.push({ k: 'ring', x, y, c, t: 0, r: heavy ? 160 : 100 }); P({ r: 4 }); break;
-    case 'fire': for (let i = 0; i < n; i++) part(x, y, { vx: away * Math.random() * 5, vy: -1 - Math.random() * 4, c: [255, 100 + Math.random() * 120, 0], life: 22, r: 10 + Math.random() * 8, k: 'flame' }); break;
-    case 'glitch': FX.push({ k: 'glitchHit', x, y, c, t: 0 }); break;
-    case 'rainbow': for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = sp * (.5 + Math.random() * .7); part(x, y, { vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: RAINBOW[i % 7], life: 24, r: 5 }); } break;
-    default: P({});
-  }
+  const heavy = amt > 80 || kind === 'super', d = att.face, x = def.x - def.face * 40;
+  const n = att.key + (kind === 'jab' || kind === 'special' ? '_F' : '_K');
+  const y = kind === 'kick' ? bodyY(def) + 40 : bodyY(def) - 10;
+  hitSprite(hitImg(n) ? n : 'c_super', x, y, kind === 'super' ? 360 : kind === 'superm' ? 240 : kind === 'kick' ? 260 : 200, d, heavy ? 18 : 14);
+  if (kind === 'super') hitSprite('c_super', def.x, bodyY(def), 460, d, 22);
   if (heavy) F.shake = Math.max(F.shake, 12);
 }
-function guardFX(def) {
-  const x = def.x + def.face * 70, y = bodyY(def);
-  FX.push({ k: 'guardHit', x, y, d: def.face, t: 0 });
-  for (let i = 0; i < 6; i++) part(x, y + (Math.random() - .5) * 80, { vx: def.face * (2 + Math.random() * 4), vy: (Math.random() - .5) * 4, c: [150, 230, 255], life: 14, r: 3 });
-}
-function koFX(def) { FX.push({ k: 'koFlash', x: def.x, y: bodyY(def), t: 0 }); burst(def.x, bodyY(def), [255, 240, 200], 30, 16, { k: 'star', r: 5 }); }
+function guardFX(def, heavy) { hitSprite(heavy ? 'c_guard2' : 'c_guard', def.x + def.face * 60, bodyY(def), heavy ? 260 : 200, def.face, 14); }
+function koFX(def) { hitSprite('c_ko', def.x, bodyY(def), 700, -def.face, 30); }
 function drawHitExtra(e) {
   if (e.k === 'zap') { if (e.t < 10) for (let i = 0; i < 3; i++) { const a = Math.random() * 6.28; bolt(e.x, e.y, e.x + Math.cos(a) * 90, e.y + Math.sin(a) * 90, e.c[1], 3, 18); } }
   else if (e.k === 'glitchHit') { if (e.t < 12) for (let i = 0; i < 5; i++) { g.fillStyle = rgba(i % 2 ? [40, 220, 255] : e.c[1], .7); g.fillRect(e.x - 70 + Math.random() * 40, e.y - 60 + Math.random() * 120, 60 + Math.random() * 60, 4 + Math.random() * 8); } }
@@ -577,11 +566,11 @@ function damage(att, def, amt, kind) {
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
-  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def); }
+  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def, kind === 'super' || kind === 'superm'); }
   else {
     def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
     if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
-    sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, low || air ? 'kick' : kind, amt);
+    sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, low || air ? 'kick' : kind, amt); if (low) hitSprite('c_lowdust', def.x - def.face * 20, FLOOR - 40, 260, att.face, 16);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
   }
   def.hp = Math.max(0, def.hp - Math.round(d));
@@ -605,9 +594,9 @@ function stepF(f, o) {
   } else if (f.st === 'jump' || f.st === 'jumpatk') {
     f.x += f.jvx; f.lift += f.vy; f.vy -= .9;
     if (f.st === 'jumpatk' && !f.hitDone && f.t >= 3 && inFront && dist <= 160 + f.r.reach && f.lift - o.lift < 230) { f.hitDone = true; damage(f, o, 70, 'air'); f.jvx *= .3; }
-    if (f.lift <= 0) { f.lift = 0; f.vy = 0; f.st = 'land'; f.t = 0; }
+    if (f.lift <= 0) { f.lift = 0; f.vy = 0; f.st = 'land'; f.t = 0; hitSprite('c_land', f.x, FLOOR - 30, 300, f.face, 14); }
   } else if (f.st === 'land') { if (f.t >= 5) { f.st = 'idle'; f.t = 0; } } else if (f.st === 'special') {
-    if (f.t === 18) launchSpecial(f, o);
+    if (f.t === 18) { launchSpecial(f, o); if (f.dash) hitSprite('c_dash', f.x - f.face * 80, bodyY(f), 300, f.face, 20); }
     if (f.dash && f.t > 18 && f.t < 36) { f.x += f.face * 19; part(f.x - f.face * 60, bodyY(f) + (Math.random() - .5) * 140, { vx: -f.face * 6, c: f.r.col[1], life: 12, r: 8 });
       if (!f.hitDone && inFront && Math.abs(o.x - f.x) < 170) { f.hitDone = true; f.dash = 0; damage(f, o, 115, 'special'); } }
     if (f.t >= 48) { f.st = 'idle'; f.t = 0; f.dash = 0; }
@@ -657,7 +646,7 @@ function control(f, o) {
   if (f.st === 'jump' && (cmd === 'F' || cmd === 'K')) { f.st = 'jumpatk'; f.t = 0; f.hitDone = false; return; }
   if (canAct(f)) {
     if (cmd) { act(f, o, cmd, down); return; }
-    if (jump) { f.st = 'jump'; f.t = 0; f.vy = 17; f.lift = 1; f.jvx = move * 6; return; }
+    if (jump) { f.st = 'jump'; f.t = 0; f.vy = 17; f.lift = 1; f.jvx = move * 6; hitSprite('c_jump', f.x, FLOOR - 30, 240, f.face, 12); return; }
     if (down) { const st = guard ? 'cguard' : 'crouch'; if (f.st !== st) { f.st = st; f.t = 0; } return; }
     if (guard) { if (f.st !== 'guard') { f.st = 'guard'; f.t = 0; } return; }
     if (move) { const fwd = move === f.face; const st = fwd ? 'walk' : 'back'; if (f.st !== st) { f.st = st; f.t = 0; } f.x += move * (fwd ? 5 : 4); }
@@ -677,7 +666,7 @@ function updateFight() {
   for (let i = SHOTS.length - 1; i >= 0; i--) if (SHOTS[i].dead) SHOTS.splice(i, 1);
   for (const e of FX) { e.t++; if (e.k === 'super') stepSuper(e);
     if (e.k === 'blastX' && e.t === 4) { burst(e.x, e.y, e.c[1], 40, 12, { k: 'flame', r: 12 }); F.shake = 14; if (Math.abs(e.to.x - e.x) < 210 && e.to.st !== 'ko') damage(e.by, e.to, 120, 'special'); } }
-  const LIFE = e => e.k === 'super' ? superLife(e) : e.k === 'cloud' ? 40 : e.k === 'ring' ? 20 : e.k === 'blastX' ? 24 : e.k === 'koFlash' ? 30 : 16;
+  const LIFE = e => e.k === 'super' ? superLife(e) : e.k === 'hitimg' ? e.life : e.k === 'cloud' ? 40 : e.k === 'ring' ? 20 : e.k === 'blastX' ? 24 : e.k === 'koFlash' ? 30 : 16;
   for (let i = FX.length - 1; i >= 0; i--) if (FX[i].t > LIFE(FX[i])) FX.splice(i, 1);
   stepParts();
   if (F.timer > 0) F.timer--;
@@ -714,11 +703,8 @@ function drawFight() {
   drawnBy = new Set(); for (const s of SHOTS) drawShot(s);
   [a, b].forEach(f => { if (f.st === 'special' && f.dash && f.t > 16) paint(f.key + '_x', f.x + f.face * 150, bodyY(f), 300, f.face); });
   for (const e of FX) {
-    if (e.k === 'spark') drawSpark(e);
-    else if (e.k === 'zap' || e.k === 'glitchHit' || e.k === 'guardHit' || e.k === 'koFlash') drawHitExtra(e);
-    else if (e.k === 'ring') { const p = e.t / 20; g.strokeStyle = rgba(e.c[1], 1 - p); g.lineWidth = 8 * (1 - p) + 1; g.beginPath(); g.arc(e.x, e.y, 20 + p * e.r, 0, 7); g.stroke(); }
-    else if (e.k === 'cloud') { const p = e.t / 40; glowC(e.x, e.y, 90 + p * 60, [200, 255, 170], e.c, (1 - p) * .8); }
-    else if (e.k === 'blastX') { const p = e.t / 24; if (!paint(e.by.key + '_x', e.x, e.y, 200 + p * 160, e.by.face, { a: 1 - p })) glowC(e.x, e.y, 60 + p * 180, e.c[0], e.c[1], 1 - p); }
+    if (e.k === 'hitimg') drawHitImg(e);
+    else if (e.k === 'blastX') { const p = e.t / 24; paint(e.by.key + '_x', e.x, e.y, 200 + p * 160, e.by.face, { a: 1 - p }); }
   }
   drawParts();
   // super cut-in
@@ -928,7 +914,7 @@ function useItem(f) {
   if (k === 'candy') f.gauge = Math.min(100, f.gauge + 50);
   if (k === 'charm') f.buff.charm = 600;
   if (k === 'rage') f.buff.rage = 600;
-  FX.push({ k: 'ring', x: f.x, y: bodyY(f), c: [[255, 255, 255], k === 'rage' ? [255, 70, 40] : k === 'potion' ? [90, 255, 130] : [120, 210, 255]], t: 0, r: 160 });
+  hitSprite(k === 'candy' ? 'c_candy' : k === 'potion' ? 'c_heal' : k === 'rage' ? 'c_rage' : 'c_charm', f.x, bodyY(f), 360, f.face, 30);
   toast(`${it.ko} 사용!`);
 }
 function drawItemHud(f) {
