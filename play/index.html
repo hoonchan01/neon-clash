@@ -706,7 +706,7 @@ function drawFight() {
   const { a, b } = F;
   g.save();
   if (F.shake > 0) { g.translate((Math.random() - .5) * F.shake, (Math.random() - .5) * F.shake); F.shake *= .85; if (F.shake < .5) F.shake = 0; }
-  bgDraw(F.ch, F.b.key);
+  bgDraw(F.ch, F.round > 1 && bgImg(F.b.key + '_r' + F.round) ? F.b.key + '_r' + F.round : F.b.key);
   if (F.superBy && F.cut > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
   const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
   order.forEach(drawF);
