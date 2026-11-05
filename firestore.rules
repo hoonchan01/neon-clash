@@ -1,0 +1,19 @@
+rules_version = '2';
+// NEON CLASH web demo: each player reads/writes only their own save; rankings are public to read, writable only by their owner.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /ranks/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.nick is string && request.resource.data.nick.size() > 0 && request.resource.data.nick.size() <= 12
+        && request.resource.data.playMs is number
+        && (!('total' in request.resource.data) || (request.resource.data.total is number && request.resource.data.total >= 60000))
+        && (!('c1' in request.resource.data) || (request.resource.data.c1 is number && request.resource.data.c1 >= 20000))
+        && (!('c2' in request.resource.data) || (request.resource.data.c2 is number && request.resource.data.c2 >= 20000))
+        && (!('c3' in request.resource.data) || (request.resource.data.c3 is number && request.resource.data.c3 >= 20000));
+    }
+  }
+}

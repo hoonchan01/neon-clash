@@ -29,6 +29,24 @@ body.mobile.infight .pad{display:block}
 .keys{display:grid;grid-template-columns:auto auto;gap:4px 16px;font:500 14px "IBM Plex Sans KR",system-ui;color:#c9c3e6;text-align:left}
 .keys kbd{font:700 13px "Chakra Petch",system-ui;background:#1e1a36;border:1px solid #3a3360;border-radius:5px;padding:1px 7px;color:#fff}
 body.mobile .keys{display:none}
+.panel{position:fixed;inset:0;z-index:6;display:none;align-items:center;justify-content:center;background:rgba(5,4,10,.82);padding:16px}
+.panel.open{display:flex}
+.box{width:min(520px,100%);max-height:100%;overflow:auto;background:#151229;border:1px solid #3a3360;border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px;font:500 15px "IBM Plex Sans KR",system-ui;color:#ece8ff}
+.box h2{margin:0;font:700 22px "IBM Plex Sans KR",system-ui}
+.box p{margin:0;color:#b9b2da;font-size:14px}
+.box label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#b9b2da}
+.box input{font:inherit;color:#fff;background:#0c0a18;border:1px solid #3a3360;border-radius:8px;padding:10px 12px}
+.box input:focus-visible,.box button:focus-visible{outline:2px solid #3fd8ff;outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.box button{font:700 15px "IBM Plex Sans KR",system-ui;padding:10px 16px;border-radius:8px;border:1px solid #3a3360;background:#1e1a36;color:#fff;cursor:pointer}
+.box button.pri{background:#ff3d81;border-color:#ff3d81;color:#1a0612}
+.box button[aria-pressed="true"]{background:#3fd8ff;border-color:#3fd8ff;color:#06121a}
+.msg{min-height:1.2em;color:#ffd23f;font-size:13px}
+.rk{width:100%;border-collapse:collapse;font-size:14px}
+.rk td,.rk th{padding:7px 6px;border-bottom:1px solid #2c2748;text-align:left}
+.rk th{color:#9a93bd;font-weight:600}
+.rk td:last-child,.rk th:last-child{text-align:right;font-family:"Chakra Petch",system-ui}
+.rk tr.me td{color:#ffd23f}
 body:not(.mobile) .mhint{display:none}
 #rot{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;font:600 18px "IBM Plex Sans KR",system-ui;padding:24px;background:var(--bg)}
 @media (orientation:portrait) and (pointer:coarse){#rot{display:flex}}
@@ -40,6 +58,8 @@ body:not(.mobile) .mhint{display:none}
     <button id="bW" data-k="X">기술<small>필살</small></button><button id="bD" data-k="D">방어</button><button id="bS" data-k="K">킥</button><button id="bA" data-k="F">주먹</button>
   </div>
 </div>
+<div class="panel" id="acct" role="dialog" aria-modal="true" aria-labelledby="acctT"><div class="box" id="acctBox"></div></div>
+<div class="panel" id="rank" role="dialog" aria-modal="true" aria-labelledby="rankT"><div class="box" id="rankBox"></div></div>
 <div id="start">
   <h1><b>NEON</b> <i>CLASH</i></h1>
   <p>웹 체험판 · 1~3장 스토리와 대전</p>
@@ -67,7 +87,17 @@ function portrait(k, x, y, w, h) { const i = faceImg(k); if (!i.complete || !i.n
 // ---------- save ----------
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
 SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0;
-function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} }
+SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {};
+function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} if (window.Cloud && Cloud.sync) Cloud.sync(SAVE); }
+window.SAVE_REF = () => SAVE;
+window.LOAD_SAVE = s => { for (const k of Object.keys(SAVE)) delete SAVE[k]; Object.assign(SAVE, s); SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0; SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {}; try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} };
+function fmt(ms) { if (!ms) return '-'; const s = ms / 1000, h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60); return h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}.${Math.floor(s * 10 % 10)}`; }
+function recordClear(ch) {
+  const t = SAVE.run[ch] || 0; if (!t) return;
+  const k = 'c' + ch; if (!SAVE.best[k] || t < SAVE.best[k]) SAVE.best[k] = t;
+  if (ch === 3 && SAVE.run[1] && SAVE.run[2]) { const tot = SAVE.run[1] + SAVE.run[2] + SAVE.run[3]; if (!SAVE.best.total || tot < SAVE.best.total) SAVE.best.total = tot; }
+}
+function resetRun() { SAVE.run = {}; }
 
 // ---------- input ----------
 const held = {}, pressed = {};
@@ -80,7 +110,7 @@ document.getElementById('go').addEventListener('click', () => {
   const el = document.documentElement;
   try { const p = el.requestFullscreen && el.requestFullscreen(); if (p && p.then) p.then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {}
 });
-addEventListener('keydown', e => { if (!started) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('go').click(); } return; } const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (!k) return; e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; audio(); });
+addEventListener('keydown', e => { if (panelOpen()) { if (e.key === 'Escape') closePanels(); return; } if (!started) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('go').click(); } return; } const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (!k) return; e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; audio(); });
 addEventListener('keyup', e => { const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (k) held[k] = false; });
 document.querySelectorAll('.pad button').forEach(b => {
   const k = b.dataset.k;
@@ -643,7 +673,7 @@ function storyNext() {
     if (won) {
       SAVE.beat[fi.k] = 1; SAVE.stage++;
       const done = SAVE.stage >= C.fights.length;
-      const after = () => { if (done) { SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNext(); } };
+      const after = () => { if (done) { recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNext(); } };
       save(); if (fi.post) say(fi.post, after); else after();
     } else { scene = 'lose'; ctT = 0; }
   } }));
@@ -669,12 +699,16 @@ function draw() {
     g.drawImage(stage(1), 0, 0); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
     face('daisuke', 120, 160, 360); face('hiroki', 860, 160, 360, true);
     g.font = `700 130px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#ff3d81'; g.shadowColor = '#ff3d81'; g.shadowBlur = 30; g.textAlign = 'right'; g.fillText('NEON', W / 2 - 10, 240); g.fillStyle = '#3fd8ff'; g.shadowColor = '#3fd8ff'; g.textAlign = 'left'; g.fillText('CLASH', W / 2 + 10, 240); g.textAlign = 'center'; g.shadowBlur = 0;
-    txt('웹 체험판 · 1~3장', W / 2, 300, 26, '#ccc');
+    txt('웹 체험판 · 1~3장', W / 2, 296, 26, '#ccc');
     const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
-    const c = menuList([prog, '대전 모드', '처음부터 다시'], 420);
-    if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; } storyNext(); }
+    const CLu = window.Cloud && Cloud.user;
+    const c = menuList([prog, '대전 모드', '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 370);
+    if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; }
-    if (c === 2) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; save(); storyNext(); }
+    if (c === 2) openRank('total');
+    if (c === 3) openAcct();
+    if (c === 4) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
+    txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
     txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · ←→ 이동 · A 주먹 · S 킥 · D 방어 · W 기술', W / 2, 690, 18, '#999');
   }
   else if (scene === 'chtitle') {
@@ -694,7 +728,7 @@ function draw() {
   else if (scene === 'select') drawSelect();
   else if (scene === 'lose') { ctT++; g.fillStyle = '#100810'; g.fillRect(0, 0, W, H); txt('패배…', W / 2, 300, 80, '#ff3d81'); const c = menuList(['다시 도전', '타이틀로'], 440); if (c === 0) storyNext(); if (c === 1) { scene = 'title'; menu = 0; } }
   else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
-  else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
+  else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); txt(`이번 클리어 타임 ${fmt((SAVE.run[1] || 0) + (SAVE.run[2] || 0) + (SAVE.run[3] || 0))} · 최고 ${fmt(SAVE.best.total)}`, W / 2, 500, 26, '#ffd23f'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
   else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const c = menuList(['다시 대전', '캐릭터 선택', '타이틀로'], 420); if (c === 0) vsStart(); if (c === 1) scene = 'select'; if (c === 2) { scene = 'title'; menu = 1; } }
   if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
   tap = null; for (const k in pressed) pressed[k] = false;
@@ -705,7 +739,7 @@ function startFightStory(C, fi) {
   startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, onEnd: won => {
     if (won) {
       SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
-      const after = () => { if (done) { SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
+      const after = () => { if (done) { recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
       save(); if (fi.post) say(fi.post, after); else after();
     } else { scene = 'lose'; ctT = 0; menu = 0; }
   } });
@@ -747,8 +781,109 @@ function drawSelect() {
 }
 function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
+
+// ---------- account & ranking panels ----------
+const $ = id => document.getElementById(id);
+function panelOpen() { return !!document.querySelector('.panel.open'); }
+function closePanels() { document.querySelectorAll('.panel.open').forEach(p => p.classList.remove('open')); for (const k in held) held[k] = false; }
+function escH(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function openAcct() {
+  const C = window.Cloud, box = $('acctBox'); $('acct').classList.add('open');
+  const close = '<button type="button" data-close>닫기</button>';
+  if (!C || !C.enabled) { box.innerHTML = `<h2 id="acctT">계정</h2><p>${escH(C ? C.status : '로그인 기능 준비 전 (브라우저에만 저장)')}</p><p>지금은 이 브라우저에만 진행이 저장돼요. 로그인은 GitHub 페이지 버전에서 Firebase 설정을 마치면 켜져요.</p><div class="row">${close}</div>`; }
+  else if (C.user) { box.innerHTML = `<h2 id="acctT">${escH(C.nick)} 님</h2><p>${escH(C.user.email)}</p><p>진행 상황(장·이긴 상대·클리어 타임·플레이 시간)이 이 계정에 저장돼요.</p><p>총 플레이 ${fmt(SAVE.playMs)} · 최고 클리어 ${fmt(SAVE.best.total)}</p><div class="row"><button type="button" id="aOut">로그아웃</button>${close}</div>`;
+    $('aOut').onclick = async () => { await C.signOut(); closePanels(); }; }
+  else {
+    box.innerHTML = `<h2 id="acctT">로그인 / 가입</h2><p>${escH(C.status)}</p>
+      <label>이메일<input id="aEm" type="email" autocomplete="email"></label>
+      <label>비밀번호 (6자 이상)<input id="aPw" type="password" autocomplete="current-password"></label>
+      <label>닉네임 (가입할 때만, 랭킹에 보여요)<input id="aNk" maxlength="12" autocomplete="nickname"></label>
+      <p class="msg" id="aMsg" role="status"></p>
+      <div class="row"><button type="button" class="pri" id="aIn">로그인</button><button type="button" id="aUp">가입</button><button type="button" id="aRs">비밀번호 재설정 메일</button>${close}</div>`;
+    const run = async (fn) => { $('aMsg').textContent = '처리 중…'; const err = await fn(); if (err) $('aMsg').textContent = err; else closePanels(); };
+    $('aIn').onclick = () => run(() => C.signIn($('aEm').value.trim(), $('aPw').value));
+    $('aUp').onclick = () => run(() => C.signUp($('aEm').value.trim(), $('aPw').value, $('aNk').value));
+    $('aRs').onclick = async () => { const err = await C.reset($('aEm').value.trim()); $('aMsg').textContent = err || '재설정 메일을 보냈어요'; };
+    setTimeout(() => $('aEm').focus(), 30);
+  }
+  box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
+}
+const RTABS = [['total', '전체 클리어 (1~3장)'], ['c1', '1장'], ['c2', '2장'], ['c3', '3장'], ['playMs', '총 플레이 시간']];
+async function openRank(field) {
+  const C = window.Cloud, box = $('rankBox'); $('rank').classList.add('open');
+  const tabs = RTABS.map(([k, l]) => `<button type="button" data-t="${k}" aria-pressed="${k === field}">${l}</button>`).join('');
+  const head = `<h2 id="rankT">랭킹</h2><div class="row">${tabs}</div><p>${field === 'playMs' ? '오래 플레이한 순서' : '스토리를 빨리 깬 순서 (싸운 시간만 계산)'}</p>`;
+  const mine = `<p>내 기록 · ${field === 'playMs' ? fmt(SAVE.playMs) : fmt(SAVE.best[field])}</p>`;
+  const close = '<div class="row"><button type="button" data-close>닫기</button></div>';
+  if (!C || !C.enabled) box.innerHTML = head + mine + '<p>온라인 랭킹은 로그인 기능이 켜지면 보여요.</p>' + close;
+  else {
+    box.innerHTML = head + mine + '<p>불러오는 중…</p>' + close;
+    try {
+      const rows = await C.top(field);
+      const body = rows.length ? rows.map((r, i) => `<tr class="${C.user && r.uid === C.user.uid ? 'me' : ''}"><td>${i + 1}</td><td>${escH(r.nick)}</td><td>${fmt(r[field])}</td></tr>`).join('') : '<tr><td colspan="3">아직 기록이 없어요</td></tr>';
+      box.innerHTML = head + mine + `<table class="rk"><thead><tr><th>#</th><th>닉네임</th><th>기록</th></tr></thead><tbody>${body}</tbody></table>` + (C.user ? '' : '<p>로그인하면 내 기록도 랭킹에 올라가요.</p>') + close;
+    } catch (e) { box.innerHTML = head + mine + '<p>랭킹을 불러오지 못했어요.</p>' + close; }
+  }
+  box.querySelectorAll('[data-t]').forEach(b => b.onclick = () => openRank(b.dataset.t));
+  box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
+}
+
 // ---------- loop ----------
 let last = 0, acc = 0;
-function loop(t) { requestAnimationFrame(loop); acc += Math.min(100, t - last); last = t; if (acc < 1000 / 60 - 1) return; acc = 0; draw(); }
+let saveTick = 0;
+function loop(t) { requestAnimationFrame(loop); const dt = Math.min(100, t - last); acc += dt; last = t;
+  if (started && !panelOpen() && !document.hidden) { SAVE.playMs += dt; if (scene === 'fight' && F && F.story && F.phase !== 'end') SAVE.run[F.ch] = (SAVE.run[F.ch] || 0) + dt; if ((saveTick += dt) > 15000) { saveTick = 0; save(); } }
+  if (acc < 1000 / 60 - 1) return; acc = 0; if (!panelOpen()) draw(); }
 requestAnimationFrame(loop);
+</script>
+<script type="module">
+// Firebase login (email/password), per-account save, and play-time rankings.
+// Fill FIREBASE_CONFIG with the web app config from the Firebase console. Left as null, the game keeps saving in the browser only.
+const FIREBASE_CONFIG = null;
+const V = '10.12.2', BASE = `https://www.gstatic.com/firebasejs/${V}/`;
+const Cloud = window.Cloud = { enabled: false, user: null, nick: '', listeners: [], status: '로그인 기능 준비 전 (브라우저에만 저장)' };
+const emit = () => Cloud.listeners.forEach(f => { try { f(Cloud) } catch (e) {} });
+if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !/claude\.ai|claudeusercontent/.test(location.host)) {
+  (async () => {
+    try {
+      const [{ initializeApp }, A, S] = await Promise.all([import(BASE + 'firebase-app.js'), import(BASE + 'firebase-auth.js'), import(BASE + 'firebase-firestore.js')]);
+      const app = initializeApp(FIREBASE_CONFIG), auth = A.getAuth(app), db = S.getFirestore(app);
+      Cloud.enabled = true; Cloud.status = '로그인하면 진행이 계정에 저장돼요';
+      const errKo = e => ({ 'auth/invalid-email': '이메일 형식이 맞지 않아요', 'auth/missing-password': '비밀번호를 입력해 주세요', 'auth/weak-password': '비밀번호는 6자 이상이어야 해요',
+        'auth/email-already-in-use': '이미 가입된 이메일이에요', 'auth/invalid-credential': '이메일 또는 비밀번호가 틀렸어요', 'auth/wrong-password': '이메일 또는 비밀번호가 틀렸어요',
+        'auth/user-not-found': '가입되지 않은 이메일이에요', 'auth/too-many-requests': '시도가 너무 많아요. 잠시 후 다시 해 주세요', 'auth/network-request-failed': '인터넷 연결을 확인해 주세요' }[e && e.code] || '처리하지 못했어요. 잠시 후 다시 해 주세요');
+      Cloud.signIn = async (email, pw) => { try { await A.signInWithEmailAndPassword(auth, email, pw); return null } catch (e) { return errKo(e) } };
+      Cloud.signUp = async (email, pw, nick) => {
+        nick = (nick || '').trim().slice(0, 12); if (!nick) return '닉네임을 입력해 주세요';
+        try { const c = await A.createUserWithEmailAndPassword(auth, email, pw); await A.updateProfile(c.user, { displayName: nick }); Cloud.nick = nick; await Cloud.push(window.SAVE_REF()); return null } catch (e) { return errKo(e) }
+      };
+      Cloud.signOut = () => A.signOut(auth);
+      Cloud.reset = async email => { try { await A.sendPasswordResetEmail(auth, email); return null } catch (e) { return errKo(e) } };
+      let timer = null;
+      Cloud.push = async save => {
+        if (!Cloud.user) return; const u = Cloud.user, best = save.best || {};
+        const rank = { nick: Cloud.nick || u.displayName || '이름없음', playMs: Math.round(save.playMs || 0), updatedAt: S.serverTimestamp() };
+        for (const k of ['c1', 'c2', 'c3', 'total']) if (best[k]) rank[k] = Math.round(best[k]);
+        await Promise.all([S.setDoc(S.doc(db, 'users', u.uid), { save, nick: rank.nick, updatedAt: S.serverTimestamp() }), S.setDoc(S.doc(db, 'ranks', u.uid), rank)]);
+      };
+      Cloud.sync = save => { if (!Cloud.user) return; clearTimeout(timer); timer = setTimeout(() => Cloud.push(save).catch(() => {}), 1500); };
+      Cloud.top = async (field, n = 20) => {
+        const asc = field !== 'playMs', q = S.query(S.collection(db, 'ranks'), S.orderBy(field, asc ? 'asc' : 'desc'), S.limit(n));
+        const snap = await S.getDocs(q); return snap.docs.map(d => ({ uid: d.id, ...d.data() })).filter(r => r[field] > 0);
+      };
+      A.onAuthStateChanged(auth, async u => {
+        Cloud.user = u; Cloud.nick = u ? (u.displayName || Cloud.nick || '') : '';
+        if (u) {
+          try {
+            const snap = await S.getDoc(S.doc(db, 'users', u.uid));
+            if (snap.exists() && snap.data().save) window.LOAD_SAVE(snap.data().save); else await Cloud.push(window.SAVE_REF());
+            Cloud.status = `${Cloud.nick} 님으로 로그인 · 진행이 계정에 저장돼요`;
+          } catch (e) { Cloud.status = '계정 저장을 불러오지 못했어요 (브라우저 저장으로 계속)'; }
+        } else Cloud.status = '로그인하면 진행이 계정에 저장돼요';
+        emit();
+      });
+    } catch (e) { Cloud.status = '로그인 서버에 연결하지 못했어요 (브라우저에만 저장)'; emit(); }
+  })();
+}
+
 </script>
