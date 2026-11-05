@@ -172,7 +172,7 @@ function stage(ch) {
 const FR = { // frames: [startup, active, recovery], damage, reach
   jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185] };
 function mk(key, x, face, isCpu, lvl) {
-  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, gauge: isCpu ? 0 : 25, st: 'idle', t: 0, vx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1 };
+  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1 };
 }
 function frame(f) {
   const t = f.t;
@@ -468,7 +468,7 @@ function startFight(p1, p2, opts) {
 }
 function resetRound() {
   const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 }); Object.assign(b, { x: 880, face: -1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 });
-  a.gauge = Math.max(a.gauge, 25); F.timer = 3600; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
+  F.timer = 3600; F.cut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
 function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard'; }
 function act(f, o, cmd) {
@@ -476,7 +476,7 @@ function act(f, o, cmd) {
   if (cmd === 'F') { f.st = 'jab'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'K') { f.st = 'kick'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'X') {
-    if (f.gauge >= 100) { f.st = 'super'; f.t = 0; f.hitDone = false; f.gauge = 0; F.freeze = 70; F.superBy = f; sfx('super'); }
+    if (f.gauge >= 100) { f.st = 'super'; f.t = 0; f.hitDone = false; f.gauge = 0; F.freeze = 70; F.cut = 70; F.superBy = f; sfx('super'); }
     else if (f.gauge >= 25) { f.st = 'special'; f.t = 0; f.hitDone = false; f.gauge -= 25; }
   }
 }
@@ -488,10 +488,10 @@ function damage(att, def, amt, kind) {
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
-  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 2); sfx('guard'); guardFX(def); }
+  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def); }
   else {
     def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4;
-    att.gauge = Math.min(100, att.gauge + 8); def.gauge = Math.min(100, def.gauge + 5);
+    if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' ? 4 : kind === 'special' ? 2 : 3)); def.gauge = Math.min(100, def.gauge + 3); }
     sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, kind, amt);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
   }
@@ -558,6 +558,7 @@ function updateFight() {
   F.pt++;
   if (F.phase === 'intro') { if (F.pt > 100) { F.phase = 'fight'; F.pt = 0; } return; }
   if (F.phase === 'end') { stepF(a, b); stepF(b, a); if (F.pt > 170 || (F.pt > 40 && (take('ok') || take('F')))) endRound(); return; }
+  if (F.cut > 0) F.cut--;
   if (F.freeze > 0) { F.freeze--; return; }
   control(a, b); control(b, a); stepF(a, b); stepF(b, a); push(a, b);
   for (const s of SHOTS) { stepShot(s); const o = s.by === a ? b : a; if (!s.dead && shotHit(s, o)) onShotHit(s, o); }
@@ -594,7 +595,7 @@ function drawFight() {
   g.save();
   if (F.shake > 0) { g.translate((Math.random() - .5) * F.shake, (Math.random() - .5) * F.shake); F.shake *= .85; if (F.shake < .5) F.shake = 0; }
   g.drawImage(stage(F.ch), 0, 0);
-  if (F.superBy && F.freeze > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
+  if (F.superBy && F.cut > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
   const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
   order.forEach(drawF);
   for (const e of FX) if (e.k === 'super') drawSuper(e);
@@ -608,8 +609,8 @@ function drawFight() {
   }
   drawParts();
   // super cut-in
-  if (F.superBy && F.freeze > 0) {
-    const f = F.superBy, m = f.r.f.cutin, k = 70 - F.freeze, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
+  if (F.superBy && F.cut > 0) {
+    const f = F.superBy, m = f.r.f.cutin, k = 70 - F.cut, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
     g.fillStyle = 'rgba(10,5,20,.85)'; g.fillRect(0, 230, W, 300);
     if (m && img(f.key).complete) g.drawImage(img(f.key), m[0], m[1], m[2], m[3], sx, 230, m[2] * 1.0, 300);
     g.font = `700 54px ${FONT}`; g.fillStyle = '#ffd23f'; g.textAlign = f === a ? 'left' : 'right'; g.fillText(f.r.S, f === a ? 80 : W - 80, 500);
