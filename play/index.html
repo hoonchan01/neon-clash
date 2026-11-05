@@ -150,6 +150,203 @@ function drawF(f) {
   g.restore();
 }
 
+// ---------- effects: per-character specials (X) and supers (MAX+X) ----------
+// x: projectile/special kind, s: super kind, h: hit-spark style (blunt | slash | pierce)
+const FXC = {
+  ryohei: { x: 'leaf', s: 'tornado', h: 'blunt' }, hattori: { x: 'water', s: 'meteor', h: 'blunt' },
+  noise: { x: 'sound', s: 'shock', h: 'blunt' }, shunsuke: { x: 'stones', s: 'grid', h: 'blunt' },
+  shigeru: { x: 'knife', s: 'slashX', h: 'slash' }, kei: { x: 'flask', s: 'toxic', h: 'blunt' },
+  matsuhiro: { x: 'ground', s: 'quake', h: 'blunt' }, iroha: { x: 'mirror', s: 'hearts', h: 'blunt' },
+  haruhiko: { x: 'star', s: 'rush', h: 'blunt' }, heart: { x: 'cards', s: 'cardstorm', h: 'slash' },
+  max: { x: 'thunder', s: 'lightning', h: 'blunt' }, hiroki: { x: 'twin', s: 'dragon', h: 'slash' },
+  daisuke: { x: 'spiral', s: 'pillar', h: 'blunt' },
+  hiroshi: { x: 'ground', s: 'whirl', h: 'slash' }, hayato: { x: 'dash', s: 'rush', h: 'pierce' },
+  hidetoshi: { x: 'crescent', s: 'slashX', h: 'slash' }, shinken: { x: 'fist', s: 'rush', h: 'blunt' },
+  hideo: { x: 'tornado', s: 'tornado', h: 'blunt' }, ojonokata: { x: 'knife', s: 'slashX', h: 'slash' },
+  marushige: { x: 'dash', s: 'rope', h: 'blunt' }, shogun: { x: 'crescent', s: 'flash', h: 'slash' },
+  kouji: { x: 'fire', s: 'pillar', h: 'blunt' }, kuma: { x: 'blast', s: 'explode', h: 'blunt' },
+  psyco: { x: 'orb', s: 'beam', h: 'blunt' }, hex: { x: 'starbomb', s: 'starrain', h: 'blunt' },
+  yuki: { x: 'needle', s: 'glitch', h: 'pierce' }, mars: { x: 'rainbow', s: 'rush', h: 'blunt' },
+  andromeda: { x: 'wave', s: 'galaxy', h: 'blunt' }, rox: { x: 'thunder', s: 'lightning', h: 'blunt' },
+};
+const fxOf = k => FXC[k] || { x: 'orb', s: 'meteor', h: 'blunt' };
+const RAINBOW = [[255, 60, 60], [255, 150, 30], [255, 230, 40], [60, 220, 80], [40, 160, 255], [80, 80, 255], [190, 70, 255]];
+const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+const PART = [];
+function part(x, y, o) { PART.push(Object.assign({ x, y, vx: 0, vy: 0, t: 0, life: 24, r: 6, c: [255, 255, 255], g: 0, k: 'dot', rot: 0, vr: 0 }, o)); }
+function burst(x, y, c, n, sp, o) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = sp * (.4 + Math.random() * .8); part(x, y, Object.assign({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, c, life: 18 + Math.random() * 14, r: 3 + Math.random() * 5 }, o)); } }
+function glowC(x, y, r, core, edge, a = 1) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, rgba(core, a)); gr.addColorStop(.35, rgba(edge, .85 * a)); gr.addColorStop(1, rgba(edge, 0));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+}
+function bolt(x1, y1, x2, y2, c, w, jag = 30) {
+  g.strokeStyle = rgba(c, 1); g.lineWidth = w; g.shadowColor = rgba(c, 1); g.shadowBlur = 20; g.beginPath(); g.moveTo(x1, y1);
+  const n = 8; for (let i = 1; i < n; i++) { const p = i / n; g.lineTo(x1 + (x2 - x1) * p + (Math.random() - .5) * jag, y1 + (y2 - y1) * p + (Math.random() - .5) * jag); }
+  g.lineTo(x2, y2); g.stroke(); g.lineWidth = w / 3; g.strokeStyle = '#fff'; g.stroke(); g.shadowBlur = 0;
+}
+function starPath(x, y, r, rot) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = rot + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.closePath(); }
+function heartPath(x, y, s) { g.beginPath(); g.moveTo(x, y + s * .3); g.bezierCurveTo(x - s, y - s * .5, x - s * .5, y - s * 1.1, x, y - s * .45); g.bezierCurveTo(x + s * .5, y - s * 1.1, x + s, y - s * .5, x, y + s * .3); g.closePath(); }
+const bodyY = f => FLOOR - f.lift - 250;
+
+// --- specials ---
+function launchSpecial(f, o) {
+  const k = fxOf(f.key).x, c = f.r.col, fx = f.x + f.face * 120, y = bodyY(f), d = f.face;
+  const shot = o2 => SHOTS.push(Object.assign({ by: f, k, x: fx, y, vx: d * 14, vy: 0, t: 0, c, dmg: 110, r: 50, life: 200 }, o2));
+  sfx('shot');
+  switch (k) {
+    case 'stones': for (let i = 0; i < 3; i++) shot({ x: fx - d * i * 70, y: y - 40 + i * 40, vx: d * 17, dmg: 40, r: 26, col2: i % 2 }); break;
+    case 'twin': shot({ y: y - 30, vx: d * 19, dmg: 55, r: 30 }); shot({ x: fx - d * 60, y: y + 40, vx: d * 19, dmg: 55, r: 30 }); break;
+    case 'cards': shot({ y: y - 35, vx: d * 17, dmg: 55, r: 34 }); shot({ x: fx - d * 50, y: y + 35, vx: d * 17, dmg: 55, r: 34 }); break;
+    case 'rainbow': RAINBOW.forEach((rc, i) => shot({ x: fx - d * i * 55, y: y + Math.sin(i) * 40, vx: d * 18, dmg: 16, r: 24, c: [[255, 255, 255], rc] })); break;
+    case 'knife': shot({ vx: d * 22, r: 36 }); break;
+    case 'needle': shot({ vx: d * 32, r: 22 }); break;
+    case 'flask': shot({ vx: d * 10, vy: -13, y: y - 40, lob: 1, r: 30 }); break;
+    case 'starbomb': shot({ vx: d * 9, vy: -15, y: y - 40, lob: 1, r: 40 }); break;
+    case 'ground': shot({ y: FLOOR - 40, vx: d * 13, r: 60, ground: 1 }); break;
+    case 'tornado': shot({ y: FLOOR - 170, vx: d * 8, r: 70, life: 140 }); break;
+    case 'sound': case 'wave': shot({ vx: d * 11, r: 80 }); break;
+    case 'crescent': shot({ vx: d * 16, r: 90 }); break;
+    case 'fist': shot({ vx: d * 18, r: 70, life: 16 }); break;
+    case 'blast': FX.push({ k: 'blastX', x: f.x + d * 190, y, c, t: 0, by: f, to: o }); break;
+    case 'dash': f.dash = 1; break;
+    default: shot({});
+  }
+}
+function stepShot(s) {
+  s.t++; s.x += s.vx; s.y += s.vy; const c = s.c;
+  if (s.lob) { s.vy += .7; if (s.y >= FLOOR - 30) { s.dead = true; landBurst(s); return; } }
+  if (s.k === 'fire' && s.t % 2 === 0) part(s.x - s.vx, s.y + (Math.random() - .5) * 30, { vx: -s.vx * .2, vy: -1.5 - Math.random() * 2, c: [255, 120 + Math.random() * 100, 0], life: 22, r: 10 + Math.random() * 10, k: 'flame' });
+  if (s.k === 'leaf' && s.t % 2 === 0) part(s.x + (Math.random() - .5) * 80, s.y + (Math.random() - .5) * 80, { vx: s.vx * .3, vy: (Math.random() - .5) * 3, c: c[1], life: 26, r: 9, k: 'leaf', vr: .3 });
+  if (s.k === 'water' && s.t % 1 === 0) part(s.x - s.vx * .5, s.y + (Math.random() - .5) * 20, { vx: -s.vx * .1, vy: 1 + Math.random() * 2, g: .3, c: [255, 220, 150], life: 20, r: 4 + Math.random() * 4 });
+  if (s.k === 'ground' && s.t % 3 === 0) part(s.x, FLOOR - 10, { vx: (Math.random() - .5) * 3, vy: -3 - Math.random() * 4, g: .35, c: [140, 110, 80], life: 26, r: 5 + Math.random() * 6, k: 'rock' });
+  if (s.k === 'starbomb' || s.k === 'star' || s.k === 'mirror') if (s.t % 3 === 0) part(s.x, s.y, { vx: -s.vx * .1, vy: (Math.random() - .5) * 2, c: c[1], life: 18, r: 4, k: 'star' });
+  if (s.t > s.life || s.x < -150 || s.x > W + 150) s.dead = true;
+}
+function landBurst(s) {
+  const o = s.by === F.a ? F.b : F.a, c = s.c;
+  if (s.k === 'flask') { burst(s.x, FLOOR - 30, [120, 255, 80], 30, 7, { g: .2 }); FX.push({ k: 'cloud', x: s.x, y: FLOOR - 90, c: [100, 220, 60], t: 0 }); }
+  else { burst(s.x, FLOOR - 40, c[1], 34, 9, { k: 'star' }); FX.push({ k: 'ring', x: s.x, y: FLOOR - 60, c, t: 0, r: 160 }); }
+  F.shake = Math.max(F.shake, 8);
+  if (Math.abs(o.x - s.x) < 150 && o.st !== 'ko') damage(s.by, o, s.dmg, 'special');
+}
+function shotHit(s, o) {
+  const dy = Math.abs(s.y - bodyY(o)), near = Math.abs(s.x - o.x) < 60 + s.r * .4;
+  return near && (s.ground || dy < 170) && o.st !== 'ko';
+}
+function onShotHit(s, o) {
+  s.dead = true; const c = s.c;
+  if (s.lob) { landBurst(s); return; }
+  if (s.k === 'fire' || s.k === 'thunder' || s.k === 'spiral') FX.push({ k: 'ring', x: s.x, y: s.y, c, t: 0, r: 120 });
+  burst(s.x, s.y, c[1], s.k === 'rainbow' ? 6 : 18, 8, { k: s.k === 'star' || s.k === 'mirror' ? 'star' : 'dot' });
+  damage(s.by, o, s.dmg, 'special');
+}
+function drawShot(s) {
+  const [c0, c1] = s.c, d = Math.sign(s.vx) || 1, x = s.x, y = s.y, t = s.t;
+  switch (s.k) {
+    case 'leaf': glowC(x, y, 55, c0, c1); g.strokeStyle = rgba(c0, .8); g.lineWidth = 4; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(x, y, 30 + i * 12, t * .3 + i * 2, t * .3 + i * 2 + 2.4); g.stroke(); } break;
+    case 'water': g.fillStyle = rgba([255, 230, 170], .85); g.beginPath(); g.ellipse(x, y, 70, 22, 0, 0, 7); g.fill(); glowC(x + d * 40, y, 40, [255, 255, 230], [255, 200, 120]); break;
+    case 'sound': case 'wave': for (let i = 0; i < 4; i++) { const r = 30 + i * 26 + (t % 8) * 3, cc = s.k === 'wave' ? (i % 2 ? [120, 255, 160] : c1) : c1; g.strokeStyle = rgba(cc, 1 - i * .2); g.lineWidth = 7 - i; g.beginPath(); g.arc(x - d * i * 18, y, r, d > 0 ? -1 : Math.PI - 1, d > 0 ? 1 : Math.PI + 1); g.stroke(); } break;
+    case 'stones': g.fillStyle = s.col2 ? '#f4f4f0' : '#141414'; g.strokeStyle = s.col2 ? '#999' : '#555'; g.lineWidth = 2; g.beginPath(); g.ellipse(x, y, 30, 22, t * .2, 0, 7); g.fill(); g.stroke(); break;
+    case 'knife': g.save(); g.translate(x, y); g.rotate(t * .6); g.scale(1.6, 1.6); g.fillStyle = '#e8eef5'; g.beginPath(); g.moveTo(-34, -5); g.lineTo(30, 0); g.lineTo(-34, 5); g.fill(); g.fillStyle = '#3a2a20'; g.fillRect(-46, -5, 14, 10); g.restore(); g.strokeStyle = rgba(c1, .5); g.lineWidth = 3; g.beginPath(); g.moveTo(x - d * 90, y); g.lineTo(x, y); g.stroke(); break;
+    case 'flask': g.save(); g.translate(x, y); g.rotate(t * .25); g.fillStyle = 'rgba(200,240,255,.6)'; g.fillRect(-10, -26, 20, 16); g.beginPath(); g.arc(0, 4, 20, 0, 7); g.fill(); g.fillStyle = 'rgba(110,240,70,.9)'; g.beginPath(); g.arc(0, 8, 15, 0, 7); g.fill(); g.restore(); break;
+    case 'ground': for (let i = 0; i < 5; i++) { const xx = x - d * i * 34, h = 70 - i * 12 + Math.sin(t + i) * 8; g.fillStyle = rgba(c1, .9 - i * .15); g.beginPath(); g.moveTo(xx - 18, FLOOR); g.lineTo(xx, FLOOR - h); g.lineTo(xx + 18, FLOOR); g.fill(); } glowC(x, FLOOR - 30, 60, c0, c1, .6); break;
+    case 'mirror': glowC(x, y, 60, c0, c1); g.fillStyle = '#dfe9ef'; g.beginPath(); g.arc(x, y, 26, 0, 7); g.fill(); g.strokeStyle = 'rgba(80,90,110,.6)'; g.lineWidth = 1.5; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x - 26, y + i * 10); g.lineTo(x + 26, y + i * 10); g.moveTo(x + i * 10, y - 26); g.lineTo(x + i * 10, y + 26); g.stroke(); } break;
+    case 'star': case 'starbomb': glowC(x, y, 60, c0, c1); g.fillStyle = rgba(c0, 1); starPath(x, y, s.k === 'star' ? 30 : 36, t * .25); g.fill(); break;
+    case 'cards': g.save(); g.translate(x, y); g.scale(Math.cos(t * .5), 1); g.fillStyle = '#fff'; g.fillRect(-20, -28, 40, 56); g.fillStyle = rgba(c1, 1); g.fillRect(-15, -23, 30, 46); g.restore(); break;
+    case 'thunder': glowC(x, y, 60, c0, c1); for (let i = 0; i < 3; i++) { const a = Math.random() * 6.3; bolt(x, y, x + Math.cos(a) * 70, y + Math.sin(a) * 70, c1, 3, 14); } break;
+    case 'twin': g.strokeStyle = rgba(c1, 1); g.lineWidth = 8; g.shadowColor = rgba(c1, 1); g.shadowBlur = 18; g.beginPath(); g.moveTo(x - d * 70, y); g.lineTo(x, y); g.stroke(); g.shadowBlur = 0; glowC(x, y, 28, c0, c1); break;
+    case 'spiral': glowC(x, y, 56, c0, c1); g.strokeStyle = rgba(c0, .9); g.lineWidth = 5; for (let a = 0; a < 3; a++) { g.beginPath(); for (let i = 0; i < 20; i++) { const an = t * .35 + a * 2.09 + i * .25, r = i * 3; g.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); } g.stroke(); } break;
+    case 'crescent': g.fillStyle = rgba(c1, .85); g.shadowColor = rgba(c1, 1); g.shadowBlur = 25; g.beginPath(); g.arc(x - d * 20, y, 100, -1.2, 1.2); g.arc(x - d * 60, y, 92, 1.1, -1.1, true); g.closePath(); if (d < 0) { g.save(); g.translate(2 * x, 0); g.scale(-1, 1); g.fill(); g.restore(); } else g.fill(); g.shadowBlur = 0; break;
+    case 'fist': { const p = t / 16; g.strokeStyle = rgba(c1, 1 - p); g.lineWidth = 6; for (let i = -3; i <= 3; i++) { g.beginPath(); g.moveTo(x - d * 60, y + i * 8); g.lineTo(x + d * (30 + p * 60), y + i * 26); g.stroke(); } glowC(x, y, 70, c0, c1, 1 - p); break; }
+    case 'tornado': for (let i = 0; i < 9; i++) { const yy = FLOOR - 20 - i * 34, rw = 20 + i * 9; g.strokeStyle = rgba(c1, .75); g.lineWidth = 4; g.beginPath(); g.ellipse(x + Math.sin(t * .4 + i) * 12, yy, rw, 9, 0, 0, 7); g.stroke(); } break;
+    case 'fire': glowC(x, y, 64, [255, 250, 200], [255, 90, 0]); break;
+    case 'needle': g.strokeStyle = rgba(c1, 1); g.lineWidth = 4; g.shadowColor = rgba(c1, 1); g.shadowBlur = 16; g.beginPath(); g.moveTo(x - d * 140, y); g.lineTo(x, y); g.stroke(); g.shadowBlur = 0; glowC(x, y, 20, c0, c1); break;
+    default: glowC(x, y, s.r + 10, c0, c1);
+  }
+}
+
+// --- supers ---
+const SUPER_HITS = { // [first hit frame, step, count, total damage]
+  meteor: [14, 0, 1, 280], lightning: [6, 9, 4, 280], pillar: [10, 8, 4, 280], beam: [6, 7, 5, 280], slashX: [2, 6, 5, 280],
+  rush: [6, 5, 7, 280], explode: [10, 0, 1, 290], hearts: [10, 6, 5, 280], cardstorm: [12, 5, 5, 280], grid: [16, 6, 5, 280],
+  quake: [8, 14, 2, 280], whirl: [4, 8, 4, 280], tornado: [14, 7, 4, 280], flash: [18, 0, 1, 300], glitch: [6, 8, 4, 280],
+  starrain: [12, 5, 6, 280], rope: [16, 14, 2, 280], dragon: [16, 6, 4, 280], shock: [4, 8, 4, 280], toxic: [10, 8, 4, 280], galaxy: [10, 6, 5, 280],
+};
+function launchSuper(f, o) {
+  const k = fxOf(f.key).s, e = { k: 'super', s: k, by: f, to: o, t: 0, c: f.r.col, x: o.x, x0: f.x, d: f.face, n: 0 };
+  if (k === 'rush') { f.x = o.x - f.face * 130; }
+  if (k === 'whirl') { f.x = o.x - f.face * 170; }
+  FX.push(e);
+}
+function stepSuper(e) {
+  const [h0, st, cnt, tot] = SUPER_HITS[e.s] || [14, 0, 1, 280], o = e.to, f = e.by;
+  if (['meteor', 'pillar', 'lightning', 'grid', 'starrain', 'hearts', 'rope', 'galaxy'].includes(e.s)) e.x = o.x;
+  const due = e.n < cnt && e.t >= h0 + e.n * st;
+  if (!due) return;
+  e.n++;
+  let inRange = true;
+  if (e.s === 'beam') inRange = Math.sign(o.x - e.x0) === e.d;
+  if (e.s === 'whirl' || e.s === 'explode' || e.s === 'shock') inRange = Math.abs(o.x - f.x) < (e.s === 'explode' ? 480 : e.s === 'shock' ? 900 : 340);
+  if (e.s === 'quake') inRange = true;
+  const hx = o.x, hy = bodyY(o);
+  if (e.s === 'lightning') burst(hx, hy + 80, e.c[1], 20, 10);
+  if (e.s === 'meteor' || e.s === 'explode') { burst(hx, hy + 60, e.c[1], 50, 14, { k: 'flame', r: 14 }); F.shake = 24; }
+  if (e.s === 'rush') { f.x = o.x - f.face * 130; f.flash = 2; burst(hx - f.face * 30, hy + (Math.random() - .5) * 120, e.s === 'rush' && f.key === 'mars' ? RAINBOW[e.n % 7] : e.c[1], 14, 9); }
+  if (e.s === 'starrain' || e.s === 'galaxy') burst(hx + (Math.random() - .5) * 100, hy, e.c[1], 16, 9, { k: 'star' });
+  if (e.s === 'hearts') burst(hx, hy, [255, 120, 180], 12, 8, { k: 'heart', r: 10 });
+  if (inRange && o.st !== 'ko') damage(f, o, Math.round(tot / cnt), cnt > 1 ? 'superm' : 'super');
+}
+function superLife(e) { const [h0, st, cnt] = SUPER_HITS[e.s] || [14, 0, 1]; return h0 + st * (cnt - 1) + 26; }
+function drawSuper(e) {
+  const t = e.t, [c0, c1] = e.c, o = e.to, f = e.by, x = e.x, oy = bodyY(o), life = superLife(e), fade = Math.max(0, Math.min(1, (life - t) / 12));
+  g.save(); g.globalAlpha = fade;
+  switch (e.s) {
+    case 'meteor': { const y = Math.min(oy + 60, -120 + t * 34); if (t < 14) { glowC(x - 120 + t * 9, y, 110, c0, c1); for (let i = 0; i < 6; i++) glowC(x - 160 + t * 9 - i * 20, y - 60 - i * 30, 40 - i * 5, c0, c1, .6); } else { const p = (t - 14) / 20; glowC(x, oy + 60, 140 + p * 260, c0, c1, Math.max(0, 1 - p)); } break; }
+    case 'lightning': for (let i = 0; i < 4; i++) if (t >= 6 + i * 9 && t < 12 + i * 9) { bolt(x + (Math.random() - .5) * 60, -20, x, FLOOR - 20, c1, 10, 60); glowC(x, FLOOR - 40, 120, c0, c1, .8); } g.fillStyle = rgba(c1, .08); g.fillRect(0, 0, W, H); break;
+    case 'pillar': { const w = Math.min(1, t / 10) * 130; const gr = g.createLinearGradient(x - w, 0, x + w, 0); gr.addColorStop(0, rgba(c1, 0)); gr.addColorStop(.35, rgba(c1, .85)); gr.addColorStop(.5, rgba(c0, 1)); gr.addColorStop(.65, rgba(c1, .85)); gr.addColorStop(1, rgba(c1, 0)); g.fillStyle = gr; g.fillRect(x - w, 0, w * 2, FLOOR); glowC(x, FLOOR - 20, 160, c0, c1, .8); if (t % 2 === 0) part(x + (Math.random() - .5) * w, FLOOR - Math.random() * 500, { vy: -6, c: c1, life: 16, r: 6, k: f.key === 'kouji' ? 'flame' : 'dot' }); break; }
+    case 'beam': { const x0 = e.x0 + e.d * 110, x1 = e.d > 0 ? W + 40 : -40, y = bodyY(f), hgt = (t < 6 ? t / 6 : 1) * 70 + Math.sin(t) * 6; const gr = g.createLinearGradient(0, y - hgt, 0, y + hgt); gr.addColorStop(0, rgba(c1, 0)); gr.addColorStop(.3, rgba(c1, .9)); gr.addColorStop(.5, rgba(c0, 1)); gr.addColorStop(.7, rgba(c1, .9)); gr.addColorStop(1, rgba(c1, 0)); g.fillStyle = gr; g.fillRect(Math.min(x0, x1), y - hgt, Math.abs(x1 - x0), hgt * 2); glowC(x0, y, 130, c0, c1); break; }
+    case 'slashX': case 'flash': {
+      if (e.s === 'flash' && t < 18) { g.fillStyle = rgba([0, 0, 0], .5 * Math.min(1, t / 6)); g.fillRect(0, 0, W, H); }
+      if (e.s === 'flash' && t >= 18) { const p = (t - 18) / 14; g.fillStyle = rgba([255, 255, 255], Math.max(0, .9 - p)); g.fillRect(0, 0, W, H); g.strokeStyle = rgba(c1, 1); g.lineWidth = 10 * (1 - p); g.beginPath(); g.moveTo(0, oy); g.lineTo(W, oy - 20); g.stroke(); }
+      if (e.s === 'slashX') for (let i = 0; i < 5; i++) { const tt = t - 2 - i * 6; if (tt < 0 || tt > 10) continue; const a = [-.6, .6, -.2, .3, 0][i], len = i === 4 ? 320 : 220; g.strokeStyle = rgba(i === 4 ? c1 : c0, 1 - tt / 10); g.lineWidth = i === 4 ? 16 : 9; g.shadowColor = rgba(c1, 1); g.shadowBlur = 20; g.beginPath(); g.moveTo(x - Math.cos(a) * len, oy - Math.sin(a) * len); g.lineTo(x + Math.cos(a) * len, oy + Math.sin(a) * len); g.stroke(); if (i === 4) { g.beginPath(); g.moveTo(x - len * .7, oy + len * .7); g.lineTo(x + len * .7, oy - len * .7); g.stroke(); } }
+      g.shadowBlur = 0; break; }
+    case 'rush': for (let i = 0; i < 3; i++) { const yy = oy + (Math.random() - .5) * 160; g.strokeStyle = rgba(f.key === 'mars' ? RAINBOW[(t + i) % 7] : c1, .9); g.lineWidth = 6; g.beginPath(); g.moveTo(f.x, yy); g.lineTo(o.x + (Math.random() - .5) * 40, yy + (Math.random() - .5) * 30); g.stroke(); } break;
+    case 'explode': case 'toxic': { const cc = e.s === 'toxic' ? [[200, 255, 160], [90, 220, 40]] : [c0, c1], cx = e.s === 'toxic' ? o.x : f.x + e.d * 160, p = Math.max(0, (t - 8) / 26); if (t < 8) glowC(cx, oy + 40, 40 + t * 8, cc[0], cc[1]); else { glowC(cx, oy + 40, 120 + p * 330, cc[0], cc[1], Math.max(0, 1 - p)); g.strokeStyle = rgba(cc[0], Math.max(0, 1 - p)); g.lineWidth = 10; g.beginPath(); g.arc(cx, oy + 40, 80 + p * 420, 0, 7); g.stroke(); } break; }
+    case 'hearts': for (let i = 0; i < 10; i++) { const hx = x + Math.sin(i * 7.3) * 160, hy = -40 + ((t * 14 + i * 70) % (FLOOR + 40)); g.fillStyle = rgba(i % 2 ? [255, 120, 180] : c1, .9); heartPath(hx, hy, 26); g.fill(); } glowC(x, oy, 160, [255, 230, 240], [255, 100, 170], .4); break;
+    case 'cardstorm': for (let i = 0; i < 5; i++) { const tt = Math.max(0, Math.min(1, (t - i * 5) / 12)), sx = e.x0 + e.d * 60, sy = bodyY(f) - 160 + i * 80; const cx = sx + (o.x - sx) * tt, cy = sy + (oy - sy) * tt; g.save(); g.translate(cx, cy); g.rotate(t * .5 + i); g.fillStyle = '#fff'; g.fillRect(-22, -32, 44, 64); g.fillStyle = rgba(c1, 1); g.fillRect(-17, -27, 34, 54); g.restore(); } break;
+    case 'grid': { const s2 = 260, a = Math.min(1, t / 10); g.strokeStyle = rgba([240, 210, 140], a); g.lineWidth = 2; for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(x - s2 / 2 + i * s2 / 8, oy - s2 / 2); g.lineTo(x - s2 / 2 + i * s2 / 8, oy + s2 / 2); g.moveTo(x - s2 / 2, oy - s2 / 2 + i * s2 / 8); g.lineTo(x + s2 / 2, oy - s2 / 2 + i * s2 / 8); g.stroke(); } for (let i = 0; i < 5; i++) { const tt = t - 16 - i * 6; if (tt < -8) continue; const sx = x - 100 + i * 50, sy = Math.min(oy - 40 + (i % 2) * 70, oy - 300 + (tt + 8) * 40); g.fillStyle = i % 2 ? '#f4f4f0' : '#111'; g.beginPath(); g.ellipse(sx, sy, 30, 22, 0, 0, 7); g.fill(); } break; }
+    case 'quake': case 'shock': { for (let i = 0; i < 3; i++) { const r = (t * 16 - i * 90); if (r < 0) continue; g.strokeStyle = rgba(c1, Math.max(0, 1 - r / 900)); g.lineWidth = 10; if (e.s === 'quake') { g.beginPath(); g.ellipse(f.x, FLOOR, r, r * .12, 0, 0, 7); g.stroke(); } else { g.beginPath(); g.arc(f.x, bodyY(f), r * .6, 0, 7); g.stroke(); } } if (e.s === 'quake' && t % 2 === 0) { F.shake = Math.max(F.shake, 10); part(Math.random() * W, FLOOR - 5, { vy: -5 - Math.random() * 5, g: .4, c: [150, 120, 90], life: 28, r: 6, k: 'rock' }); } break; }
+    case 'whirl': for (let i = 0; i < 3; i++) { const a = t * .45 + i * 2.09; g.strokeStyle = rgba(c1, .9); g.lineWidth = 12; g.beginPath(); g.arc(f.x, bodyY(f), 200, a, a + 1.4); g.stroke(); g.strokeStyle = rgba(c0, .9); g.lineWidth = 4; g.stroke(); } break;
+    case 'tornado': { const tx = e.x0 + (o.x - e.x0) * Math.min(1, t / 14); for (let i = 0; i < 12; i++) { const yy = FLOOR - 10 - i * 42, rw = 30 + i * 14; g.strokeStyle = rgba(i % 2 ? c0 : c1, .8); g.lineWidth = 6; g.beginPath(); g.ellipse(tx + Math.sin(t * .5 + i) * 18, yy, rw, 12, 0, 0, 7); g.stroke(); } if (t % 2 === 0) part(tx + (Math.random() - .5) * 200, FLOOR - Math.random() * 400, { vx: (Math.random() - .5) * 10, vy: -4, c: c1, life: 18, r: 7, k: f.key === 'ryohei' ? 'leaf' : 'dot', vr: .4 }); break; }
+    case 'glitch': for (let i = 0; i < 8; i++) { const yy = Math.random() * H, hh = 6 + Math.random() * 30; g.fillStyle = rgba(i % 3 === 0 ? [255, 40, 80] : i % 3 === 1 ? [40, 220, 255] : c1, .35); g.fillRect(0, yy, W, hh); } g.strokeStyle = rgba(c1, 1); g.lineWidth = 3; g.strokeRect(o.x - 90 + (Math.random() - .5) * 20, oy - 170, 180, 340); g.font = `700 28px ${DFONT}`; g.fillStyle = rgba(c1, 1); g.textAlign = 'center'; g.fillText('SYSTEM DOWN', o.x, oy - 190); break;
+    case 'starrain': case 'galaxy': if (e.s === 'galaxy') { g.fillStyle = 'rgba(20,0,40,.35)'; g.fillRect(0, 0, W, H); for (let i = 0; i < 60; i++) { g.fillStyle = rgba(i % 3 ? [255, 255, 255] : c1, .8); g.fillRect((i * 97 + t * 3) % W, (i * 53) % FLOOR, 3, 3); } } for (let i = 0; i < 7; i++) { const sx = x + Math.sin(i * 5.1) * 150, sy = -60 + ((t * 18 + i * 90) % (FLOOR + 60)); glowC(sx, sy, 40, c0, e.s === 'galaxy' ? (i % 2 ? [120, 255, 160] : c1) : c1); g.fillStyle = '#fff'; starPath(sx, sy, 18, t * .3 + i); g.fill(); } break;
+    case 'rope': { const a = Math.min(1, t / 16); for (let i = 0; i < 3; i++) { g.strokeStyle = rgba(i % 2 ? [200, 170, 110] : c1, .95); g.lineWidth = 7; g.beginPath(); g.ellipse(o.x, oy - 80 + i * 80, 160 - a * 90, 30 - a * 12, 0, 0, 7); g.stroke(); } break; }
+    case 'dragon': for (let k = 0; k < 2; k++) { g.strokeStyle = rgba(k ? c0 : c1, .9); g.lineWidth = 14; g.shadowColor = rgba(c1, 1); g.shadowBlur = 24; g.beginPath(); const tt = Math.min(1, t / 16); for (let i = 0; i <= 24; i++) { const p = i / 24 * tt, xx = e.x0 + (o.x - e.x0) * p, yy = bodyY(f) + Math.sin(p * 12 + k * 3.1 + t * .3) * 90 * (1 - p * .5); g.lineTo(xx, yy); } g.stroke(); } g.shadowBlur = 0; if (t > 16) glowC(o.x, oy, 150, c0, c1, .7); break;
+  }
+  g.restore();
+}
+function stepParts() { for (const p of PART) { p.t++; p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= .97; p.rot += p.vr; } for (let i = PART.length - 1; i >= 0; i--) if (PART[i].t > PART[i].life) PART.splice(i, 1); }
+function drawParts() {
+  for (const p of PART) {
+    const a = 1 - p.t / p.life;
+    if (p.k === 'flame') glowC(p.x, p.y, p.r * (1.2 - a * .3), [255, 240, 180], p.c, a);
+    else if (p.k === 'leaf') { g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = rgba(p.c, a); g.beginPath(); g.ellipse(0, 0, p.r, p.r * .45, 0, 0, 7); g.fill(); g.restore(); }
+    else if (p.k === 'star') { g.fillStyle = rgba(p.c, a); starPath(p.x, p.y, p.r * 1.6, p.t * .2); g.fill(); }
+    else if (p.k === 'heart') { g.fillStyle = rgba(p.c, a); heartPath(p.x, p.y, p.r * 1.4); g.fill(); }
+    else if (p.k === 'rock') { g.fillStyle = rgba(p.c, a); g.fillRect(p.x - p.r / 2, p.y - p.r / 2, p.r, p.r); }
+    else { g.fillStyle = rgba(p.c, a); g.beginPath(); g.arc(p.x, p.y, p.r * a + 1, 0, 7); g.fill(); }
+  }
+}
+function drawSpark(e) {
+  const p = e.t / 16;
+  g.globalAlpha = Math.max(0, 1 - p);
+  if (e.h === 'slash') { g.strokeStyle = e.c; g.lineWidth = 8 * (1 - p) + 2; g.shadowColor = e.c; g.shadowBlur = 14; g.beginPath(); g.arc(e.x + 40, e.y + 40, e.r * 1.6, 3.4, 4.6); g.stroke(); g.beginPath(); g.moveTo(e.x - e.r, e.y + e.r * .6); g.lineTo(e.x + e.r, e.y - e.r * .6); g.stroke(); g.shadowBlur = 0; }
+  else if (e.h === 'pierce') { g.strokeStyle = e.c; g.lineWidth = 6; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(e.x, e.y + i * 6); g.lineTo(e.x - e.d * e.r * (2.4 + p * 2), e.y + i * 18); g.stroke(); } }
+  else { g.strokeStyle = e.c; g.lineWidth = 6; for (let i = 0; i < 8; i++) { const an = i * .785; g.beginPath(); g.moveTo(e.x + Math.cos(an) * e.r * p * .4, e.y + Math.sin(an) * e.r * p * .4); g.lineTo(e.x + Math.cos(an) * e.r * (p + .3), e.y + Math.sin(an) * e.r * (p + .3)); g.stroke(); } }
+  g.globalAlpha = 1;
+}
+
 // ---------- fight ----------
 let F = null; // current fight
 const SHOTS = [], FX = [];
@@ -157,12 +354,12 @@ function startFight(p1, p2, opts) {
   const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
   b.dmgMul = opts.dmg || 1;
   F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
-  SHOTS.length = FX.length = 0;
+  SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
 function resetRound() {
   const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 }); Object.assign(b, { x: 880, face: -1, hp: 1000, st: 'idle', t: 0, lift: 0, vx: 0 });
-  a.gauge = Math.max(a.gauge, 25); F.timer = 3600; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = 0;
+  a.gauge = Math.max(a.gauge, 25); F.timer = 3600; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
 function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard'; }
 function act(f, o, cmd) {
@@ -182,17 +379,17 @@ function damage(att, def, amt, kind) {
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
-  if (guarding) { d *= kind === 'super' ? .4 : .15; def.gauge = Math.min(100, def.gauge + 2); sfx('guard'); spark(def.x - def.face * 60, FLOOR - 250, '#9fe7ff', 30); }
+  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 2); sfx('guard'); spark(def.x - def.face * 60, FLOOR - 250, '#9fe7ff', 30); }
   else {
-    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : 7); def.flash = 4;
+    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4;
     att.gauge = Math.min(100, att.gauge + 8); def.gauge = Math.min(100, def.gauge + 5);
-    sfx(amt > 80 ? 'heavy' : 'hit'); spark(def.x - def.face * 40, FLOOR - 260, '#fff2a0', amt > 80 ? 70 : 45);
+    sfx(amt > 80 ? 'heavy' : 'hit'); spark(def.x - def.face * 40, FLOOR - 260, fxOf(att.key).h === 'blunt' ? '#fff2a0' : rgba(att.r.col[1], 1), amt > 80 ? 70 : 45, fxOf(att.key).h, def.face);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
   }
   def.hp = Math.max(0, def.hp - Math.round(d));
   if (def.hp <= 0) { def.st = 'ko'; def.t = 0; def.vx = -def.face * 9; def.lift = 1; def.vy = 9; sfx('ko'); F.shake = 16; }
 }
-function spark(x, y, c, r) { FX.push({ k: 'spark', x, y, c, r, t: 0 }); }
+function spark(x, y, c, r, h, d) { FX.push({ k: 'spark', x, y, c, r, t: 0, h: h || 'blunt', d: d || 1 }); }
 function stepF(f, o) {
   f.t++;
   const dist = Math.abs(o.x - f.x), inFront = Math.sign(o.x - f.x) === f.face;
@@ -202,10 +399,12 @@ function stepF(f, o) {
     if (!f.hitDone && f.t >= su && f.t < su + ac && inFront && dist <= reach + f.r.reach + 60) { f.hitDone = true; damage(f, o, dmg, f.st); }
     if (f.t >= su + ac + re) { f.st = 'idle'; f.t = 0; }
   } else if (f.st === 'special') {
-    if (f.t === 18) { SHOTS.push({ by: f, x: f.x + f.face * 120, y: FLOOR - 250, vx: f.face * 15, t: 0, c: f.r.col }); sfx('shot'); }
-    if (f.t >= 48) { f.st = 'idle'; f.t = 0; }
+    if (f.t === 18) launchSpecial(f, o);
+    if (f.dash && f.t > 18 && f.t < 36) { f.x += f.face * 19; part(f.x - f.face * 60, bodyY(f) + (Math.random() - .5) * 140, { vx: -f.face * 6, c: f.r.col[1], life: 12, r: 8 });
+      if (!f.hitDone && inFront && Math.abs(o.x - f.x) < 170) { f.hitDone = true; f.dash = 0; damage(f, o, 115, 'special'); } }
+    if (f.t >= 48) { f.st = 'idle'; f.t = 0; f.dash = 0; }
   } else if (f.st === 'super') {
-    if (f.t === 22) { FX.push({ k: 'bomb', x: o.x, y: -100, c: f.r.col, t: 0, by: f, to: o }); }
+    if (f.t === 22) launchSuper(f, o);
     if (f.t >= 70) { f.st = 'idle'; f.t = 0; }
   } else if (f.st === 'hit') {
     f.x += f.vx; f.vx *= .85; if (f.t >= 18) { f.st = 'idle'; f.t = 0; }
@@ -252,10 +451,13 @@ function updateFight() {
   if (F.phase === 'end') { stepF(a, b); stepF(b, a); if (F.pt > 170 || (F.pt > 40 && (take('ok') || take('F')))) endRound(); return; }
   if (F.freeze > 0) { F.freeze--; return; }
   control(a, b); control(b, a); stepF(a, b); stepF(b, a); push(a, b);
-  for (const s of SHOTS) { s.x += s.vx; s.t++; const o = s.by === a ? b : a; if (!s.dead && Math.abs(s.x - o.x) < 70 && o.st !== 'ko') { s.dead = true; damage(s.by, o, 110, 'special'); } if (s.x < -100 || s.x > W + 100) s.dead = true; }
+  for (const s of SHOTS) { stepShot(s); const o = s.by === a ? b : a; if (!s.dead && shotHit(s, o)) onShotHit(s, o); }
   for (let i = SHOTS.length - 1; i >= 0; i--) if (SHOTS[i].dead) SHOTS.splice(i, 1);
-  for (const e of FX) { e.t++; if (e.k === 'bomb') { e.y += 34; e.x = e.to.x; if (e.y >= FLOOR - 230 && !e.hit) { e.hit = true; e.boom = 0; damage(e.by, e.to, 280, 'super'); F.shake = 20; } } }
-  for (let i = FX.length - 1; i >= 0; i--) if (FX[i].t > (FX[i].k === 'bomb' ? 60 : 16)) FX.splice(i, 1);
+  for (const e of FX) { e.t++; if (e.k === 'super') stepSuper(e);
+    if (e.k === 'blastX' && e.t === 4) { burst(e.x, e.y, e.c[1], 40, 12, { k: 'flame', r: 12 }); F.shake = 14; if (Math.abs(e.to.x - e.x) < 210 && e.to.st !== 'ko') damage(e.by, e.to, 120, 'special'); } }
+  const LIFE = e => e.k === 'super' ? superLife(e) : e.k === 'cloud' ? 40 : e.k === 'ring' ? 20 : e.k === 'blastX' ? 24 : 16;
+  for (let i = FX.length - 1; i >= 0; i--) if (FX[i].t > LIFE(FX[i])) FX.splice(i, 1);
+  stepParts();
   if (F.timer > 0) F.timer--;
   if (a.hp <= 0 || b.hp <= 0 || F.timer <= 0) {
     F.phase = 'end'; F.pt = 0;
@@ -286,11 +488,15 @@ function drawFight() {
   if (F.superBy && F.freeze > 0) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H); }
   const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
   order.forEach(drawF);
-  for (const s of SHOTS) glow(s.x, s.y, 60, s.c.map(v => v.join(',')));
+  for (const e of FX) if (e.k === 'super') drawSuper(e);
+  for (const s of SHOTS) drawShot(s);
   for (const e of FX) {
-    if (e.k === 'spark') { const p = e.t / 16; g.strokeStyle = e.c; g.globalAlpha = 1 - p; g.lineWidth = 6; for (let i = 0; i < 8; i++) { const an = i * .785; g.beginPath(); g.moveTo(e.x + Math.cos(an) * e.r * p * .4, e.y + Math.sin(an) * e.r * p * .4); g.lineTo(e.x + Math.cos(an) * e.r * (p + .3), e.y + Math.sin(an) * e.r * (p + .3)); g.stroke(); } g.globalAlpha = 1; }
-    if (e.k === 'bomb') { if (!e.hit) glow(e.x, e.y, 110, e.c.map(v => v.join(','))); else { const p = (e.t - (e.boomT || (e.boomT = e.t))) / 25; g.globalAlpha = Math.max(0, 1 - p); glow(e.x, FLOOR - 230, 140 + p * 220, e.c.map(v => v.join(','))); g.globalAlpha = 1; } }
+    if (e.k === 'spark') drawSpark(e);
+    else if (e.k === 'ring') { const p = e.t / 20; g.strokeStyle = rgba(e.c[1], 1 - p); g.lineWidth = 8 * (1 - p) + 1; g.beginPath(); g.arc(e.x, e.y, 20 + p * e.r, 0, 7); g.stroke(); }
+    else if (e.k === 'cloud') { const p = e.t / 40; glowC(e.x, e.y, 90 + p * 60, [200, 255, 170], e.c, (1 - p) * .8); }
+    else if (e.k === 'blastX') { const p = e.t / 24; glowC(e.x, e.y, 60 + p * 180, e.c[0], e.c[1], 1 - p); }
   }
+  drawParts();
   // super cut-in
   if (F.superBy && F.freeze > 0) {
     const f = F.superBy, m = f.r.f.cutin, k = 70 - F.freeze, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
