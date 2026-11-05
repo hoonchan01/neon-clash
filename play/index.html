@@ -10,15 +10,26 @@ body{display:flex;align-items:center;justify-content:center;padding-left:max(0px
 #wrap{position:relative;width:min(100vw,177.78vh);aspect-ratio:16/9;max-width:100%}
 canvas{width:100%;height:100%;display:block;background:#000}
 .pad{position:absolute;inset:0;pointer-events:none;display:none}
-@media (pointer:coarse){.pad{display:block}}
-.pad button{pointer-events:auto;position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(10,8,20,.45);color:#fff;font:700 clamp(14px,3.2vh,26px) "Chakra Petch",system-ui;display:flex;align-items:center;justify-content:center;touch-action:none}
-.pad button.on{background:rgba(255,61,129,.6)}
-#bl{left:3%;bottom:6%;width:12%;aspect-ratio:1}
-#br{left:17%;bottom:6%;width:12%;aspect-ratio:1}
-#bF{right:15%;bottom:4%;width:10%;aspect-ratio:1}
-#bK{right:3%;bottom:16%;width:10%;aspect-ratio:1}
-#bD{right:27%;bottom:14%;width:10%;aspect-ratio:1}
-#bX{right:15%;bottom:28%;width:10%;aspect-ratio:1}
+body.mobile.infight .pad{display:block}
+.pad button{pointer-events:auto;position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(10,8,20,.5);color:#fff;font:700 clamp(12px,2.6vh,22px) "IBM Plex Sans KR",system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none;-webkit-tap-highlight-color:transparent}
+.pad button small{font:600 clamp(9px,1.8vh,14px) "Chakra Petch",system-ui;opacity:.7}
+.pad button.on{background:rgba(255,61,129,.65);border-color:#fff}
+#bl{left:3%;bottom:8%;width:13%;aspect-ratio:1;font-size:clamp(18px,4vh,34px)}
+#br{left:18%;bottom:8%;width:13%;aspect-ratio:1;font-size:clamp(18px,4vh,34px)}
+#bW{right:13%;bottom:40%;width:11%;aspect-ratio:1;border-color:#ff3d81}
+#bD{right:25%;bottom:22%;width:11%;aspect-ratio:1;border-color:#3fd8ff}
+#bS{right:1.5%;bottom:22%;width:11%;aspect-ratio:1}
+#bA{right:13%;bottom:4%;width:11%;aspect-ratio:1}
+#start{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 40%,#2a1238,#07060c 70%);text-align:center;padding:24px}
+#start h1{margin:0;font:700 clamp(44px,10vw,110px) "Chakra Petch",system-ui;letter-spacing:.04em}
+#start h1 b{color:#ff3d81;text-shadow:0 0 24px #ff3d81} #start h1 i{color:#3fd8ff;font-style:normal;text-shadow:0 0 24px #3fd8ff}
+#start p{margin:0;font:500 clamp(13px,2vw,17px) "IBM Plex Sans KR",system-ui;color:#c9c3e6;max-width:52ch}
+#go{font:700 clamp(18px,3vw,26px) "IBM Plex Sans KR",system-ui;padding:14px 44px;border-radius:999px;border:0;background:#ff3d81;color:#1a0612;cursor:pointer;box-shadow:0 0 30px rgba(255,61,129,.6)}
+#go:focus-visible{outline:3px solid #3fd8ff;outline-offset:3px}
+.keys{display:grid;grid-template-columns:auto auto;gap:4px 16px;font:500 14px "IBM Plex Sans KR",system-ui;color:#c9c3e6;text-align:left}
+.keys kbd{font:700 13px "Chakra Petch",system-ui;background:#1e1a36;border:1px solid #3a3360;border-radius:5px;padding:1px 7px;color:#fff}
+body.mobile .keys{display:none}
+body:not(.mobile) .mhint{display:none}
 #rot{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;font:600 18px "IBM Plex Sans KR",system-ui;padding:24px;background:var(--bg)}
 @media (orientation:portrait) and (pointer:coarse){#rot{display:flex}}
 </style>
@@ -26,8 +37,15 @@ canvas{width:100%;height:100%;display:block;background:#000}
   <canvas id="c" width="1280" height="720" aria-label="NEON CLASH 게임 화면"></canvas>
   <div class="pad" id="pad">
     <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button>
-    <button id="bF" data-k="F">F</button><button id="bK" data-k="K">K</button><button id="bD" data-k="D">D</button><button id="bX" data-k="X">X</button>
+    <button id="bW" data-k="X">기술<small>필살</small></button><button id="bD" data-k="D">방어</button><button id="bS" data-k="K">킥</button><button id="bA" data-k="F">주먹</button>
   </div>
+</div>
+<div id="start">
+  <h1><b>NEON</b> <i>CLASH</i></h1>
+  <p>웹 체험판 · 1~3장 스토리와 대전</p>
+  <button id="go" type="button">게임 시작</button>
+  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
+  <p class="mhint">가로 화면으로 돌려서 하세요. 싸울 때 화면 아래에 이동 버튼과 주먹·킥·방어·기술 버튼이 나와요.</p>
 </div>
 <div id="rot">화면을 가로로 돌려 주세요<br>横向きにしてください</div>
 <script>
@@ -53,8 +71,16 @@ function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAV
 
 // ---------- input ----------
 const held = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', ArrowA: 'left', f: 'F', k: 'K', d: 'D', x: 'X', j: 'F', l: 'D', i: 'X', Enter: 'ok', ' ': 'ok', Escape: 'back', z: 'ok' };
-addEventListener('keydown', e => { const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (!k) return; e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; audio(); });
+const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', Enter: 'ok', ' ': 'ok', Escape: 'back' };
+const MOBILE = matchMedia('(pointer:coarse)').matches;
+document.body.classList.toggle('mobile', MOBILE);
+let started = false;
+document.getElementById('go').addEventListener('click', () => {
+  started = true; audio(); document.getElementById('start').remove();
+  const el = document.documentElement;
+  try { const p = el.requestFullscreen && el.requestFullscreen(); if (p && p.then) p.then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {}
+});
+addEventListener('keydown', e => { if (!started) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('go').click(); } return; } const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (!k) return; e.preventDefault(); if (!held[k]) pressed[k] = true; held[k] = true; audio(); });
 addEventListener('keyup', e => { const k = KEYMAP[e.key] || KEYMAP[e.key.toLowerCase()]; if (k) held[k] = false; });
 document.querySelectorAll('.pad button').forEach(b => {
   const k = b.dataset.k;
@@ -564,7 +590,7 @@ function drawFight() {
   g.font = `700 26px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(a.r.ko, 60, 104); g.textAlign = 'right'; g.fillText(b.r.ko, 1220, 104);
   for (let i = 0; i < 2; i++) { g.fillStyle = a.wins > i ? '#ff3d81' : '#333'; g.fillRect(470 - i * 26, 86, 18, 18); g.fillStyle = b.wins > i ? '#ff3d81' : '#333'; g.fillRect(792 + i * 26, 86, 18, 18); }
   g.font = `700 52px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
-  [[a, 60, false], [b, 920, true]].forEach(([f, x, rt]) => { bar(x, 120, 300, 14, f.gauge / 100, rt, f.gauge >= 100 ? '#ff3d81' : '#3fd8ff'); g.fillStyle = 'rgba(0,0,0,.6)'; for (let i = 1; i < 4; i++) g.fillRect(x + i * 75, 120, 2, 14); g.font = `700 14px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = rt ? 'right' : 'left'; g.fillText(f.gauge >= 100 ? 'MAX! X = 필살기' : 'X 고유기 (1/4)', rt ? x + 300 : x, 152); });
+  [[a, 60, false], [b, 920, true]].forEach(([f, x, rt]) => { bar(x, 120, 300, 14, f.gauge / 100, rt, f.gauge >= 100 ? '#ff3d81' : '#3fd8ff'); g.fillStyle = 'rgba(0,0,0,.6)'; for (let i = 1; i < 4; i++) g.fillRect(x + i * 75, 120, 2, 14); g.font = `700 14px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = rt ? 'right' : 'left'; g.fillText(f.gauge >= 100 ? (MOBILE ? 'MAX! 기술 = 필살기' : 'MAX! W = 필살기') : (MOBILE ? '기술 (1/4)' : 'W 고유기 (1/4)'), rt ? x + 300 : x, 152); });
   g.textAlign = 'center';
   if (F.phase === 'intro') { big(F.pt < 60 ? `ROUND ${F.round}` : 'FIGHT!'); }
   if (F.phase === 'end') { big(F.banner); if (F.pt > 60 && F.rw) { g.font = `700 32px ${FONT}`; g.fillStyle = '#fff'; g.fillText(`${F.rw.r.ko} WIN`, W / 2, 440); } }
@@ -574,7 +600,7 @@ function big(t) { g.font = `700 120px ${DFONT}`; g.textAlign = 'center'; g.lineW
 // ---------- story ----------
 const STORY = {
   1: { title: '1장 · 동네의 숨은 고수들', fights: [
-    { k: 'ryohei', lv: 1, pre: [['ryohei', '다이스케, 주먹 쥐는 법부터 다시 가르쳐 주마. 덤벼!'], ['ryohei', '←→ 이동 · F 주먹 · K 킥 · D 방어 · X 고유기 (게이지 1/4) · 게이지 MAX면 X로 필살기!']], post: [['ryohei', '좋아. 이 동네엔 숨은 고수들이 있다. 하나씩 만나러 가자.']] },
+    { k: 'ryohei', lv: 1, pre: [['ryohei', '다이스케, 주먹 쥐는 법부터 다시 가르쳐 주마. 덤벼!'], ['ryohei', MOBILE ? '◀▶ 이동 · 주먹 · 킥 · 방어 · 기술 버튼 (게이지 1/4) · 게이지 MAX면 기술 버튼으로 필살기!' : '←→ 이동 · A 주먹 · S 킥 · D 방어 · W 고유기 (게이지 1/4) · 게이지 MAX면 W로 필살기!']], post: [['ryohei', '좋아. 이 동네엔 숨은 고수들이 있다. 하나씩 만나러 가자.']] },
     { k: 'hattori', lv: 1.5, pre: [['hattori', '무도인으로서 당신과의 대결은 영광이요.']] },
     { k: 'noise', lv: 2, pre: [['noise', '이 지역 파칭코는 내가 꽉 쥐고 있지. 너도 덤비거라.']] },
     { k: 'shunsuke', lv: 2.5, pre: [['shunsuke', '바둑판 위엔 한 수 앞을 보는 자가 이긴다. 네 수는 다 읽혔다.']] },
@@ -636,6 +662,7 @@ function menuList(items, y0) {
   return -1;
 }
 function draw() {
+  document.body.classList.toggle('infight', scene === 'fight');
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
   if (scene === 'fight') { updateFight(); drawFight(); }
   else if (scene === 'title') {
@@ -648,7 +675,7 @@ function draw() {
     if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; }
     if (c === 2) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; save(); storyNext(); }
-    txt('←→↑↓ 이동 · F 주먹 · K 킥 · D 방어 · X 고유기/필살기 · Enter 결정', W / 2, 690, 18, '#999');
+    txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · ←→ 이동 · A 주먹 · S 킥 · D 방어 · W 기술', W / 2, 690, 18, '#999');
   }
   else if (scene === 'chtitle') {
     ctT++; const C = STORY[SAVE.ch]; g.drawImage(stage(SAVE.ch), 0, 0); g.fillStyle = `rgba(0,0,0,${.6})`; g.fillRect(0, 0, W, H);
@@ -713,7 +740,8 @@ function drawSelect() {
   if (sel.side === 0) sel.p = pick.key; else sel.o = pick.key;
   g.save(); g.fillStyle = '#ff3d81'; g.fillRect(56, 476, 188, 188); g.fillRect(W - 244, 476, 188, 188); g.restore(); portrait(sel.p, 60, 480, 180, 180); portrait(sel.o, W - 240, 480, 180, 180);
   txt(BY[sel.p].ko, 300, 560, 34, '#fff', 'left'); txt('VS', W / 2, 600, 60, '#ff3d81', 'center', DFONT); txt(BY[sel.o].ko, W - 300, 560, 34, '#fff', 'right');
-  txt(unlocked(pick.key) || sel.side === 1 ? 'Enter / F 로 결정 · Esc 뒤로' : '스토리에서 이기면 열려요', W / 2, 690, 20, '#aaa');
+  txt(unlocked(pick.key) || sel.side === 1 ? (MOBILE ? '한 번 더 누르면 결정 · 왼쪽 위 뒤로' : 'Enter / A 로 결정 · Esc 뒤로') : '스토리에서 이기면 열려요', W / 2, 690, 20, '#aaa');
+  txt('← 뒤로', 30, 50, 22, '#aaa', 'left'); if (tap && tap.x < 160 && tap.y < 80) pressed.back = true;
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
   if (take('back')) { if (sel.side === 1) sel.side = 0; else { scene = 'title'; menu = 1; } }
 }
