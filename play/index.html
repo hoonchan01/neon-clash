@@ -231,6 +231,56 @@ const FXC = {
 const fxOf = k => FXC[k] || { x: 'orb', s: 'meteor', h: 'blunt' };
 const RAINBOW = [[255, 60, 60], [255, 150, 30], [255, 230, 40], [60, 220, 80], [40, 160, 255], [80, 80, 255], [190, 70, 255]];
 const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+
+// ---------- painted effect sprites (assets/fx/<key>_x|s.webp) ----------
+const FXHAS = new Set(["daisuke_s", "daisuke_x", "haruhiko_s", "haruhiko_x", "hattori_s", "hattori_x", "hayato_s", "hayato_x", "heart_s", "heart_x", "hideo_s", "hideo_x", "hidetoshi_s", "hidetoshi_x", "hiroki_s", "hiroki_x", "hiroshi_s", "hiroshi_x", "iroha_s", "iroha_x", "kei_s", "kei_x", "kouji_s", "kouji_x", "kuma_s", "kuma_x", "marushige_s", "marushige_x", "matsuhiro_s", "matsuhiro_x", "max_s", "max_x", "noise_s", "noise_x", "ojonokata_s", "ojonokata_x", "psyco_s", "psyco_x", "ryohei_s", "ryohei_x", "shigeru_s", "shigeru_x", "shinken_s", "shinken_x", "shogun_s", "shogun_x", "shunsuke_s", "shunsuke_x"]);
+const FXOBJ = new Set(['shunsuke_x', 'shigeru_x', 'kei_x', 'heart_x', 'heart_s', 'ojonokata_x']);
+const FXI = {};
+function fxImg(n) { if (!FXHAS.has(n)) return null; if (!FXI[n]) { const i = new Image(); i.src = 'assets/fx/' + n + '.webp'; FXI[n] = i; } const i = FXI[n]; return i.complete && i.naturalWidth ? i : null; }
+FXHAS.forEach(n => fxImg(n));
+function paint(n, cx, cy, w, dir, o = {}) {
+  const im = fxImg(n); if (!im) return false;
+  const h = (o.h || w * im.naturalHeight / im.naturalWidth), ww = o.h ? o.h * im.naturalWidth / im.naturalHeight * (o.sx || 1) : w;
+  g.save(); g.globalAlpha = o.a == null ? 1 : Math.max(0, Math.min(1, o.a)); g.globalCompositeOperation = FXOBJ.has(n) ? 'source-over' : 'lighter';
+  g.translate(cx, o.floor ? FLOOR - h / 2 : cy); if (o.rot) g.rotate(o.rot); g.scale(dir < 0 ? -1 : 1, 1);
+  g.drawImage(im, -ww / 2, -h / 2, ww, h); g.restore(); return true;
+}
+const SHOT_W = { leaf: 170, water: 280, sound: 210, stones: 210, knife: 170, flask: 100, ground: 280, mirror: 150, star: 170, cards: 190, thunder: 170, twin: 260, spiral: 170, crescent: 230, fist: 240, tornado: 0, fire: 230, orb: 160 };
+const MULTI = { stones: 1, twin: 1, cards: 1 };
+let drawnBy = new Set();
+function drawShotImg(s) {
+  const n = s.by.key + '_x'; if (!FXHAS.has(n)) return false;
+  if (MULTI[s.k]) { if (drawnBy.has(s.by)) return true; drawnBy.add(s.by); }
+  const d = Math.sign(s.vx) || 1;
+  if (s.k === 'tornado') return paint(n, s.x, 0, 0, d, { h: 300, floor: true });
+  if (s.k === 'ground') return paint(n, s.x, 0, 280, d, { floor: true });
+  if (s.k === 'flask') return paint(n, s.x, s.y, 100, d, { rot: s.t * .25 });
+  return paint(n, s.x - d * (SHOT_W[s.k] || 170) * .25, s.y, SHOT_W[s.k] || 170, d);
+}
+function drawSuperImg(e) {
+  const n = e.by.key + '_s'; if (!FXHAS.has(n)) return false;
+  const t = e.t, o = e.to, f = e.by, life = superLife(e), fin = Math.min(1, t / 6), fout = Math.max(0, Math.min(1, (life - t) / 12)), a = fin * fout, oy = bodyY(o), d = e.d;
+  const pulse = 1 + Math.sin(t * .5) * .04;
+  switch (e.s) {
+    case 'meteor': { if (t < 14) { const p = t / 14; return paint(n, o.x - d * 420 * (1 - p), -80 + (oy + 140) * p, 320, d, { a: 1 }); } glowC(o.x, oy + 60, 160 + (t - 14) * 12, [255, 240, 200], e.c[1], fout); return true; }
+    case 'lightning': if (t % 9 < 6) paint(n, o.x, 0, 0, 1, { h: FLOOR + 40, floor: true, a }); return true;
+    case 'pillar': return paint(n, o.x, 0, 0, 1, { h: Math.max(1, Math.min(1, t / 8) * FLOOR), floor: true, a, sx: 1.2 });
+    case 'beam': { const x0 = e.x0 + d * 100, len = d > 0 ? W - x0 + 60 : x0 + 60; return paint(n, x0 + d * len / 2, bodyY(f), len, d, { h: 230, sx: len / (230 * 1.9), a }); }
+    case 'dragon': { const p = Math.min(1, t / 16), x1 = e.x0 + (o.x - e.x0) * p; return paint(n, (e.x0 + x1) / 2, oy, Math.max(200, Math.abs(x1 - e.x0) + 260), d, { a }); }
+    case 'cardstorm': { const p = Math.min(1, t / 14), x = e.x0 + (o.x - e.x0) * p; return paint(n, x, oy - 20, 360, d, { a }); }
+    case 'tornado': { const x = e.x0 + (o.x - e.x0) * Math.min(1, t / 14); return paint(n, x, 0, 0, d, { h: 560, floor: true, a }); }
+    case 'whirl': return paint(n, f.x, bodyY(f), 460 * pulse, d, { a, rot: t * .25 });
+    case 'shock': return paint(n, f.x, bodyY(f), 300 + t * 16, d, { a: a * Math.max(0, 1 - t / life) + .2 });
+    case 'quake': return paint(n, f.x + d * 200, 0, 700, d, { floor: true, a });
+    case 'flash': if (t >= 16) paint(n, W / 2, oy, W * 1.1, d, { a: Math.max(0, 1 - (t - 16) / 16) }); return false;
+    case 'glitch': return false;
+    case 'grid': paint(n, o.x, oy + 90, 360, 1, { a }); return false;
+    case 'explode': return paint(n, f.x + d * 170, 0, 280 + t * 10, d, { floor: true, a });
+    case 'toxic': return paint(n, o.x, 0, 300 + t * 8, d, { floor: true, a });
+    default: return paint(n, o.x, oy, 400 * pulse, d, { a });
+  }
+}
+
 const PART = [];
 function part(x, y, o) { PART.push(Object.assign({ x, y, vx: 0, vy: 0, t: 0, life: 24, r: 6, c: [255, 255, 255], g: 0, k: 'dot', rot: 0, vr: 0 }, o)); }
 function burst(x, y, c, n, sp, o) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = sp * (.4 + Math.random() * .8); part(x, y, Object.assign({ vx: Math.cos(a) * v, vy: Math.sin(a) * v, c, life: 18 + Math.random() * 14, r: 3 + Math.random() * 5 }, o)); } }
@@ -301,6 +351,7 @@ function onShotHit(s, o) {
   damage(s.by, o, s.dmg, 'special');
 }
 function drawShot(s) {
+  if (drawShotImg(s)) return;
   const [c0, c1] = s.c, d = Math.sign(s.vx) || 1, x = s.x, y = s.y, t = s.t;
   switch (s.k) {
     case 'leaf': glowC(x, y, 55, c0, c1); g.strokeStyle = rgba(c0, .8); g.lineWidth = 4; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(x, y, 30 + i * 12, t * .3 + i * 2, t * .3 + i * 2 + 2.4); g.stroke(); } break;
@@ -358,6 +409,7 @@ function stepSuper(e) {
 }
 function superLife(e) { const [h0, st, cnt] = SUPER_HITS[e.s] || [14, 0, 1]; return h0 + st * (cnt - 1) + 26; }
 function drawSuper(e) {
+  if (drawSuperImg(e)) return;
   const t = e.t, [c0, c1] = e.c, o = e.to, f = e.by, x = e.x, oy = bodyY(o), life = superLife(e), fade = Math.max(0, Math.min(1, (life - t) / 12));
   g.save(); g.globalAlpha = fade;
   switch (e.s) {
@@ -599,13 +651,14 @@ function drawFight() {
   const order = a.st === 'jab' || a.st === 'kick' || a.st === 'special' || a.st === 'super' ? [b, a] : [a, b];
   order.forEach(drawF);
   for (const e of FX) if (e.k === 'super') drawSuper(e);
-  for (const s of SHOTS) drawShot(s);
+  drawnBy = new Set(); for (const s of SHOTS) drawShot(s);
+  [a, b].forEach(f => { if (f.st === 'special' && f.dash && f.t > 16) paint(f.key + '_x', f.x + f.face * 150, bodyY(f), 300, f.face); });
   for (const e of FX) {
     if (e.k === 'spark') drawSpark(e);
     else if (e.k === 'zap' || e.k === 'glitchHit' || e.k === 'guardHit' || e.k === 'koFlash') drawHitExtra(e);
     else if (e.k === 'ring') { const p = e.t / 20; g.strokeStyle = rgba(e.c[1], 1 - p); g.lineWidth = 8 * (1 - p) + 1; g.beginPath(); g.arc(e.x, e.y, 20 + p * e.r, 0, 7); g.stroke(); }
     else if (e.k === 'cloud') { const p = e.t / 40; glowC(e.x, e.y, 90 + p * 60, [200, 255, 170], e.c, (1 - p) * .8); }
-    else if (e.k === 'blastX') { const p = e.t / 24; glowC(e.x, e.y, 60 + p * 180, e.c[0], e.c[1], 1 - p); }
+    else if (e.k === 'blastX') { const p = e.t / 24; if (!paint(e.by.key + '_x', e.x, e.y, 200 + p * 160, e.by.face, { a: 1 - p })) glowC(e.x, e.y, 60 + p * 180, e.c[0], e.c[1], 1 - p); }
   }
   drawParts();
   // super cut-in
