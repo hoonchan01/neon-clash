@@ -233,8 +233,8 @@ const RAINBOW = [[255, 60, 60], [255, 150, 30], [255, 230, 40], [60, 220, 80], [
 const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 
 // ---------- painted effect sprites (assets/fx/<key>_x|s.webp) ----------
-const FXHAS = new Set(["daisuke_s", "daisuke_x", "haruhiko_s", "haruhiko_x", "hattori_s", "hattori_x", "hayato_s", "hayato_x", "heart_s", "heart_x", "hideo_s", "hideo_x", "hidetoshi_s", "hidetoshi_x", "hiroki_s", "hiroki_x", "hiroshi_s", "hiroshi_x", "iroha_s", "iroha_x", "kei_s", "kei_x", "kouji_s", "kouji_x", "kuma_s", "kuma_x", "marushige_s", "marushige_x", "matsuhiro_s", "matsuhiro_x", "max_s", "max_x", "noise_s", "noise_x", "ojonokata_s", "ojonokata_x", "psyco_s", "psyco_x", "ryohei_s", "ryohei_x", "shigeru_s", "shigeru_x", "shinken_s", "shinken_x", "shogun_s", "shogun_x", "shunsuke_s", "shunsuke_x"]);
-const FXOBJ = new Set(['shunsuke_x', 'shigeru_x', 'kei_x', 'heart_x', 'heart_s', 'ojonokata_x']);
+const FXHAS = new Set(["andromeda_s", "andromeda_x", "daisuke_s", "daisuke_x", "haruhiko_s", "haruhiko_x", "hattori_s", "hattori_x", "hayato_s", "hayato_x", "heart_s", "heart_x", "hex_s", "hex_x", "hideo_s", "hideo_x", "hidetoshi_s", "hidetoshi_x", "hiroki_s", "hiroki_x", "hiroshi_s", "hiroshi_x", "iroha_s", "iroha_x", "kei_s", "kei_x", "kouji_s", "kouji_x", "kuma_s", "kuma_x", "mars_s", "mars_x", "marushige_s", "marushige_x", "matsuhiro_s", "matsuhiro_x", "max_s", "max_x", "noise_s", "noise_x", "ojonokata_s", "ojonokata_x", "psyco_s", "psyco_x", "rox_s", "rox_x", "ryohei_s", "ryohei_x", "shigeru_s", "shigeru_x", "shinken_s", "shinken_x", "shogun_s", "shogun_x", "shunsuke_s", "shunsuke_x", "yuki_s", "yuki_x"]);
+const FXOBJ = new Set(['shunsuke_x', 'shigeru_x', 'kei_x', 'heart_x', 'heart_s', 'ojonokata_x', 'hex_x']);
 const FXI = {};
 function fxImg(n) { if (!FXHAS.has(n)) return null; if (!FXI[n]) { const i = new Image(); i.src = 'assets/fx/' + n + '.webp'; FXI[n] = i; } const i = FXI[n]; return i.complete && i.naturalWidth ? i : null; }
 FXHAS.forEach(n => fxImg(n));
@@ -245,8 +245,8 @@ function paint(n, cx, cy, w, dir, o = {}) {
   g.translate(cx, o.floor ? FLOOR - h / 2 : cy); if (o.rot) g.rotate(o.rot); g.scale(dir < 0 ? -1 : 1, 1);
   g.drawImage(im, -ww / 2, -h / 2, ww, h); g.restore(); return true;
 }
-const SHOT_W = { leaf: 170, water: 280, sound: 210, stones: 210, knife: 170, flask: 100, ground: 280, mirror: 150, star: 170, cards: 190, thunder: 170, twin: 260, spiral: 170, crescent: 230, fist: 240, tornado: 0, fire: 230, orb: 160 };
-const MULTI = { stones: 1, twin: 1, cards: 1 };
+const SHOT_W = { leaf: 170, water: 280, sound: 210, stones: 210, knife: 170, flask: 100, ground: 280, mirror: 150, star: 170, cards: 190, thunder: 170, twin: 260, spiral: 170, crescent: 230, fist: 240, tornado: 0, fire: 230, orb: 160, needle: 260, wave: 220, rainbow: 300, starbomb: 110 };
+const MULTI = { stones: 1, twin: 1, cards: 1, rainbow: 1 };
 let drawnBy = new Set();
 function drawShotImg(s) {
   const n = s.by.key + '_x'; if (!FXHAS.has(n)) return false;
@@ -254,7 +254,7 @@ function drawShotImg(s) {
   const d = Math.sign(s.vx) || 1;
   if (s.k === 'tornado') return paint(n, s.x, 0, 0, d, { h: 300, floor: true });
   if (s.k === 'ground') return paint(n, s.x, 0, 280, d, { floor: true });
-  if (s.k === 'flask') return paint(n, s.x, s.y, 100, d, { rot: s.t * .25 });
+  if (s.k === 'flask' || s.k === 'starbomb') return paint(n, s.x, s.y, 100, d, { rot: s.t * .25 });
   return paint(n, s.x - d * (SHOT_W[s.k] || 170) * .25, s.y, SHOT_W[s.k] || 170, d);
 }
 function drawSuperImg(e) {
@@ -273,7 +273,7 @@ function drawSuperImg(e) {
     case 'shock': return paint(n, f.x, bodyY(f), 300 + t * 16, d, { a: a * Math.max(0, 1 - t / life) + .2 });
     case 'quake': return paint(n, f.x + d * 200, 0, 700, d, { floor: true, a });
     case 'flash': if (t >= 16) paint(n, W / 2, oy, W * 1.1, d, { a: Math.max(0, 1 - (t - 16) / 16) }); return false;
-    case 'glitch': return false;
+    case 'glitch': if (t % 7 < 5) paint(n, o.x, oy, 380 * pulse, d, { a: a * .9 }); return false;
     case 'grid': paint(n, o.x, oy + 90, 360, 1, { a }); return false;
     case 'explode': return paint(n, f.x + d * 170, 0, 280 + t * 10, d, { floor: true, a });
     case 'toxic': return paint(n, o.x, 0, 300 + t * 8, d, { floor: true, a });
