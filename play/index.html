@@ -42,6 +42,9 @@ const FONT = '"IBM Plex Sans KR","Chakra Petch",system-ui,sans-serif', DFONT = '
 const IMG = {};
 function img(key) { if (!IMG[key]) { const i = new Image(); i.src = 'assets/' + key + '.webp'; IMG[key] = i; } return IMG[key]; }
 R.forEach(r => img(r.key));
+const FACE = {};
+function faceImg(k) { if (!FACE[k]) { const i = new Image(); i.src = 'assets/face/' + k + '.webp'; FACE[k] = i; } return FACE[k]; }
+function portrait(k, x, y, w, h) { const i = faceImg(k); if (!i.complete || !i.naturalWidth) return; g.drawImage(i, x, y, w, h); }
 
 // ---------- save ----------
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
@@ -652,12 +655,12 @@ function drawSelect() {
     const x = x0 + (i % cols) * cw, y = y0 + Math.floor(i / cols) * ch, ok = sel.side === 1 || unlocked(r.key);
     if (tap && tap.x > x && tap.x < x + cw - 8 && tap.y > y && tap.y < y + ch - 8) { if (cur === i) pressed.ok = true; cur = i; }
     g.fillStyle = i === cur ? '#ff3d81' : '#1c1830'; g.fillRect(x, y, cw - 8, ch - 8);
-    g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 14, ch - 14); g.clip(); if (ok) face(r.key, x + 3, y + 3, (ch - 14) * 1.15); else txt('?', x + cw / 2 - 4, y + ch / 2 + 14, 40, '#555'); g.restore();
+    g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 14, ch - 14); g.clip(); if (ok) portrait(r.key, x + 3, y + 3, cw - 14, ch - 14); else txt('?', x + cw / 2 - 4, y + ch / 2 + 14, 40, '#555'); g.restore();
     if (!r.real) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y + ch - 30, cw - 8, 22); txt('모션 준비중', x + cw / 2 - 4, y + ch - 14, 13, '#ffd23f'); }
   });
   const pick = list[cur];
   if (sel.side === 0) sel.p = pick.key; else sel.o = pick.key;
-  face(sel.p, 60, 470, 220); face(sel.o, W - 60 - 220 * 0.9, 470, 220, true);
+  g.save(); g.fillStyle = '#ff3d81'; g.fillRect(56, 476, 188, 188); g.fillRect(W - 244, 476, 188, 188); g.restore(); portrait(sel.p, 60, 480, 180, 180); portrait(sel.o, W - 240, 480, 180, 180);
   txt(BY[sel.p].ko, 300, 560, 34, '#fff', 'left'); txt('VS', W / 2, 600, 60, '#ff3d81', 'center', DFONT); txt(BY[sel.o].ko, W - 300, 560, 34, '#fff', 'right');
   txt(unlocked(pick.key) || sel.side === 1 ? 'Enter / F 로 결정 · Esc 뒤로' : '스토리에서 이기면 열려요', W / 2, 690, 20, '#aaa');
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
