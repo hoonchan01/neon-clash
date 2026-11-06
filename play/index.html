@@ -18,6 +18,8 @@ body.mobile.infight .pad{display:block}
 #br{left:22%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
 #bu{left:12%;bottom:33%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
 #bdn{left:12%;bottom:2%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
+#bE{right:11%;bottom:62%;width:8%;aspect-ratio:1;border-color:#ff8a3d;font-size:clamp(10px,2vh,16px);display:none}
+body.awkok #bE{display:flex}
 #bI{right:2%;bottom:62%;width:8%;aspect-ratio:1;border-color:#ffd23f;font-size:clamp(10px,2vh,16px)}
 #bW{right:13%;bottom:40%;width:11%;aspect-ratio:1;border-color:#ff3d81}
 #bD{right:25%;bottom:22%;width:11%;aspect-ratio:1;border-color:#3fd8ff}
@@ -62,7 +64,7 @@ body:not(.mobile) .mhint{display:none}
 <div id="wrap">
   <canvas id="c" width="1280" height="720" aria-label="NEON CLASH 게임 화면"></canvas>
   <div class="pad" id="pad">
-    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button><button id="bu" data-k="up" aria-label="점프">▲</button><button id="bdn" data-k="down" aria-label="숙이기">▼</button><button id="bI" data-k="I">아이템</button>
+    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button><button id="bu" data-k="up" aria-label="점프">▲</button><button id="bdn" data-k="down" aria-label="숙이기">▼</button><button id="bI" data-k="I">아이템</button><button id="bE" data-k="E">각성</button>
     <button id="bW" data-k="X">기술<small>필살</small></button><button id="bD" data-k="D">방어</button><button id="bS" data-k="K">킥</button><button id="bA" data-k="F">주먹</button>
   </div>
 </div>
@@ -73,7 +75,7 @@ body:not(.mobile) .mhint{display:none}
   <h1><b>NEON</b> <i>CLASH</i></h1>
   <p>웹 체험판 · 1~3장 스토리와 대전 · 코인 모아서 아이템과 단련</p>
   <button id="go" type="button">게임 시작</button>
-  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>↑</kbd></span><span>점프 (점프 중 A·S 점프 공격)</span><span><kbd>↓</kbd></span><span>숙이기 (↓+A·S 하단 킥 · ↓+D 앉아 방어)</span><span><kbd>Q</kbd></span><span>아이템 사용 (라운드마다 1번)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
+  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>↑</kbd></span><span>점프 (점프 중 A·S 점프 공격)</span><span><kbd>↓</kbd></span><span>숙이기 (↓+A·S 하단 킥 · ↓+D 앉아 방어)</span><span><kbd>Q</kbd></span><span>아이템 사용 (라운드마다 1번)</span><span><kbd>E</kbd></span><span>각성 (해금한 캐릭터 · 게이지 절반 · 라운드마다 1번)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
   <p class="mhint">가로 화면으로 돌려서 하세요. 싸울 때 화면 아래에 이동 버튼과 주먹·킥·방어·기술 버튼이 나와요.</p>
 </div>
 <div id="rot">화면을 가로로 돌려 주세요<br>横向きにしてください</div>
@@ -97,7 +99,7 @@ function portrait(k, x, y, w, h) { const i = faceImg(k); if (!i.complete || !i.n
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
 SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0;
 SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {};
-function fixSave() { SAVE.coin = SAVE.coin || 0; SAVE.inv = SAVE.inv || {}; SAVE.up = SAVE.up || {}; if (SAVE.equip === undefined) SAVE.equip = 'potion'; }
+function fixSave() { SAVE.coin = SAVE.coin || 0; SAVE.inv = SAVE.inv || {}; SAVE.up = SAVE.up || {}; if (SAVE.equip === undefined) SAVE.equip = 'potion'; SAVE.shard = SAVE.shard || 0; SAVE.awk = SAVE.awk || {}; }
 fixSave();
 function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} if (window.Cloud && Cloud.sync) Cloud.sync(SAVE); }
 window.SAVE_REF = () => SAVE;
@@ -112,7 +114,7 @@ function resetRun() { SAVE.run = {}; }
 
 // ---------- input ----------
 const held = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', q: 'I', Enter: 'ok', ' ': 'ok', Escape: 'back' };
+const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', q: 'I', e: 'E', Enter: 'ok', ' ': 'ok', Escape: 'back' };
 const MOBILE = matchMedia('(pointer:coarse)').matches;
 document.body.classList.toggle('mobile', MOBILE);
 let started = false;
@@ -184,12 +186,26 @@ const BGI = {}; let bgKey = null;
 function bgImg(k) { if (!k) return null; if (!(k in BGI)) { const i = new Image(); i.onerror = () => { BGI[k] = null; }; i.src = 'assets/bg/' + k + '.webp'; BGI[k] = i; } const i = BGI[k]; return i && i.complete && i.naturalWidth ? i : null; }
 function bgDraw(ch, k) { const i = bgImg(k); if (i) { g.drawImage(i, 0, 0, W, H); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); } else g.drawImage(stage(ch), 0, 0); }
 
+// ---------- awakening (각성): 6 fighters, unlocked with 각성의 조각 ----------
+const AWK = {
+  daisuke: { S: '오렌지 인피니티', c: '#ff8c14' }, ryohei: { S: '녹룡 대선풍', c: '#46e664' }, hiroki: { S: '제독참·흑룡', c: '#3264ff' },
+  max: { S: '뇌신 천붕', c: '#ffe128' }, shogun: { S: '천하무쌍 일섬', c: '#eb2323' }, rox: { S: '칠성 뇌폭', c: '#5ad7ff' } };
+const AWK_COST = 5, AWK_TIME = 900, SHARD_PRICE = 300;
+const AURA = {}; Object.keys(AWK).forEach(k => { const i = new Image(); i.src = 'assets/fx/aura/' + k + '.webp'; AURA[k] = i; });
+function canAwaken(f) { return AWK[f.key] && f.awkOK && !f.awkUsed && !f.awk && f.gauge >= 50 && F && F.phase === 'fight'; }
+function awaken(f) {
+  if (!canAwaken(f)) { if (!f.cpu && AWK[f.key] && f.awkOK) toast(f.awkUsed ? '각성은 라운드마다 1번이에요' : '게이지가 절반 이상 있어야 각성할 수 있어요'); return; }
+  f.awk = AWK_TIME; f.awkUsed = 1; f.gauge -= 50; f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .3));
+  F.freeze = 50; F.awkCut = 50; F.awkBy = f; sfx('super');;
+}
+function shardGain(n, why) { SAVE.shard = (SAVE.shard || 0) + n; toast(`각성의 조각 +${n} · ${why}`); }
+
 // ---------- fighter ----------
 const FR = { // frames: [startup, active, recovery], damage, reach
   jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185], lowkick: [7, 5, 13, 55, 175] };
 const LOWST = { crouch: 1, cguard: 1, lowkick: 1, land: 1 };
 function mk(key, x, face, isCpu, lvl) {
-  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, maxhp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, vy: 0, jvx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1, gMul: 1, buff: {}, itemUsed: 0 };
+  return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, maxhp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, vy: 0, jvx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1, gMul: 1, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0, awkOK: false };
 }
 function frame(f) {
   const t = f.t;
@@ -213,6 +229,12 @@ function frame(f) {
   return 'idle1';
 }
 function drawF(f) {
+  if (!f.awk) return drawF0(f);
+  const A = AWK[f.key], au = AURA[f.key], pulse = 1 + Math.sin(f.t * .25) * .05;
+  if (au && au.complete && au.naturalWidth) { const w = 330 * pulse, h = w * au.naturalHeight / au.naturalWidth; g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .75; g.translate(f.x, FLOOR - f.lift - h / 2 + 20); g.scale(f.face, 1); g.drawImage(au, -w / 2, -h / 2, w, h); g.restore(); }
+  g.save(); g.filter = `drop-shadow(0 0 10px ${A.c}) saturate(1.25)`; drawF0(f); g.restore();
+}
+function drawF0(f) {
   const r = f.r, name = frame(f); let m = r.f[name], syn = null;
   const rp = realPose(r.key, name);
   if (rp) { const [pi, [pw, ph, pax, pay]] = rp; g.save(); const s0 = Math.max(.4, 1 - f.lift / 400); g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90 * s0, 14 * s0, 0, 0, 7); g.fill();
@@ -433,7 +455,7 @@ const SUPER_HITS = { // [first hit frame, step, count, total damage]
   starrain: [12, 5, 6, 280], rope: [16, 14, 2, 280], dragon: [16, 6, 4, 280], shock: [4, 8, 4, 280], toxic: [10, 8, 4, 280], galaxy: [10, 6, 5, 280],
 };
 function launchSuper(f, o) {
-  const k = fxOf(f.key).s, e = { k: 'super', s: k, by: f, to: o, t: 0, c: f.r.col, x: o.x, x0: f.x, d: f.face, n: 0 };
+  const k = fxOf(f.key).s, e = { k: 'super', s: k, by: f, to: o, t: 0, c: f.r.col, x: o.x, x0: f.x, d: f.face, n: 0, awk: f.superAwk };
   if (k === 'rush') { f.x = o.x - f.face * 130; }
   if (k === 'whirl') { f.x = o.x - f.face * 170; }
   FX.push(e);
@@ -454,10 +476,11 @@ function stepSuper(e) {
   if (e.s === 'rush') { f.x = o.x - f.face * 130; f.flash = 2; burst(hx - f.face * 30, hy + (Math.random() - .5) * 120, e.s === 'rush' && f.key === 'mars' ? RAINBOW[e.n % 7] : e.c[1], 14, 9); }
   if (e.s === 'starrain' || e.s === 'galaxy') burst(hx + (Math.random() - .5) * 100, hy, e.c[1], 16, 9, { k: 'star' });
   if (e.s === 'hearts') burst(hx, hy, [255, 120, 180], 12, 8, { k: 'heart', r: 10 });
-  if (inRange && o.st !== 'ko') damage(f, o, Math.round(tot / cnt), cnt > 1 ? 'superm' : 'super');
+  if (inRange && o.st !== 'ko') damage(f, o, Math.round(tot / cnt * (e.awk ? 1.6 : 1)), cnt > 1 ? 'superm' : 'super');
 }
 function superLife(e) { const [h0, st, cnt] = SUPER_HITS[e.s] || [14, 0, 1]; return h0 + st * (cnt - 1) + 26; }
 function drawSuper(e) {
+  if (e.awk) { const cx = e.to.x, cy = bodyY(e.to); g.save(); g.translate(cx, cy); g.scale(1.35, 1.35); g.translate(-cx, -cy); drawSuperImg(e); g.restore(); return; }
   drawSuperImg(e); return; // painted sprites only; the old code-drawn version below is unused
   const t = e.t, [c0, c1] = e.c, o = e.to, f = e.by, x = e.x, oy = bodyY(o), life = superLife(e), fade = Math.max(0, Math.min(1, (life - t) / 12));
   g.save(); g.globalAlpha = fade;
@@ -553,13 +576,14 @@ function startFight(p1, p2, opts) {
   const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
   b.dmgMul = opts.dmg || 1;
   const U = SAVE.up; a.maxhp = a.hp = Math.round(1000 * (1 + .05 * (U.hp || 0))); a.dmgMul = 1 + .05 * (U.atk || 0); a.gMul = 1 + .1 * (U.gauge || 0); bgKey = p2;
+  a.awkOK = !!(AWK[p1] && SAVE.awk[p1]); b.awkOK = !!(AWK[p2] && (opts.awkBoss || !opts.story));
   F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
   SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
 function resetRound() {
-  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0 });
-  F.timer = 3600; F.cut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
+  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 });
+  F.timer = 3600; F.cut = 0; F.awkCut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
 function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard' || f.st === 'crouch' || f.st === 'cguard'; }
 function act(f, o, cmd, down) {
@@ -568,7 +592,7 @@ function act(f, o, cmd, down) {
   if (cmd === 'F') { f.st = 'jab'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'K') { f.st = 'kick'; f.t = 0; f.hitDone = false; }
   else if (cmd === 'X') {
-    if (f.gauge >= 100) { f.st = 'super'; f.t = 0; f.hitDone = false; f.gauge = 0; F.freeze = 70; F.cut = 70; F.superBy = f; sfx('super'); }
+    if (f.gauge >= 100) { f.st = 'super'; f.t = 0; f.hitDone = false; f.gauge = 0; F.freeze = 70; F.cut = 70; F.superBy = f; F.superAwk = !!f.awk; f.superAwk = !!f.awk; sfx('super'); }
     else if (f.gauge >= 25) { f.st = 'special'; f.t = 0; f.hitDone = false; f.gauge -= 25; }
   }
 }
@@ -576,7 +600,7 @@ function damage(att, def, amt, kind) {
   if (def.st === 'ko') return;
   const low = kind === 'low', air = kind === 'air';
   const guarding = ((def.st === 'guard' && !low) || (def.st === 'cguard' && !air)) && kind !== 'super-unblock';
-  let d = amt * att.dmgMul * (att.buff.rage > 0 ? 1.3 : 1) * (def.buff.charm > 0 ? .6 : 1);
+  let d = amt * att.dmgMul * (att.buff.rage > 0 ? 1.3 : 1) * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
   // looks affinity
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
@@ -584,7 +608,7 @@ function damage(att, def, amt, kind) {
   if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def, kind === 'super' || kind === 'superm'); }
   else {
     def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
-    if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
+    if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul * (att.awk ? 1.5 : 1)); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
     sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, low || air ? 'kick' : kind, amt); if (low) hitSprite('c_lowdust', def.x - def.face * 20, FLOOR - 40, 260, att.face, 16);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
   }
@@ -595,6 +619,7 @@ function spark(x, y, c, r, h, d) { FX.push({ k: 'spark', x, y, c, r, t: 0, h: h 
 function stepF(f, o) {
   f.t++;
   for (const k in f.buff) if (f.buff[k] > 0) f.buff[k]--;
+  if (f.awk > 0) f.awk--;
   const dist = Math.abs(o.x - f.x), inFront = Math.sign(o.x - f.x) === f.face;
   if (f.st === 'jab' || f.st === 'kick') {
     const [su, ac, re, dmg, reach] = FR[f.st];
@@ -634,6 +659,7 @@ function control(f, o) {
     if (held.left) move = -1; if (held.right) move = 1; guard = held.D; down = held.down; jump = take('up');
     for (const k of ['F', 'K', 'X']) if (take(k)) cmd = k;
     if (take('I')) useItem(f);
+    if (take('E')) awaken(f);
   } else {
     const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl;
     if (--A.t <= 0) {
@@ -645,6 +671,7 @@ function control(f, o) {
       else if (o.st === 'guard' && d < 250 && roll < .3) A.act = 'low';
       else if (d > 250 && d < 430 && roll < .1 + lv * .015) A.act = 'jumpin';
       else if (threat && roll < .12 + lv * .07) A.act = 'guard';
+      else if (canAwaken(f) && f.hp < f.maxhp * .4) { awaken(f); A.act = 'idle'; }
       else if (f.gauge >= 100 && roll < .5) A.act = 'X';
       else if (d > 420 && f.gauge >= 25 && roll < .25 + lv * .03) A.act = 'X';
       else if (d > 230 + f.r.reach) A.act = roll < .85 ? 'fwd' : 'idle';
@@ -675,6 +702,7 @@ function updateFight() {
   if (F.phase === 'intro') { if (F.pt > 100) { F.phase = 'fight'; F.pt = 0; } return; }
   if (F.phase === 'end') { stepF(a, b); stepF(b, a); if (F.pt > 170 || (F.pt > 40 && (take('ok') || take('F')))) endRound(); return; }
   if (F.cut > 0) F.cut--;
+  if (F.awkCut > 0) F.awkCut--;
   if (F.freeze > 0) { F.freeze--; return; }
   control(a, b); control(b, a); stepF(a, b); stepF(b, a); push(a, b);
   for (const s of SHOTS) { stepShot(s); const o = s.by === a ? b : a; if (!s.dead && shotHit(s, o)) onShotHit(s, o); }
@@ -725,16 +753,24 @@ function drawFight() {
   // super cut-in
   if (F.superBy && F.cut > 0) {
     const f = F.superBy, m = f.r.f.cutin, k = 70 - F.cut, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
-    g.fillStyle = 'rgba(10,5,20,.85)'; g.fillRect(0, 230, W, 300);
+    g.fillStyle = F.superAwk ? 'rgba(40,10,0,.9)' : 'rgba(10,5,20,.85)'; g.fillRect(0, 230, W, 300); if (F.superAwk) { g.fillStyle = AWK[f.key].c; g.fillRect(0, 226, W, 6); g.fillRect(0, 528, W, 6); }
     const ci = POSE[f.key] && pimg('assets/cut/' + f.key + '.webp');
     if (ci) { const cw = POSE[f.key].cut[0], cx = f === a ? Math.max(W - cw - 60, W - k * 60) : Math.min(60, -cw + k * 60); g.save(); g.beginPath(); g.rect(0, 230, W, 300); g.clip(); g.drawImage(ci, cx, 230, cw, 300); g.restore(); }
     else if (m && img(f.key).complete) g.drawImage(img(f.key), m[0], m[1], m[2], m[3], sx, 230, m[2] * 1.0, 300);
-    g.font = `700 54px ${FONT}`; g.fillStyle = '#ffd23f'; g.textAlign = f === a ? 'left' : 'right'; g.fillText(f.r.S, f === a ? 80 : W - 80, 500);
+    g.font = `700 54px ${FONT}`; g.fillStyle = '#ffd23f'; g.textAlign = f === a ? 'left' : 'right'; g.fillText(F.superAwk ? AWK[f.key].S : f.r.S, f === a ? 80 : W - 80, 500); if (F.superAwk) { g.font = `700 26px ${FONT}`; g.fillStyle = AWK[f.key].c; g.fillText('각성 필살기', f === a ? 80 : W - 80, 440); }
   }
+  if (F.awkBy && F.awkCut > 0) { const f = F.awkBy, A = AWK[f.key], p = 1 - F.awkCut / 50;
+    g.fillStyle = `rgba(0,0,0,${.55 * Math.min(1, F.awkCut / 10)})`; g.fillRect(0, 0, W, H);
+    const ci = POSE[f.key] && pimg('assets/cut/' + f.key + '.webp'); if (ci) { const cw = POSE[f.key].cut[0] * 1.4; g.save(); g.globalAlpha = Math.min(1, F.awkCut / 10); g.filter = `drop-shadow(0 0 24px ${A.c})`; g.drawImage(ci, W / 2 - cw / 2, 150 - p * 20, cw, 420); g.restore(); }
+    g.font = `700 ${110 + p * 30}px ${FONT}`; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#1a0612'; g.strokeText('각성!', W / 2, 640); g.fillStyle = A.c; g.fillText('각성!', W / 2, 640); }
   g.restore();
   // HUD
   bar(60, 40, 500, 30, a.hp / a.maxhp, true, '#ffd23f'); bar(720, 40, 500, 30, b.hp / b.maxhp, false, '#ffd23f');
   drawItemHud(a);
+  [[a, 60, 'left'], [b, 1220, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
+    g.fillStyle = f.awk ? AWK[f.key].c : f.awkUsed ? '#6c6690' : f.gauge >= 50 ? AWK[f.key].c : '#9a93bd';
+    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', x, f === a ? 222 : 178); });
+  document.body.classList.toggle('awkok', !!(a.awkOK && !a.awkUsed));
   g.font = `700 26px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(a.r.ko, 60, 104); g.textAlign = 'right'; g.fillText(b.r.ko, 1220, 104);
   for (let i = 0; i < 2; i++) { g.fillStyle = a.wins > i ? '#ff3d81' : '#333'; g.fillRect(470 - i * 26, 86, 18, 18); g.fillStyle = b.wins > i ? '#ff3d81' : '#333'; g.fillRect(792 + i * 26, 86, 18, 18); }
   g.font = `700 52px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
@@ -759,7 +795,7 @@ const STORY = {
     { k: 'haruhiko', lv: 4, pre: [['haruhiko', '셔터보다 빠른 주먹을 보여 주지. 전직 챔피언의 펀치다.']] },
     { k: 'heart', lv: 4, pre: [['heart', '자, 카드를 한 장 골라 봐. 어느 걸 골라도 네 패배야.']] },
     { k: 'max', lv: 4.5, pre: [['max', '너의 힘, 흥미롭군. 본국 연구소에 보고할 가치가 있겠어.']] },
-    { k: 'hiroki', lv: 5, boss: 1, pre: [['ryohei', '히로키…! 다이스케, 저 녀석이 내 숙적이다.'], ['hiroki', '료헤이의 제자라고? 그 녀석이 지키는 동네, 오늘 내가 산다.']], post: [['ryohei', '잘했다. 하지만 히로키가 이대로 물러설 놈이 아니지.']] } ] },
+    { k: 'hiroki', lv: 5, boss: 1, pre: [['ryohei', '히로키…! 다이스케, 저 녀석이 내 숙적이다.'], ['hiroki', '료헤이의 제자라고? 그 녀석이 지키는 동네, 오늘 내가 산다.']], post: [['ryohei', '잘했다. 하지만 히로키가 이대로 물러설 놈이 아니지.'], ['ryohei', '방금 히로키가 쓴 그 힘… 각성이다. 강한 놈을 이기면 빛나는 각성의 조각이 나온다. 다섯 개 모아서 상점에서 네 힘을 깨워라.']] } ] },
   2: { title: '2장 · 과거의 성', dmg: 1.15, intro: [['kei', '타임머신 완성이다! 악의 뿌리는 과거에 있다. 그 조직을 지금 뽑아 버리자.'], ['ryohei', '과거라… 좋다, 다이스케. 가자.']], fights: [
     { k: 'hiroshi', lv: 5, pre: [['hiroshi', '밭을 짓밟는 자는 이 도끼가 용서치 않는다!']] },
     { k: 'hayato', lv: 5, pre: [['hayato', '이 창끝을 넘어야 성에 닿을 수 있다.']] },
@@ -828,7 +864,7 @@ function draw() {
     if (c === 3) openRank('total');
     if (c === 4) openAcct();
     if (c === 5) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
-    txt(`🪙 ${SAVE.coin}`, 20, 34, 20, '#ffd23f', 'left'); txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
+    txt(`🪙 ${SAVE.coin}   ◆ 조각 ${SAVE.shard || 0}`, 20, 34, 20, '#ffd23f', 'left'); txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
     txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · 싸울 때 ←→ 이동 ↑ 점프 ↓ 숙이기 · A 주먹 · S 킥 · D 방어 · W 기술 · Q 아이템', W / 2, 690, 18, '#999');
   }
   else if (scene === 'chtitle') {
@@ -857,12 +893,13 @@ function draw() {
 function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; bgKey = fi.k; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
 function storyNextGo() { SAVE.introSeen = SAVE.ch; save(); const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage]; dlg = null; startFightStory(C, fi); }
 function startFightStory(C, fi) {
-  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, onEnd: won => {
+  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, awkBoss: !!(fi.boss && AWK[fi.k]), onEnd: won => {
     if (won) {
       const first = !SAVE.beat[fi.k], base = Math.round(30 + fi.lv * 14) * (fi.boss ? 2 : 1), hpB = Math.round(F.a.hp / F.a.maxhp * 30);
       reward(base + hpB, `${BY[fi.k].ko} 격파`); if (first) reward(50, '첫 승리 보너스');
+      if (fi.boss) shardGain(2, '보스 격파'); else if (Math.random() < .3) shardGain(1, `${BY[fi.k].ko}에게서 발견`);
       SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
-      const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
+      const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); shardGain(1, `${SAVE.ch}장 클리어`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
       save(); if (fi.post) say(fi.post, after); else after();
     } else { reward(10, '위로금'); save(); scene = 'lose'; ctT = 0; menu = 0; }
   } });
@@ -902,7 +939,7 @@ function drawSelect() {
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
   if (take('back')) { if (sel.side === 1) sel.side = 0; else { scene = 'title'; menu = 1; } }
 }
-function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; reward(w ? 25 : 5, w ? '대전 승리' : '대전 참가'); save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
+function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; reward(w ? 25 : 5, w ? '대전 승리' : '대전 참가'); if (w && Math.random() < .15) shardGain(1, '대전 승리'); save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
 
 // ---------- coins, items, training ----------
@@ -951,11 +988,17 @@ function openShop() {
   box.innerHTML = `<h2 id="shopT">상점</h2><p>보유 코인 <span class="coin">${SAVE.coin}</span> · 스토리와 대전에서 이기면 모여요</p>
     <h3>전투 아이템</h3><p>장착한 아이템을 싸울 때 ${MOBILE ? '아이템 버튼' : 'Q 키'}로 써요. 라운드마다 1번.</p>${items}
     <h3>단련 (영구)</h3><p>내 캐릭터에 계속 적용돼요.</p>${ups}
+    <h3>각성</h3><p>각성의 조각 <span class="coin">◆ ${SAVE.shard || 0}</span> · 보스를 이기면 2개, 장을 깨면 1개, 일반 상대에게서도 가끔 나와요. 조각 ${AWK_COST}개로 캐릭터 하나를 해금해요.</p>
+    <p>해금한 캐릭터로 싸울 때 게이지가 절반 이상이면 ${MOBILE ? '각성 버튼' : 'E 키'}로 각성 (라운드마다 1번, 15초): 체력 30% 회복, 주는 피해 +30%, 받는 피해 -20%, 게이지 빨리 참, 필살기가 각성 필살기로 바뀌어요.</p>
+    <div class="it"><div><b>각성의 조각 1개</b><small>코인으로 사기</small></div><button type="button" id="buyShard" ${SAVE.coin < SHARD_PRICE ? 'disabled' : ''}>구매 ${SHARD_PRICE}</button></div>
+    ${Object.entries(AWK).map(([k, A]) => `<div class="it"><div><b style="color:${A.c}">${BY[k].ko} 각성</b><small>각성 필살기 · ${A.S}</small></div>${SAVE.awk[k] ? '<button type="button" disabled>해금됨</button>' : `<button type="button" data-awk="${k}" ${(SAVE.shard || 0) < AWK_COST ? 'disabled' : ''}>해금 ◆${AWK_COST}</button>`}</div>`).join('')}
     <p class="msg" id="sMsg" role="status"></p><div class="row"><button type="button" data-close>닫기</button></div>`;
   const msg = t => { const m = $('sMsg'); if (m) m.textContent = t; };
   box.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const k = b.dataset.buy, it = ITEMS[k]; if (SAVE.coin < it.price) return; SAVE.coin -= it.price; SAVE.inv[k] = (SAVE.inv[k] || 0) + 1; if (!ITEMS[SAVE.equip]) SAVE.equip = k; save(); openShop(); msg(`${it.ko}을(를) 샀어요`); });
   box.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { SAVE.equip = b.dataset.eq; save(); openShop(); msg(`${ITEMS[SAVE.equip].ko} 장착`); });
   box.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const k = b.dataset.up, lv = SAVE.up[k] || 0, c = upCost(lv); if (lv >= UPMAX || SAVE.coin < c) return; SAVE.coin -= c; SAVE.up[k] = lv + 1; save(); openShop(); msg(`${UPS[k].ko} Lv ${lv + 1}`); });
+  const bs = $('buyShard'); if (bs) bs.onclick = () => { if (SAVE.coin < SHARD_PRICE) return; SAVE.coin -= SHARD_PRICE; SAVE.shard = (SAVE.shard || 0) + 1; save(); openShop(); msg('각성의 조각을 샀어요'); };
+  box.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { const k = b.dataset.awk; if ((SAVE.shard || 0) < AWK_COST) return; SAVE.shard -= AWK_COST; SAVE.awk[k] = 1; save(); openShop(); msg(`${BY[k].ko} 각성 해금!`); });
   box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
 }
 
