@@ -11,9 +11,9 @@ body{display:flex;align-items:center;justify-content:center;padding-left:max(0px
 canvas{width:100%;height:100%;display:block;background:#000}
 .pad{position:absolute;inset:0;pointer-events:none;display:none}
 body.mobile.infight .pad{display:block}
-.pad button{pointer-events:auto;position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(10,8,20,.5);color:#fff;font:700 clamp(12px,2.6vh,22px) "IBM Plex Sans KR",system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none;-webkit-tap-highlight-color:transparent}
+.pad button{pointer-events:auto;position:absolute;border-radius:50%;border:0;background:url(assets/ui/f_touch.webp) center/100% 100% no-repeat;text-shadow:0 1px 3px #000;color:#fff;font:700 clamp(12px,2.6vh,22px) "IBM Plex Sans KR",system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none;-webkit-tap-highlight-color:transparent}
 .pad button small{font:600 clamp(9px,1.8vh,14px) "Chakra Petch",system-ui;opacity:.7}
-.pad button.on{background:rgba(255,61,129,.65);border-color:#fff}
+.pad button.on{filter:brightness(1.6) saturate(1.3);transform:scale(.94)}
 #bl{left:2%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
 #br{left:22%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
 #bu{left:12%;bottom:33%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
@@ -794,7 +794,28 @@ function glow(x, y, rad, col) {
   gr.addColorStop(0, `rgba(${c1},1)`); gr.addColorStop(.35, `rgba(${c2},.9)`); gr.addColorStop(1, `rgba(${c2},0)`);
   g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
 }
+const HPC = document.createElement('canvas'), HPG = HPC.getContext('2d'); HPC.width = 1252; HPC.height = 328;
 function hpBar(f, x, right) {
+  const v = Math.max(0, f.hp / f.maxhp), lag = Math.max(v, (f.hpLag || f.hp) / f.maxhp); f.hpLag = Math.max(f.hp, (f.hpLag || f.hp) - f.maxhp * .006);
+  const fr = uiImg('f_hp'), mk = uiImg('f_hpmask'), S = .447, fw = 1252 * S, fx = right ? 1260 - fw : 20, fy = 6;
+  if (!fr || !mk) return hpBar0(f, x, right);
+  // fill drawn in frame space, cut to the painted window
+  const X0 = 282, X1 = 1176, q = HPG; q.setTransform(1, 0, 0, 1, 0, 0); q.globalCompositeOperation = 'source-over'; q.clearRect(0, 0, 1252, 328);
+  q.fillStyle = '#2a0f1e'; q.fillRect(X0, 40, X1 - X0, 200);
+  q.fillStyle = '#ff3d6e'; q.fillRect(X0, 40, (X1 - X0) * lag, 200);
+  const low = v < .3, gr = q.createLinearGradient(0, 60, 0, 240); gr.addColorStop(0, low ? '#ffb0a0' : '#fff6b0'); gr.addColorStop(.5, low ? '#ff5a3a' : '#ffd23f'); gr.addColorStop(1, low ? '#b0201a' : '#ff9a1f');
+  q.fillStyle = gr; q.fillRect(X0, 40, (X1 - X0) * v, 200);
+  q.globalCompositeOperation = 'destination-in'; q.drawImage(mk, 0, 0); q.globalCompositeOperation = 'source-over'; q.drawImage(fr, 0, 0, 1252, 328);
+  g.save(); if (right) { g.translate(fx + fw, fy); g.scale(-1, 1); } else g.translate(fx, fy); g.drawImage(HPC, 0, 0, fw, 328 * S); g.restore();
+  // portrait in the round socket
+  const cx = right ? fx + fw - 136 * S : fx + 136 * S, cy = fy + 188 * S, r = 92 * S, im = faceImg(f.key);
+  g.save(); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.clip(); g.fillStyle = '#16122a'; g.fill(); if (im.complete && im.naturalWidth) g.drawImage(im, cx - r, cy - r * .9, r * 2, r * 2); g.restore();
+  if (f.awk) { g.strokeStyle = AWK[f.key].c; g.lineWidth = 4; g.beginPath(); g.arc(cx, cy, r + 2, 0, 7); g.stroke(); }
+  g.font = `700 20px ${FONT}`; g.textAlign = right ? 'right' : 'left'; g.fillStyle = '#fff'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.7)';
+  g.strokeText(f.r.ko, right ? 1120 : 160, 148); g.fillText(f.r.ko, right ? 1120 : 160, 148);
+}
+function hpBar0(f, x, right) {
+
   const w = 470, h = 26, y = 46, sk = 14, v = Math.max(0, f.hp / f.maxhp), lag = Math.max(v, (f.hpLag || f.hp) / f.maxhp);
   f.hpLag = Math.max(f.hp, (f.hpLag || f.hp) - f.maxhp * .006);
   const poly = (x0, x1, col) => { g.beginPath(); if (!right) { g.moveTo(x0 + sk, y); g.lineTo(x1 + sk, y); g.lineTo(x1, y + h); g.lineTo(x0, y + h); } else { g.moveTo(x0 - sk, y); g.lineTo(x1 - sk, y); g.lineTo(x1, y + h); g.lineTo(x0, y + h); } g.closePath(); g.fillStyle = col; g.fill(); };
@@ -815,11 +836,11 @@ function hpBar(f, x, right) {
   g.font = `700 22px ${FONT}`; g.textAlign = right ? 'right' : 'left'; g.fillStyle = '#fff'; g.fillText(f.r.ko, right ? x + w - 4 : x + 4, y + h + 26);
 }
 function gaugeBar(f, x, right) {
-  const w = 300, h = 12, y = 106; for (let i = 0; i < 4; i++) { const sx = right ? x + w - (i + 1) * 75 + 3 : x + i * 75, fill = Math.max(0, Math.min(1, (f.gauge - i * 25) / 25));
+  const w = 300, h = 12, y = uiImg('f_hp') ? 158 : 106; x = uiImg('f_hp') ? (right ? 820 : 160) : x; for (let i = 0; i < 4; i++) { const sx = right ? x + w - (i + 1) * 75 + 3 : x + i * 75, fill = Math.max(0, Math.min(1, (f.gauge - i * 25) / 25));
     g.fillStyle = '#0b0916'; g.fillRect(sx - 2, y - 2, 73, h + 4); g.fillStyle = '#1c2340'; g.fillRect(sx, y, 69, h);
     const full = f.gauge >= 100; g.fillStyle = full ? (Math.floor(F.pt / 6) % 2 ? '#ff3d81' : '#ff8ab4') : '#3fd8ff'; const fw = 69 * fill; g.fillRect(right ? sx + 69 - fw : sx, y, fw, h); }
   g.font = `700 13px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = right ? 'right' : 'left';
-  g.fillText(f.gauge >= 100 ? (MOBILE ? 'MAX! 기술 = 필살기' : 'MAX! W = 필살기') : (MOBILE ? '기술 (1칸)' : 'W 고유기 (1칸)'), right ? x + w : x, y + 30);
+  g.fillText(f.gauge >= 100 ? (MOBILE ? 'MAX! 기술 = 필살기' : 'MAX! W = 필살기') : (MOBILE ? '기술 (1칸)' : 'W 고유기 (1칸)'), right ? x + w : x, y + 28);
 }
 function bar(x, y, w, h, v, right, col) {
   g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x - 3, y - 3, w + 6, h + 6); g.fillStyle = '#3a1020'; g.fillRect(x, y, w, h);
@@ -858,16 +879,17 @@ function drawFight() {
   // HUD
   hpBar(a, 100, false); hpBar(b, 710, true); gaugeBar(a, 100, false); gaugeBar(b, 880, true);
   drawItemHud(a);
-  [[a, 100, 'left'], [b, 1180, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
+  [[a, 160, 'left'], [b, 1120, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
     g.fillStyle = f.awk ? AWK[f.key].c : f.awkUsed ? '#6c6690' : f.gauge >= 50 ? AWK[f.key].c : '#9a93bd';
-    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', f === a ? 100 : 1180, f === a ? 220 : 160); });
+    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', f === a ? 160 : 1120, f === a ? 268 : 210); });
   document.body.classList.toggle('awkok', !!(a.awkOK && !a.awkUsed));
+  if (uiImg('f_pip_on')) { for (let i = 0; i < 2; i++) [[a, 548 - i * 30], [b, 708 + i * 30]].forEach(([f, px]) => g.drawImage(uiImg(f.wins > i ? 'f_pip_on' : 'f_pip_off'), px, 70, 26, 26)); } else
   for (let i = 0; i < 2; i++) { [[a, 540 - i * 26], [b, 722 + i * 26]].forEach(([f, px]) => { g.save(); g.translate(px, 96); g.rotate(Math.PI / 4); g.fillStyle = f.wins > i ? '#ff3d81' : '#2a2442'; g.fillRect(-7, -7, 14, 14); g.strokeStyle = '#fff'; g.lineWidth = 1; g.strokeRect(-7, -7, 14, 14); g.restore(); }); }
-  g.save(); g.translate(W / 2, 58); g.beginPath(); for (let i = 0; i < 6; i++) { const an = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(an) * 46, Math.sin(an) * 46); } g.closePath(); g.fillStyle = '#0b0916'; g.fill(); g.strokeStyle = F.timer < 600 ? '#ff3d81' : '#ffd23f'; g.lineWidth = 3; g.stroke(); g.restore();
-  g.font = `700 44px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = F.timer < 600 ? '#ff3d81' : '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 74);
+  if (uiImg('f_timer')) g.drawImage(uiImg('f_timer'), W / 2 - 62, 6, 124, 107); else { g.save(); g.translate(W / 2, 58); g.beginPath(); for (let i = 0; i < 6; i++) { const an = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(an) * 46, Math.sin(an) * 46); } g.closePath(); g.fillStyle = '#0b0916'; g.fill(); g.strokeStyle = F.timer < 600 ? '#ff3d81' : '#ffd23f'; g.lineWidth = 3; g.stroke(); g.restore(); }
+  g.font = `700 44px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = F.timer < 600 ? '#ff3d81' : '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
   g.textAlign = 'center';
-  if (F.phase === 'intro') { big(F.pt < 60 ? `ROUND ${F.round}` : 'FIGHT!'); }
-  if (F.phase === 'end') { big(F.banner); if (F.pt > 60 && F.rw) { g.font = `700 32px ${FONT}`; g.fillStyle = '#fff'; g.fillText(`${F.rw.r.ko} WIN`, W / 2, 440); } }
+  if (F.phase === 'intro') { if (F.pt < 60) { if (!(F.round <= 3 && banner('r' + F.round, W / 2, 340, 150, F.pt))) big(`ROUND ${F.round}`); } else if (!banner('fight', W / 2, 340, 260, F.pt - 60)) big('FIGHT!'); }
+  if (F.phase === 'end') { if (!(F.banner === 'K.O.' && banner('ko', W / 2, 330, 300, F.pt))) big(F.banner); if (F.pt > 60 && F.rw) { g.font = `700 32px ${FONT}`; g.fillStyle = '#fff'; g.fillText(`${F.rw.r.ko} WIN`, W / 2, 440); } }
 }
 function big(t) { g.font = `700 120px ${DFONT}`; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#3a0820'; g.strokeText(t, W / 2, 360); g.fillStyle = '#ffd23f'; g.fillText(t, W / 2, 360); }
 
@@ -931,7 +953,7 @@ function menuList(items, y0) {
   if (take('up') || take('left')) { menu = (menu + items.length - 1) % items.length; sfx('sel'); }
   if (take('down') || take('right')) { menu = (menu + 1) % items.length; sfx('sel'); }
   const gap = items.length > 5 ? 54 : 70, bh = gap - 10;
-  items.forEach((it, i) => { const y = y0 + i * gap, on = i === menu; g.fillStyle = on ? 'rgba(255,61,129,.85)' : 'rgba(255,255,255,.08)'; g.fillRect(W / 2 - 260, y - 44, 520, bh); txt(it, W / 2, y - 44 + bh / 2 + 10, gap < 70 ? 26 : 30, on ? '#1a0612' : '#fff');
+  items.forEach((it, i) => { const y = y0 + i * gap, on = i === menu; if (!slice3(on ? 'f_btn_on' : 'f_btn', W / 2 - 260, y - 44, 520, bh, 70)) { g.fillStyle = on ? 'rgba(255,61,129,.85)' : 'rgba(255,255,255,.08)'; g.fillRect(W / 2 - 260, y - 44, 520, bh); } txt(it, W / 2, y - 44 + bh / 2 + 9, gap < 70 ? 24 : 28, '#fff');
     if (tap && tap.x > W / 2 - 260 && tap.x < W / 2 + 260 && tap.y > y - 44 && tap.y < y - 44 + bh) { menu = i; pressed.ok = true; } });
   if (take('ok') || take('F')) { sfx('sel'); return menu; }
   return -1;
@@ -941,13 +963,13 @@ function draw() {
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
   if (scene === 'fight') { updateFight(); drawFight(); }
   else if (scene === 'title') {
-    g.drawImage(stage(1), 0, 0); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
+    if (bgImg('hiroki')) g.drawImage(bgImg('hiroki'), 0, 0, W, H); else g.drawImage(stage(1), 0, 0); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
     face('daisuke', 120, 160, 360); face('hiroki', 860, 160, 360, true);
-    g.font = `700 130px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#ff3d81'; g.shadowColor = '#ff3d81'; g.shadowBlur = 30; g.textAlign = 'right'; g.fillText('NEON', W / 2 - 10, 240); g.fillStyle = '#3fd8ff'; g.shadowColor = '#3fd8ff'; g.textAlign = 'left'; g.fillText('CLASH', W / 2 + 10, 240); g.textAlign = 'center'; g.shadowBlur = 0;
-    txt('웹 체험판 · 1~3장', W / 2, 296, 26, '#ccc');
+    if (banner('logo', W / 2, 136, 240, null)) {} else { g.font = `700 130px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#ff3d81'; g.shadowColor = '#ff3d81'; g.shadowBlur = 30; g.textAlign = 'right'; g.fillText('NEON', W / 2 - 10, 240); g.fillStyle = '#3fd8ff'; g.shadowColor = '#3fd8ff'; g.textAlign = 'left'; g.fillText('CLASH', W / 2 + 10, 240); g.textAlign = 'center'; g.shadowBlur = 0; }
+    txt('웹 체험판 · 1~3장', W / 2, 282, 18, '#ccc');
     const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
     const CLu = window.Cloud && Cloud.user;
-    const c = menuList([prog, '대전 모드', '인벤토리', `상점 · 단련 ${SAVE.train || 0}단계`, '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 352);
+    const c = menuList([prog, '대전 모드', '인벤토리', `상점 · 단련 ${SAVE.train || 0}단계`, '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 344);
     if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; }
     if (c === 2) openInv();
@@ -967,8 +989,8 @@ function draw() {
     const fi = currentBg(); bgDraw(fi, bgKey); g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(0, 0, W, H);
     const [who, line] = dlg.lines[dlg.i]; const r = BY[who];
     face(who, 80, 120, 380);
-    g.fillStyle = 'rgba(8,6,18,.92)'; g.fillRect(40, 500, W - 80, 180); g.strokeStyle = '#ff3d81'; g.lineWidth = 3; g.strokeRect(40, 500, W - 80, 180);
-    txt(r.ko, 80, 545, 30, '#ffd23f', 'left'); wrap(line, 80, 595, W - 160, 34);
+    g.fillStyle = 'rgba(8,6,18,.9)'; g.fillRect(56, 492, W - 112, 186);
+    if (slice9('f_dlg', 36, 456, W - 72, 236, 250, 110, 80, 70, .62)) txt(r.ko, 80, 486, 24, '#ffd23f', 'left'); else { g.strokeStyle = '#ff3d81'; g.lineWidth = 3; g.strokeRect(40, 500, W - 80, 180); txt(r.ko, 80, 545, 30, '#ffd23f', 'left'); } wrap(line, 80, 595, W - 160, 34);
     txt('▶', W - 80, 660, 24, '#ff3d81', 'right');
     if (take('ok') || take('F') || take('K') || tap) { dlg.i++; if (dlg.i >= dlg.lines.length) { const t = dlg.then; dlg = null; t(); } }
   }
@@ -981,7 +1003,7 @@ function draw() {
   else if (scene === 'lose') { ctT++; g.fillStyle = '#100810'; g.fillRect(0, 0, W, H); txt('패배…', W / 2, 300, 80, '#ff3d81'); const c = menuList(['다시 도전', '타이틀로'], 440); if (c === 0) storyNext(); if (c === 1) { scene = 'title'; menu = 0; } }
   else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
   else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); txt(`이번 클리어 타임 ${fmt((SAVE.run[1] || 0) + (SAVE.run[2] || 0) + (SAVE.run[3] || 0))} · 최고 ${fmt(SAVE.best.total)}`, W / 2, 500, 26, '#ffd23f'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
-  else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const c = menuList(['다시 대전', '캐릭터 선택', '타이틀로'], 420); if (c === 0) vsStart(); if (c === 1) scene = 'select'; if (c === 2) { scene = 'title'; menu = 1; } }
+  else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); if (!(vsWon && banner('win', W / 2, 250, 300, ctT))) txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const c = menuList(['다시 대전', '캐릭터 선택', '타이틀로'], 470); if (c === 0) vsStart(); if (c === 1) scene = 'select'; if (c === 2) { scene = 'title'; menu = 1; } }
   drawToasts();
   if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
   tap = null; for (const k in pressed) pressed[k] = false;
@@ -1041,17 +1063,18 @@ function drawSelect() {
   list.forEach((r, i) => {
     const x = x0 + (i % cols) * cw, y = y0 + Math.floor(i / cols) * ch, ok = sel.side === 1 || unlocked(r.key);
     if (tap && tap.x > x && tap.x < x + cw - 6 && tap.y > y && tap.y < y + ch - 6) { if (cur === i) pressed.ok = true; cur = i; }
-    g.fillStyle = i === cur ? '#ff3d81' : AWK[r.key] && SAVE.awk[r.key] ? AWK[r.key].c : '#2a2444'; g.fillRect(x, y, cw - 6, ch - 6);
+    const tile = uiImg('f_tile'); if (!tile) { g.fillStyle = i === cur ? '#ff3d81' : AWK[r.key] && SAVE.awk[r.key] ? AWK[r.key].c : '#2a2444'; g.fillRect(x, y, cw - 6, ch - 6); }
     g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 12, ch - 12); g.clip(); g.fillStyle = '#15122a'; g.fillRect(x + 3, y + 3, cw - 12, ch - 12);
     if (ok) portrait(r.key, x + 3, y + 3, cw - 12, ch - 12); else txt('?', x + cw / 2 - 3, y + ch / 2 + 14, 40, '#555');
-    if (i !== cur) { g.fillStyle = 'rgba(12,10,24,.28)'; g.fillRect(x + 3, y + 3, cw - 12, ch - 12); } g.restore();
+    if (i !== cur) { g.fillStyle = 'rgba(12,10,24,.35)'; g.fillRect(x + 3, y + 3, cw - 12, ch - 12); } g.restore();
+    if (tile) { const e = i === cur ? 10 : 4; if (i === cur) { g.save(); g.shadowColor = '#ff3d81'; g.shadowBlur = 24; } g.drawImage(tile, x - e, y - e, cw - 6 + 2 * e, ch - 6 + 2 * e); if (i === cur) g.restore(); }
     if (!r.real) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y + ch - 26, cw - 6, 20); txt('준비중', x + cw / 2 - 3, y + ch - 11, 12, '#ffd23f'); }
   });
   const pick = list[cur];
   if (sel.side === 0) sel.p = pick.key; else sel.o = pick.key;
   const t = SAVE.train || 0;
   statPanel(sel.p, 50, 384, false, t, '1P · 단련 ' + t + '단계'); statPanel(sel.o, W - 570, 384, true, t, 'CPU · 같은 단련');
-  txt('VS', W / 2, 520, 64, '#ff3d81', 'center', DFONT);
+  if (!banner('vs', W / 2, 505, 92, null)) txt('VS', W / 2, 520, 64, '#ff3d81', 'center', DFONT);
   txt(unlocked(pick.key) || sel.side === 1 ? (MOBILE ? '한 번 더 누르면 결정 · 왼쪽 위 뒤로' : 'Enter / A 로 결정 · Esc 뒤로') : '스토리에서 이기면 열려요', W / 2, 700, 18, '#aaa');
   txt('← 뒤로', 30, 46, 22, '#aaa', 'left'); if (tap && tap.x < 160 && tap.y < 70) pressed.back = true;
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
@@ -1090,21 +1113,30 @@ function useItem(f) {
 function drawItemHud(f) {
   const k = SAVE.equip, it = ITEMS[k], n = it ? (SAVE.inv[k] || 0) : 0;
   g.font = `700 16px ${FONT}`; g.textAlign = 'left'; g.fillStyle = f.itemUsed || !n ? '#6c6690' : '#ffd23f';
-  if (it) { g.globalAlpha = f.itemUsed || !n ? .4 : 1; drawIcon(k, 100, 150, 26); g.globalAlpha = 1; }
-  g.fillText(it ? `${MOBILE ? '' : 'Q '}${it.ko} ×${n}${f.itemUsed ? ' (사용함)' : ''}` : `${MOBILE ? '아이템' : 'Q'} 없음`, 132, 169);
-  let x = 100; for (const [b, l, c] of [['jelly', '스피드', '#ffd23f'], ['charm', '부적', '#8fd6ff']]) if (f.buff[b] > 0) { g.fillStyle = c; g.fillText(`${l} ${Math.ceil(f.buff[b] / 60)}초`, x, 196); x += 100; }
+  if (it) { g.globalAlpha = f.itemUsed || !n ? .4 : 1; drawIcon(k, 160, 196, 28); g.globalAlpha = 1; }
+  g.fillText(it ? `${MOBILE ? '' : 'Q '}${it.ko} ×${n}${f.itemUsed ? ' (사용함)' : ''}` : `${MOBILE ? '아이템' : 'Q'} 없음`, 194, 216);
+  let x = 160; for (const [b, l, c] of [['jelly', '스피드', '#ffd23f'], ['charm', '부적', '#8fd6ff']]) if (f.buff[b] > 0) { g.fillStyle = c; g.fillText(`${l} ${Math.ceil(f.buff[b] / 60)}초`, x, 244); x += 100; }
 }
 // ---------- UI icons (assets/ui/<name>.webp from the icon sheet; drawn fallbacks until then) ----------
-const UIC = {}; const ICONS = ['potion', 'candy', 'charm', 'jelly', 'coin', 'train', 'shard'];
+const UIC = {}; const ICONS = ['potion', 'candy', 'charm', 'jelly', 'coin', 'train', 'logo', 'vs', 'r1', 'r2', 'r3', 'fight', 'ko', 'win', 'f_hp', 'f_hpmask', 'f_timer', 'f_pip_on', 'f_pip_off', 'f_dlg', 'f_btn', 'f_btn_on', 'f_tile', ...['daisuke', 'ryohei', 'hiroki', 'max', 'shogun', 'rox'].map(k => 'shard_' + k)];
 function uiImg(n) { if (!(n in UIC)) { const i = new Image(); i.onerror = () => { UIC[n] = null; }; i.src = 'assets/ui/' + n + '.webp'; UIC[n] = i; } const i = UIC[n]; return i && i.complete && i.naturalWidth ? i : null; }
 ICONS.forEach(uiImg);
 const ICOL = { potion: '#57e38a', candy: '#3fd8ff', charm: '#8fd6ff', jelly: '#ffd23f', coin: '#ffd23f', train: '#ff8a3d', shard: '#c08bff' };
 const ISYM = { potion: '✚', candy: '◆', charm: '⛨', jelly: '»', coin: '¢', train: '▲', shard: '✦' };
-function iconHTML(n, col) { const c = col || ICOL[n] || '#fff'; return `<span class="ico" style="--ic:${c}"><img src="assets/ui/${n}.webp" alt="" onerror="this.remove()"><i aria-hidden="true">${ISYM[n] || '•'}</i></span>`; }
+function iconHTML(n, col) { const b = n.split('_')[0], c = col || ICOL[b] || '#fff'; return `<span class="ico" style="--ic:${c}"><img src="assets/ui/${n}.webp" alt="" onerror="this.remove()"><i aria-hidden="true">${ISYM[b] || '•'}</i></span>`; }
 function drawIcon(n, x, y, sz, col) { g.save(); drawIcon0(n, x, y, sz, col); g.restore(); }
 function drawIcon0(n, x, y, sz, col) { const im = uiImg(n); if (im) { g.drawImage(im, x, y, sz, sz); return; } const c = col || ICOL[n];
   const gr = g.createRadialGradient(x + sz * .35, y + sz * .3, 1, x + sz / 2, y + sz / 2, sz / 2); gr.addColorStop(0, '#fff'); gr.addColorStop(.35, c); gr.addColorStop(1, 'rgba(0,0,0,.6)');
   g.fillStyle = gr; g.beginPath(); g.arc(x + sz / 2, y + sz / 2, sz / 2, 0, 7); g.fill(); g.font = `700 ${sz * .55}px ${FONT}`; g.textAlign = 'center'; g.fillStyle = '#1a0612'; g.fillText(ISYM[n] || '', x + sz / 2, y + sz * .7); }
+// draws a UI frame stretched horizontally with fixed end caps (cap = source px kept at each end)
+function slice3(n, x, y, w, h, cap) { const im = uiImg(n); if (!im) return false; const s = h / im.naturalHeight, c = Math.min(cap * s, w / 2), iw = im.naturalWidth;
+  g.drawImage(im, 0, 0, cap, im.naturalHeight, x, y, c, h); g.drawImage(im, cap, 0, iw - 2 * cap, im.naturalHeight, x + c, y, w - 2 * c, h); g.drawImage(im, iw - cap, 0, cap, im.naturalHeight, x + w - c, y, c, h); return true; }
+// nine-slice: L,T,R,B in source px, drawn at scale s
+function slice9(n, x, y, w, h, L, T, Rr, B, s) { const im = uiImg(n); if (!im) return false; const iw = im.naturalWidth, ih = im.naturalHeight, sx = [0, L, iw - Rr, iw], sy = [0, T, ih - B, ih], dx = [x, x + L * s, x + w - Rr * s, x + w], dy = [y, y + T * s, y + h - B * s, y + h];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) g.drawImage(im, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); return true; }
+// big lettering image, popping in over its first frames
+function banner(n, cx, cy, h, t) { const im = uiImg(n); if (!im) return false; const k = t == null ? 1 : Math.min(1, t / 8), sc = (1.6 - .6 * k) * (t == null ? 1 : 1 + .03 * Math.sin(t * .3)), hh = h * sc, ww = im.naturalWidth * hh / im.naturalHeight;
+  g.save(); g.globalAlpha = k; g.drawImage(im, cx - ww / 2, cy - hh / 2, ww, hh); g.restore(); return true; }
 function drawWallet(x, y) {
   g.fillStyle = 'rgba(10,8,22,.75)'; g.fillRect(x - 6, y - 4, 330, 36); g.strokeStyle = 'rgba(255,210,63,.35)'; g.lineWidth = 1; g.strokeRect(x - 6, y - 4, 330, 36);
   drawIcon('coin', x, y, 28); txt(`${SAVE.coin}`, x + 36, y + 22, 20, '#ffd23f', 'left', DFONT);
@@ -1116,7 +1148,7 @@ function openInv() {
   const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it">${iconHTML(k)}<div><b>${it.ko} <span class="cnt">×${SAVE.inv[k] || 0}</span></b><small>${it.desc}</small></div>
     <button type="button" data-eq="${k}" aria-pressed="${SAVE.equip === k}" ${!(SAVE.inv[k] > 0) && SAVE.equip !== k ? 'disabled' : ''}>${SAVE.equip === k ? '장착됨' : '장착'}</button></div>`).join('');
   const shards = Object.entries(AWK).map(([k, A]) => { const n = SAVE.shards[k] || 0, own = unlocked(k), done = SAVE.awk[k];
-    return `<div class="sh${done ? ' done' : ''}" style="--ac:${A.c}"><img src="assets/face/${k}.webp" alt="">${iconHTML('shard', A.c)}<b>${BY[k].ko}</b>
+    return `<div class="sh${done ? ' done' : ''}" style="--ac:${A.c}"><img src="assets/face/${k}.webp" alt="">${iconHTML('shard_' + k, A.c)}<b>${BY[k].ko}</b>
       <span class="pips">${Array.from({ length: AWK_COST }, (_, i) => `<i class="${i < n || done ? 'on' : ''}"></i>`).join('')}</span>
       ${done ? '<button type="button" disabled>각성 가능</button>' : `<button type="button" data-awk="${k}" ${n < AWK_COST ? 'disabled' : ''}>${n}/${AWK_COST}${n >= AWK_COST ? ' · 해금' : ''}</button>`}
       ${own ? '' : '<small>캐릭터 미보유</small>'}</div>`; }).join('');
@@ -1136,7 +1168,7 @@ function openShop(focus) {
   const t = SAVE.train || 0, max = t >= TRAIN_MAX, c = trainCost(t);
   const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it">${iconHTML(k)}<div><b>${it.ko} <span class="cnt">보유 ${SAVE.inv[k] || 0}</span></b><small>${it.desc}</small></div>
     <button type="button" data-buy="${k}" ${SAVE.coin < it.price ? 'disabled' : ''}>${iconHTML('coin')} ${it.price}</button></div>`).join('');
-  const shards = Object.entries(AWK).filter(([k]) => !SAVE.awk[k]).map(([k, A]) => `<div class="it">${iconHTML('shard', A.c)}<div><b>${BY[k].ko}의 각성 조각 <span class="cnt">${SAVE.shards[k] || 0}/${AWK_COST}</span></b><small>상대로 이기면 나오기도 해요</small></div>
+  const shards = Object.entries(AWK).filter(([k]) => !SAVE.awk[k]).map(([k, A]) => `<div class="it">${iconHTML('shard_' + k, A.c)}<div><b>${BY[k].ko}의 각성 조각 <span class="cnt">${SAVE.shards[k] || 0}/${AWK_COST}</span></b><small>상대로 이기면 나오기도 해요</small></div>
     <button type="button" data-sh="${k}" ${SAVE.coin < SHARD_PRICE ? 'disabled' : ''}>${iconHTML('coin')} ${SHARD_PRICE}</button></div>`).join('') || '<p>모든 각성을 해금했어요.</p>';
   const nextNeed = SAVE.ch <= 3 ? reqOf(SAVE.ch, SAVE.stage) : 0;
   box.innerHTML = `<h2 id="shopT">상점 · 단련</h2><div class="wallet"><div>${iconHTML('coin')}<b>${SAVE.coin}</b><small>코인</small></div><div>${iconHTML('train')}<b>${t} / ${TRAIN_MAX}</b><small>단련 단계</small></div></div>
