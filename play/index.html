@@ -14,21 +14,25 @@ body{display:flex;align-items:center;justify-content:center;padding-left:max(0px
 canvas{width:100%;height:100%;display:block;background:#000}
 .pad{position:absolute;inset:0;pointer-events:none;display:none}
 body.mobile.infight .pad{display:block}
-.pad button{opacity:.92}
+.pad button{opacity:.42;transition:opacity .08s}
 .pad button{pointer-events:auto;position:absolute;border-radius:50%;border:0;background:url(assets/ui/f_touch.webp) center/100% 100% no-repeat;text-shadow:0 1px 3px #000;color:#fff;font:700 clamp(12px,2.6vh,22px) "IBM Plex Sans KR",system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;touch-action:none;-webkit-tap-highlight-color:transparent}
 .pad button small{font:600 clamp(9px,1.8vh,14px) "Chakra Petch",system-ui;opacity:.7}
-.pad button.on{filter:brightness(1.6) saturate(1.3);transform:scale(.94)}
-#bl{left:2%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
-#br{left:22%;bottom:15%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
-#bu{left:12%;bottom:33%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
-#bdn{left:12%;bottom:2%;width:10%;aspect-ratio:1;font-size:clamp(16px,3.6vh,30px)}
-#bE{left:43%;bottom:3%;width:7.5%;aspect-ratio:1;border-color:#ff8a3d;font-size:clamp(10px,2vh,16px);display:none}
+.pad button.on{opacity:.9;filter:brightness(1.5) saturate(1.3);transform:scale(.94)}
+/* pad sized from the screen height (--u = 1% of it) so it stays small on wide phones; see-through until pressed */
+#bl{left:calc(var(--u,4px)*3);bottom:calc(var(--u,4px)*15);width:calc(var(--u,4px)*13)}
+#br{left:calc(var(--u,4px)*29);bottom:calc(var(--u,4px)*15);width:calc(var(--u,4px)*13)}
+#bu{left:calc(var(--u,4px)*16);bottom:calc(var(--u,4px)*28);width:calc(var(--u,4px)*13)}
+#bdn{left:calc(var(--u,4px)*16);bottom:calc(var(--u,4px)*2);width:calc(var(--u,4px)*13)}
+#bl,#br,#bu,#bdn{font-size:clamp(13px,3vh,24px)}
+#bI{left:calc(var(--u,4px)*46);bottom:calc(var(--u,4px)*2);width:calc(var(--u,4px)*10);font-size:clamp(9px,1.7vh,13px)}
+#bE{left:calc(var(--u,4px)*58);bottom:calc(var(--u,4px)*2);width:calc(var(--u,4px)*10);font-size:clamp(9px,1.7vh,13px);display:none}
 body.awkok #bE{display:flex}
-#bI{left:34%;bottom:3%;width:7.5%;aspect-ratio:1;border-color:#ffd23f;font-size:clamp(10px,2vh,16px)}
-#bW{right:13%;bottom:40%;width:11%;aspect-ratio:1;border-color:#ff3d81}
-#bD{right:25%;bottom:22%;width:11%;aspect-ratio:1;border-color:#3fd8ff}
-#bS{right:1.5%;bottom:22%;width:11%;aspect-ratio:1}
-#bA{right:13%;bottom:4%;width:11%;aspect-ratio:1}
+#bA{right:calc(var(--u,4px)*17);bottom:calc(var(--u,4px)*2);width:calc(var(--u,4px)*14)}
+#bW{right:calc(var(--u,4px)*17);bottom:calc(var(--u,4px)*30);width:calc(var(--u,4px)*14)}
+#bS{right:calc(var(--u,4px)*2);bottom:calc(var(--u,4px)*16);width:calc(var(--u,4px)*14)}
+#bD{right:calc(var(--u,4px)*32);bottom:calc(var(--u,4px)*16);width:calc(var(--u,4px)*14)}
+#bA,#bW,#bS,#bD{font-size:clamp(11px,2.3vh,18px)}
+.pad button{aspect-ratio:1;white-space:nowrap;letter-spacing:-.02em}
 #start{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 40%,#2a1238,#07060c 70%);text-align:center;padding:24px}
 #start h1{margin:0;font:700 clamp(44px,10vw,110px) "Chakra Petch",system-ui;letter-spacing:.04em}
 #start h1 b{color:#ff3d81;text-shadow:0 0 24px #ff3d81} #start h1 i{color:#3fd8ff;font-style:normal;text-shadow:0 0 24px #3fd8ff}
@@ -108,7 +112,7 @@ const cv = document.getElementById('c'), g = cv.getContext('2d');
 function fitScreen() {
   const wrap = document.getElementById('wrap'), a = innerWidth / innerHeight;
   if (MOBILE && a > 1) { const nw = Math.round(Math.min(1760, Math.max(1280, 720 * a))); if (nw !== W) { W = nw; cv.width = W; } }
-  wrap.style.aspectRatio = `${W} / 720`; wrap.style.width = Math.min(innerWidth, innerHeight * W / 720) + 'px'; wrap.style.maxWidth = 'none';
+  wrap.style.aspectRatio = `${W} / 720`; wrap.style.width = Math.min(innerWidth, innerHeight * W / 720) + 'px'; wrap.style.maxWidth = 'none'; wrap.style.setProperty('--u', Math.min(innerWidth, innerHeight * W / 720) * 720 / W / 100 + 'px');
 }
 queueMicrotask(fitScreen); addEventListener('resize', fitScreen); addEventListener('orientationchange', () => setTimeout(fitScreen, 300));
 if (window.visualViewport) visualViewport.addEventListener('resize', fitScreen);
