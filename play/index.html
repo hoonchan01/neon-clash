@@ -1288,7 +1288,15 @@ requestAnimationFrame(loop);
 <script type="module">
 // Firebase login (game ID + password), per-account save (progress, coins, items, training), and rankings.
 // Fill FIREBASE_CONFIG with the web app config from the Firebase console. Left as null, the game keeps saving in the browser only.
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAzpBra0hvxfJ2Fa7msMSwQ-Guke_kqkXg",
+  authDomain: "neon-clash-5bfdf.firebaseapp.com",
+  projectId: "neon-clash-5bfdf",
+  storageBucket: "neon-clash-5bfdf.firebasestorage.app",
+  messagingSenderId: "243131082578",
+  appId: "1:243131082578:web:bb7c85a4cd734d97893c8b",
+  measurementId: "G-VC53JDJ5G4"
+};
 const V = '10.12.2', BASE = `https://www.gstatic.com/firebasejs/${V}/`;
 const Cloud = window.Cloud = { enabled: false, user: null, nick: '', listeners: [], status: '로그인 기능 준비 전 (브라우저에만 저장)' };
 const emit = () => Cloud.listeners.forEach(f => { try { f(Cloud) } catch (e) {} });
