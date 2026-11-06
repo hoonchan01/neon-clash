@@ -245,7 +245,7 @@ function applyStats(f, lv, base) {
   const [at, df, hp, sp] = statsOf(f.key, lv, base); f.stat = [at, df, hp, sp]; f.lv = lv;
   f.maxhp = f.hp = Math.round(700 + 50 * hp); f.atkMul = .7 + .05 * at; f.defMul = Math.max(.45, 1.3 - .05 * df); f.spd = sp;
 }
-const spdOf = f => f.spd + (f.buff.jelly > 0 ? 4 : 0) + (f.awk ? 2 : 0);
+const spdOf = f => f.spd + (f.buff.jelly > 0 ? 1.5 : 0) + (f.awk ? 2 : 0);
 // story opponents' 수련치 (fights are even when the player's 수련치 matches)
 // 난이도: each story opponent has an intrinsic difficulty H (0-10); the 수련치 gap adds a weight n (-3..+3); D = H + n (0..10)
 // D drives the CPU's skill (reaction, guarding, punishing, pace) and its power (attack, HP, 맷집 x (0.5 + 0.065 D)); D 0 = far weaker than you
@@ -710,7 +710,7 @@ function damage(att, def, amt, kind) {
   if (guarding && melee && sd >= 2 && roll(Math.min(.35, .07 * (sd - 1)))) { guarding = false; hitSprite('c_guard2', def.x + def.face * 60, bodyY(def), 260, def.face, 14); if (!att.cpu || !def.cpu) toast('가드 브레이크!'); amt *= .7; }
   // 수련치 gap: each step above the opponent deals 9% more / below deals less (fighting far above your 수련치 is hard)
   const gap = (att.lv || 1) - (def.lv || 1), lvMul = Math.max(.4, Math.min(2, 1 + .09 * gap));
-  let d = amt * lvMul * att.dmgMul * att.atkMul * def.defMul * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
+  let d = amt * lvMul * att.dmgMul * att.atkMul * def.defMul * (def.buff.charm > 0 ? .85 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
   // looks affinity
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
@@ -1082,10 +1082,10 @@ function draw() {
     bgDraw(1, 'hiroki'); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
     frontFace('daisuke', 'left', 400, -90, 720); frontFace('hiroki', 'right', 400, -90, 720);
     if (banner('logo', W / 2, 136, 240, null)) {} else { g.font = `700 130px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#ff3d81'; g.shadowColor = '#ff3d81'; g.shadowBlur = 30; g.textAlign = 'right'; g.fillText('NEON', W / 2 - 10, 240); g.fillStyle = '#3fd8ff'; g.shadowColor = '#3fd8ff'; g.textAlign = 'left'; g.fillText('CLASH', W / 2 + 10, 240); g.textAlign = 'center'; g.shadowBlur = 0; }
-    txt('웹 체험판 · 1~3장', W / 2, 282, 18, '#ccc');
+    txt(`${CLu0() ? Cloud.nick + ' · ' : ''}수련치 ${SAVE.lv} · 수련치는 대전 모드, 스토리 모드에서 올릴 수 있습니다.`, W / 2, 284, 18, '#ffd9a8');
     const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
     const CLu = window.Cloud && Cloud.user;
-    const c = menuList([prog, '대전 모드', '인벤토리', '상점', '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 344);
+    const c = menuList([prog, '대전 모드', '인벤토리', '상점', '랭킹', CLu ? `계정 · ${Cloud.nick} · 수련치 ${SAVE.lv}` : '로그인 / 가입', '처음부터 다시'], 344);
     if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; sel.mode = null; VC = null; }
     if (c === 2) openInv();
@@ -1233,10 +1233,11 @@ function vsStart() { const k = VC.list[VC.i], st = VC.i + 1, o = BY[k]; sel.o = 
 
 // ---------- coins, items, training ----------
 const ITEMS = {
-  potion: { ko: '회복 드링크', price: 80, desc: '체력 25% 회복' },
-  candy: { ko: '기력 캔디', price: 60, desc: '게이지 +50' },
-  charm: { ko: '강철 부적', price: 100, desc: '10초 동안 받는 피해 40% 감소' },
-  jelly: { ko: '스피드 젤리', price: 110, desc: '10초 동안 스피드 +4 (가드를 잘 뚫고 잘 버팀, 이동 빨라짐)' } };
+  // each item is worth roughly +2 수련치 for a moment, so it never lifts you far above your own level
+  potion: { ko: '회복 드링크', price: 80, desc: '체력 12% 회복' },
+  candy: { ko: '기력 캔디', price: 60, desc: '게이지 +25 (1칸)' },
+  charm: { ko: '강철 부적', price: 100, desc: '10초 동안 받는 피해 15% 감소' },
+  jelly: { ko: '스피드 젤리', price: 110, desc: '10초 동안 스피드 +1.5 (가드를 조금 더 잘 뚫고 버팀)' } };
 const TOASTS = [];
 function toast(t) { TOASTS.push({ t, n: 0 }); if (TOASTS.length > 4) TOASTS.shift(); }
 function reward(n, why) { SAVE.coin = (SAVE.coin || 0) + n; toast(`+${n} 코인 · ${why}`); }
@@ -1251,8 +1252,8 @@ function useItem(f) {
   if (!it || !(SAVE.inv[k] > 0)) { toast('장착한 아이템이 없어요 · 상점에서 사고 인벤토리에서 장착하세요'); return; }
   if (f.itemUsed) { toast('아이템은 라운드마다 1번만 쓸 수 있어요'); return; }
   SAVE.inv[k]--; f.itemUsed = 1; save(); sfx('sel');
-  if (k === 'potion') f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .25));
-  if (k === 'candy') f.gauge = Math.min(100, f.gauge + 50);
+  if (k === 'potion') f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .12));
+  if (k === 'candy') f.gauge = Math.min(100, f.gauge + 25);
   if (k === 'charm') f.buff.charm = 600;
   if (k === 'jelly') f.buff.jelly = 600;
   hitSprite(k === 'candy' ? 'c_candy' : k === 'potion' ? 'c_heal' : k === 'jelly' ? 'c_dash' : 'c_charm', f.x, k === 'candy' || k === 'potion' ? FLOOR - 120 : FLOOR - 200, 330, f.face, 30);
@@ -1285,6 +1286,7 @@ function slice9(n, x, y, w, h, L, T, Rr, B, s) { const im = uiImg(n); if (!im) r
 // big lettering image, popping in over its first frames
 function banner(n, cx, cy, h, t) { const im = uiImg(n); if (!im) return false; const k = t == null ? 1 : Math.min(1, t / 8), sc = (1.6 - .6 * k) * (t == null ? 1 : 1 + .03 * Math.sin(t * .3)), hh = h * sc, ww = im.naturalWidth * hh / im.naturalHeight;
   g.save(); g.globalAlpha = k; g.drawImage(im, cx - ww / 2, cy - hh / 2, ww, hh); g.restore(); return true; }
+const CLu0 = () => !!(window.Cloud && Cloud.user);
 function drawWallet(x, y) {
   g.fillStyle = 'rgba(10,8,22,.75)'; g.fillRect(x - 6, y - 4, 330, 36); g.strokeStyle = 'rgba(255,210,63,.35)'; g.lineWidth = 1; g.strokeRect(x - 6, y - 4, 330, 36);
   drawIcon('coin', x, y, 28); txt(`${SAVE.coin}`, x + 36, y + 22, 20, '#ffd23f', 'left', DFONT);
