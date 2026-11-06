@@ -188,7 +188,7 @@ function bgDraw(ch, k) { const i = bgImg(k); if (i) { g.drawImage(i, 0, 0, W, H)
 
 // ---------- awakening (각성): 6 fighters, unlocked with 각성의 조각 ----------
 const AWK = {
-  daisuke: { S: '오렌지 인피니티', c: '#ff8c14' }, ryohei: { S: '녹룡 대선풍', c: '#46e664' }, hiroki: { S: '제독참·흑룡', c: '#3264ff' },
+  daisuke: { S: '오렌지 인피니티', c: '#ff8c14' }, ryohei: { S: '녹룡 대선풍', c: '#3fe0b0' }, hiroki: { S: '제독참·흑룡', c: '#3264ff' },
   max: { S: '뇌신 천붕', c: '#ffe128' }, shogun: { S: '천하무쌍 일섬', c: '#eb2323' }, rox: { S: '칠성 뇌폭', c: '#5ad7ff' } };
 const AWK_COST = 5, AWK_TIME = 900, SHARD_PRICE = 300;
 const AURA = {}; Object.keys(AWK).forEach(k => { const i = new Image(); i.src = 'assets/fx/aura/' + k + '.webp'; AURA[k] = i; });
@@ -231,8 +231,21 @@ function frame(f) {
 function drawF(f) {
   if (!f.awk) return drawF0(f);
   const A = AWK[f.key], au = AURA[f.key], pulse = 1 + Math.sin(f.t * .25) * .05;
-  if (au && au.complete && au.naturalWidth) { const w = 330 * pulse, h = w * au.naturalHeight / au.naturalWidth; g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .75; g.translate(f.x, FLOOR - f.lift - h / 2 + 20); g.scale(f.face, 1); g.drawImage(au, -w / 2, -h / 2, w, h); g.restore(); }
-  g.save(); g.filter = `drop-shadow(0 0 10px ${A.c}) saturate(1.25)`; drawF0(f); g.restore();
+  if (au && au.complete && au.naturalWidth) { const w = 330 * pulse, h = w * au.naturalHeight / au.naturalWidth; g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .45; g.translate(f.x, FLOOR - f.lift - h / 2 + 20); g.scale(f.face, 1); g.drawImage(au, -w / 2, -h / 2, w, h); g.restore(); }
+  g.save(); g.filter = `drop-shadow(0 0 10px ${A.c}) saturate(1.15)`; if (!drawAwkBody(f)) drawF0(f); g.restore();
+}
+// awakened body sprites: assets/awk/<key>/<frame>.webp
+const AWKF = {"shogun":{"cutin":[456,300],"idle1":[218,406,66.5,405],"idle2":[604,401,343.8,400],"walk1":[618,395,358.6,394],"walk2":[336,395,82.5,394],"jab1":[498,409,354.3,408],"jab2":[467,389,80.3,388],"kick1":[261,384,126.0,383],"kick2":[380,384,166.0,383],"guard":[483,395,354.7,394],"special1":[453,395,344.0,394],"special2":[456,402,82.7,401],"super1":[444,428,366.4,427],"super2":[373,353,96.7,352],"hit":[546,419,361.6,418],"down1":[238,345,119.0,344],"down2":[700,359,350.0,358],"crouch":[289,317,167.4,316],"lowkick":[451,323,262.3,322]},"max":{"cutin":[300,300],"idle1":[464,399,333.7,398],"idle2":[465,397,334.2,396],"walk1":[452,395,347.6,394],"walk2":[463,393,347.1,392],"jab1":[438,394,293.1,393],"jab2":[287,395,80.4,394],"kick1":[441,392,344.2,391],"kick2":[380,397,131.1,396],"guard":[217,399,92.0,398],"special1":[459,398,333.3,397],"special2":[581,392,135.6,391],"super1":[399,402,333.3,401],"super2":[345,380,162.0,379],"hit":[427,361,331.1,360],"down1":[520,287,260.0,286],"down2":[625,130,312.5,129],"crouch":[276,397,108.7,396],"lowkick":[336,324,127.8,323]},"daisuke":{"cutin":[300,300],"idle1":[253,376,152.2,375],"idle2":[238,363,131.0,362],"walk1":[210,365,125.7,364],"walk2":[470,373,364.1,372],"jab1":[250,354,136.5,353],"jab2":[326,334,151.1,333],"kick1":[282,379,188.3,378],"kick2":[305,361,105.6,360],"guard":[239,366,128.2,365],"special1":[242,358,128.6,357],"special2":[345,388,130.2,387],"super1":[235,336,131.6,335],"super2":[341,368,298.6,367],"hit":[289,322,198.9,321],"down1":[353,233,176.5,232],"down2":[227,123,113.5,122],"crouch":[291,388,180.1,387],"lowkick":[326,266,134.6,265]},"ryohei":{"cutin":[443,300],"idle1":[176,388,43.0,387],"idle2":[177,392,44.0,391],"walk1":[236,379,103.9,378],"walk2":[203,386,80.2,385],"jab1":[236,390,135.8,389],"jab2":[582,391,319.4,390],"kick1":[133,383,35.9,382],"kick2":[291,386,74.0,385],"guard":[199,377,106.5,376],"special1":[311,385,135.8,384],"special2":[334,374,85.3,373],"super1":[173,378,16.5,377],"super2":[603,393,293.5,392],"hit":[484,356,359.1,355],"down1":[399,283,199.5,282],"down2":[548,187,274.0,186],"crouch":[286,358,82.0,357],"lowkick":[520,365,268.9,364]},"rox":{"cutin":[290,300],"idle1":[213,381,93.8,380],"idle2":[235,367,104.9,366],"walk1":[213,382,93.1,381],"walk2":[218,379,98.7,378],"jab1":[217,379,102.8,378],"jab2":[277,377,96.5,376],"kick1":[342,381,96.8,380],"kick2":[412,346,139.4,345],"guard":[195,390,94.6,389],"special1":[271,385,136.5,384],"special2":[311,385,92.2,384],"super1":[187,368,77.4,367],"super2":[190,361,70.4,360],"hit":[333,348,180.8,347],"down1":[304,315,152.0,314],"down2":[567,116,283.5,115],"crouch":[278,350,121.2,349],"lowkick":[437,366,298.5,365]},"hiroki":{"cutin":[283,300],"idle1":[504,399,347.5,398],"idle2":[505,399,348.3,398],"walk1":[238,386,103.0,385],"walk2":[237,386,102.9,385],"jab1":[208,398,67.0,397],"jab2":[582,398,336.6,397],"kick1":[150,388,50.8,387],"kick2":[295,400,72.4,399],"guard":[202,393,56.5,392],"special1":[226,386,54.5,385],"special2":[274,406,54.0,405],"super1":[198,385,66.6,384],"super2":[419,404,132.2,403],"hit":[383,402,184.5,401],"down1":[399,303,199.5,302],"down2":[381,77,190.5,76],"crouch":[211,311,59.4,310],"lowkick":[261,285,68.9,284]}};
+const AWKMAP = { crouch: 'crouch', cguard: 'crouch', lowkick1: 'crouch', lowkick2: 'lowkick', jump: 'kick1', jumpatk: 'kick2', win: 'idle1' };
+function awkImg(k, n) { return pimg('assets/awk/' + k + '/' + n + '.webp'); }
+setTimeout(() => Object.keys(AWKF).forEach(k => Object.keys(AWKF[k]).forEach(n => awkImg(k, n))), 0);
+function drawAwkBody(f) {
+  const M = AWKF[f.key]; if (!M) return false;
+  let n = frame(f); n = AWKMAP[n] || n; const P = M[n], im = P && awkImg(f.key, n); if (!im) return false;
+  const [pw, ph, pax, pay] = P; const s0 = Math.max(.4, 1 - f.lift / 400);
+  g.save(); g.filter = 'none'; g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90 * s0, 14 * s0, 0, 0, 7); g.fill(); g.restore();
+  g.save(); g.translate(f.x, FLOOR - f.lift); g.scale(f.face, 1); if (f.flash > 0) { g.filter = 'brightness(2.2)'; f.flash--; } else if (frame(f) === 'cguard') g.filter = 'brightness(.85)';
+  g.drawImage(im, -pax, -pay, pw, ph); g.restore(); return true;
 }
 function drawF0(f) {
   const r = f.r, name = frame(f); let m = r.f[name], syn = null;
@@ -305,7 +318,6 @@ const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 const FXHAS = new Set(["andromeda_s", "andromeda_x", "daisuke_s", "daisuke_x", "haruhiko_s", "haruhiko_x", "hattori_s", "hattori_x", "hayato_s", "hayato_x", "heart_s", "heart_x", "hex_s", "hex_x", "hideo_s", "hideo_x", "hidetoshi_s", "hidetoshi_x", "hiroki_s", "hiroki_x", "hiroshi_s", "hiroshi_x", "iroha_s", "iroha_x", "kei_s", "kei_x", "kouji_s", "kouji_x", "kuma_s", "kuma_x", "mars_s", "mars_x", "marushige_s", "marushige_x", "matsuhiro_s", "matsuhiro_x", "max_s", "max_x", "noise_s", "noise_x", "ojonokata_s", "ojonokata_x", "psyco_s", "psyco_x", "rox_s", "rox_x", "ryohei_s", "ryohei_x", "shigeru_s", "shigeru_x", "shinken_s", "shinken_x", "shogun_s", "shogun_x", "shunsuke_s", "shunsuke_x", "yuki_s", "yuki_x"]);
 const FXOBJ = new Set(['shunsuke_x', 'shigeru_x', 'kei_x', 'heart_x', 'heart_s', 'ojonokata_x', 'hex_x']);
 ['shogun', 'max', 'daisuke', 'ryohei', 'rox', 'hiroki'].forEach(k => { FXHAS.add('awk/' + k + '_x'); FXHAS.add('awk/' + k + '_s'); });
-FXOBJ.add('awk/ryohei_x');
 const FXI = {};
 function fxImg(n) { if (!FXHAS.has(n)) return null; if (!FXI[n]) { const i = new Image(); i.src = 'assets/fx/' + n + '.webp'; FXI[n] = i; } const i = FXI[n]; return i.complete && i.naturalWidth ? i : null; }
 FXHAS.forEach(n => fxImg(n));
@@ -332,7 +344,7 @@ function drawAwkSuper(e) {
   const k = e.by.key, n = 'awk/' + k + '_s', t = e.t, o = e.to, f = e.by, life = superLife(e), a = Math.min(1, t / 6) * Math.max(0, Math.min(1, (life - t) / 12)), oy = bodyY(o), d = e.d, pulse = 1 + Math.sin(t * .5) * .05;
   if (k === 'max') { if (t % 8 < 6) paint(n, o.x, 0, 0, 1, { h: FLOOR + 40, floor: true, a }); return true; }
   if (k === 'daisuke') return paint(n, o.x, 0, 640 * pulse, d, { floor: true, a });
-  if (k === 'ryohei') { const x0 = e.x0 + d * 90, len = Math.max(300, Math.abs(o.x - x0) + 220); return paint(n, x0 + d * len / 2, bodyY(f), len, d, { h: 220, sx: len / (220 * 3), a }); }
+  if (k === 'ryohei') { const x = e.x0 + (o.x - e.x0) * Math.min(1, t / 14); return paint(n, x, 0, 0, d, { h: 600, floor: true, a }); }
   if (k === 'shogun' && t >= 14) paint('awk/shogun_s', W / 2, oy, W, d, { a: a * .5 });
   return paint(n, o.x, oy, 600 * pulse, d, { a });
 }
@@ -765,14 +777,14 @@ function drawFight() {
   if (F.superBy && F.cut > 0) {
     const f = F.superBy, m = f.r.f.cutin, k = 70 - F.cut, sx = f === a ? Math.max(120, W - k * 60) : Math.min(W - 120 - m[2] * 1.3, -m[2] + k * 60);
     g.fillStyle = F.superAwk ? 'rgba(40,10,0,.9)' : 'rgba(10,5,20,.85)'; g.fillRect(0, 230, W, 300); if (F.superAwk) { g.fillStyle = AWK[f.key].c; g.fillRect(0, 226, W, 6); g.fillRect(0, 528, W, 6); }
-    const ci = POSE[f.key] && pimg('assets/cut/' + f.key + '.webp');
-    if (ci) { const cw = POSE[f.key].cut[0], cx = f === a ? Math.max(W - cw - 60, W - k * 60) : Math.min(60, -cw + k * 60); g.save(); g.beginPath(); g.rect(0, 230, W, 300); g.clip(); g.drawImage(ci, cx, 230, cw, 300); g.restore(); }
+    const ac = f.awk && AWKF[f.key] && AWKF[f.key].cutin && awkImg(f.key, 'cutin'), ci = ac || (POSE[f.key] && pimg('assets/cut/' + f.key + '.webp'));
+    if (ci) { const cw = ac ? AWKF[f.key].cutin[0] : POSE[f.key].cut[0], cx = f === a ? Math.max(W - cw - 60, W - k * 60) : Math.min(60, -cw + k * 60); g.save(); g.beginPath(); g.rect(0, 230, W, 300); g.clip(); g.drawImage(ci, cx, 230, cw, 300); g.restore(); }
     else if (m && img(f.key).complete) g.drawImage(img(f.key), m[0], m[1], m[2], m[3], sx, 230, m[2] * 1.0, 300);
     g.font = `700 54px ${FONT}`; g.fillStyle = '#ffd23f'; g.textAlign = f === a ? 'left' : 'right'; g.fillText(F.superAwk ? AWK[f.key].S : f.r.S, f === a ? 80 : W - 80, 500); if (F.superAwk) { g.font = `700 26px ${FONT}`; g.fillStyle = AWK[f.key].c; g.fillText('각성 필살기', f === a ? 80 : W - 80, 440); }
   }
   if (F.awkBy && F.awkCut > 0) { const f = F.awkBy, A = AWK[f.key], p = 1 - F.awkCut / 50;
     g.fillStyle = `rgba(0,0,0,${.55 * Math.min(1, F.awkCut / 10)})`; g.fillRect(0, 0, W, H);
-    const ci = POSE[f.key] && pimg('assets/cut/' + f.key + '.webp'); if (ci) { const cw = POSE[f.key].cut[0] * 1.4; g.save(); g.globalAlpha = Math.min(1, F.awkCut / 10); g.filter = `drop-shadow(0 0 24px ${A.c})`; g.drawImage(ci, W / 2 - cw / 2, 150 - p * 20, cw, 420); g.restore(); }
+    const ac = AWKF[f.key] && AWKF[f.key].cutin && awkImg(f.key, 'cutin'), ci = ac || (POSE[f.key] && pimg('assets/cut/' + f.key + '.webp')); if (ci) { const cw = (ac ? AWKF[f.key].cutin[0] : POSE[f.key].cut[0]) * 1.4; g.save(); g.globalAlpha = Math.min(1, F.awkCut / 10); g.filter = `drop-shadow(0 0 24px ${A.c})`; g.drawImage(ci, W / 2 - cw / 2, 150 - p * 20, cw, 420); g.restore(); }
     g.font = `700 ${110 + p * 30}px ${FONT}`; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#1a0612'; g.strokeText('각성!', W / 2, 640); g.fillStyle = A.c; g.fillText('각성!', W / 2, 640); }
   g.restore();
   // HUD
