@@ -271,7 +271,7 @@ const roll = p => Math.random() < p;
 
 // ---------- fighter ----------
 const FR = { // frames: [startup, active, recovery], damage, reach
-  jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185], lowkick: [7, 5, 13, 55, 175] };
+  jab: [6, 4, 10, 45, 150], kick: [9, 5, 14, 65, 185], lowkick: [8, 4, 20, 38, 165] }; // low kick: weaker and slow to recover, so spamming it gets punished
 const LOWST = { crouch: 1, cguard: 1, lowkick: 1, land: 1 };
 function mk(key, x, face, isCpu, lvl) {
   return { key, r: BY[key], x, face, cpu: isCpu, lvl: lvl || 1, hp: 1000, maxhp: 1000, gauge: 0, st: 'idle', t: 0, vx: 0, vy: 0, jvx: 0, lift: 0, hitDone: false, ai: { t: 0, act: null }, wins: 0, dmgMul: 1, gMul: 1, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0, awkOK: false };
@@ -695,14 +695,16 @@ function damage(att, def, amt, kind) {
   // speed: a faster attacker chips more through a guard and can break it; a faster defender holds the guard better
   const sd = spdOf(att) - spdOf(def), melee = kind === 'jab' || kind === 'kick' || low || air;
   if (guarding && melee && sd >= 2 && roll(Math.min(.35, .07 * (sd - 1)))) { guarding = false; hitSprite('c_guard2', def.x + def.face * 60, bodyY(def), 260, def.face, 14); if (!att.cpu || !def.cpu) toast('가드 브레이크!'); amt *= .7; }
-  let d = amt * att.dmgMul * att.atkMul * def.defMul * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
+  // 수련치 gap: each step above the opponent deals 3.5% more / below deals less (fighting far above your 수련치 is hard)
+  const gap = (att.lv || 1) - (def.lv || 1), lvMul = Math.max(.6, Math.min(1.5, 1 + .035 * gap));
+  let d = amt * lvMul * att.dmgMul * att.atkMul * def.defMul * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
   // looks affinity
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
   if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : Math.max(.04, Math.min(.4, .15 + .025 * sd)); def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def, kind === 'super' || kind === 'superm'); }
   else {
-    def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
+    def.st = 'hit'; def.t = low ? 5 : 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
     if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul * (att.awk ? 1.5 : 1)); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
     sfx(amt > 80 ? 'heavy' : 'hit'); hitFX(att, def, low || air ? 'kick' : kind, amt); if (low) hitSprite('c_lowdust', def.x - def.face * 20, FLOOR - 40, 260, att.face, 16);
     F.shake = amt > 80 ? 12 : 6; F.freeze = Math.max(F.freeze, amt > 80 ? 8 : 4);
@@ -755,20 +757,36 @@ function control(f, o) {
     for (const k of ['F', 'K', 'X']) if (take(k)) cmd = k;
     if (take('I')) useItem(f);
   } else {
-    const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl;
+    const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl, sk = Math.min(1, .2 + lv * .1);
+    // remember how the player attacks, so spamming one move gets read
+    const OA = { jab: 1, kick: 1, lowkick: 1, jumpatk: 1 };
+    if (o.t === 1 && OA[o.st]) A.hist = (A.hist || []).concat(o.st).slice(-8);
+    const H = A.hist || [], lowSpam = H.filter(x => x === 'lowkick').length, highSpam = H.filter(x => x === 'kick' || x === 'jab').length;
+    // react once to each incoming attack: crouch-guard blocks every ground hit, stand guard blocks jump-ins
+    const ground = (o.st === 'jab' || o.st === 'kick' || o.st === 'lowkick') && o.t <= FR[o.st][0] + 1 && d < 330;
+    const airIn = o.st === 'jumpatk' || (o.st === 'jump' && d < 280 && o.vy < 4);
+    const id = o.st + (F.pt - o.t);
+    if ((ground || airIn) && A.seen !== id) { A.seen = id;
+      const p = sk * .72 + (o.st === 'lowkick' ? Math.min(.3, lowSpam * .06) : Math.min(.2, highSpam * .03));
+      if (Math.random() < p) { A.act = airIn ? 'guard' : 'cguard'; A.t = 12 + Math.random() * 8; } }
+    // punish an attack that is stuck in recovery
+    const rec = (o.st === 'jab' || o.st === 'kick' || o.st === 'lowkick') && o.t > FR[o.st][0] + FR[o.st][1];
+    if (rec && d < 250 && canAct(f) && A.pun !== id && (A.pun = id) && Math.random() < sk * .6) { A.act = Math.random() < .55 ? 'K' : 'F'; A.t = 6; }
     if (--A.t <= 0) {
-      A.t = Math.max(6, 30 - lv * 3) + Math.random() * 12;
-      const threat = (o.st === 'jab' || o.st === 'kick' || o.st === 'special') && d < 330;
+      A.t = Math.max(5, 24 - lv * 2.5) + Math.random() * 10;
+      const threat = (o.st === 'jab' || o.st === 'kick' || o.st === 'special' || o.st === 'lowkick') && d < 330;
       const roll = Math.random(), inc = SHOTS.find(s => s.by === o && Math.sign(s.vx) === Math.sign(f.x - s.x) && Math.abs(s.x - f.x) < 420);
+      const sitter = o.st === 'crouch' || o.st === 'cguard' || o.st === 'lowkick';
       if (inc && roll < .15 + lv * .07) A.act = inc.ground || inc.lob ? 'jump' : 'crouch';
-      else if (threat && o.st === 'lowkick' && roll < .1 + lv * .06) A.act = 'cguard';
-      else if (o.st === 'guard' && d < 250 && roll < .3) A.act = 'low';
+      else if (threat && roll < .15 + sk * .5) A.act = o.st === 'lowkick' ? 'cguard' : roll < .5 ? 'cguard' : 'guard';
+      else if (sitter && lowSpam >= 3 && d > 160 && d < 400 && roll < .2 + sk * .35) A.act = 'jumpin';
+      else if (o.st === 'guard' && d < 250 && roll < .3 + sk * .2) A.act = 'low';
+      else if (o.st === 'cguard' && d > 160 && d < 400 && roll < .15 + sk * .25) A.act = 'jumpin';
       else if (d > 250 && d < 430 && roll < .1 + lv * .015) A.act = 'jumpin';
-      else if (threat && roll < .12 + lv * .07) A.act = 'guard';
       else if (f.gauge >= 100 && roll < .5) A.act = 'X';
       else if (d > 420 && f.gauge >= 25 && roll < .25 + lv * .03) A.act = 'X';
       else if (d > 230 + f.r.reach) A.act = roll < .85 ? 'fwd' : 'idle';
-      else A.act = roll < .4 ? 'F' : roll < .7 ? 'K' : roll < .82 ? 'back' : 'guard';
+      else A.act = roll < .3 ? 'F' : roll < .55 ? 'K' : roll < .68 ? 'low' : roll < .78 ? 'back' : roll < .9 ? 'cguard' : 'guard';
     }
     if (A.act === 'fwd') move = towards; else if (A.act === 'back') move = -towards; else if (A.act === 'guard') guard = true;
     else if (A.act === 'F' || A.act === 'K' || A.act === 'X') { cmd = A.act; A.act = 'idle'; }
@@ -968,13 +986,15 @@ const STORY = {
     { k: 'kuma', lv: 6, pre: [['kuma', "…시끄럽다. 코우지가 졌다고?"], ['ryohei', "몸에서 열기가 뿜어져 나와요. 다이스케 씨, 폭발에 휘말리지 마세요!"], ['kuma', "길 막지 마라. 다 터뜨려 버리기 전에."]], post: [['kuma', "…졌다. 스물다섯 해 인생 처음이다."], ['daisuke', "스물다섯이요?! …아, 아닙니다."], ['kuma', "…기지 입구엔 사이코가 있다. 그 녀석이랑은 말이 잘 통할지도 모르지."]] },
     { k: 'psyco', lv: 6.5, pre: [['psyco', "정의의 히어로, 사이코 등장! 침입자는 거기까지다!"], ['daisuke', "히, 히어로…? 변신 포즈까지… 멋있다…"], ['max', "선배…?! 이게 다 선배들 짓이었다고요?"], ['psyco', "맥스? …미안, 조직의 명령이야. 그래도 히어로는 정정당당하게! 하나, 둘! 내 리듬에 맞춰 날아가 버려!"]], post: [['psyco', "크윽… 진짜 히어로는 너였구나. 나중에 변신 포즈 같이 연구하자!"], ['max', "선배, 누나는… 플레이아데스는 어디 있습니까?"], ['psyco', "…기지 깊숙한 곳. 하지만 헥스가 길을 막고 있을 거야."]] },
     { k: 'hex', lv: 6.5, pre: [['hex', "침입자 셋. 체급, 속도, 반응 속도… 분석 완료."], ['max', "헥스… 기지 최고의 요원이야. 머리 싸움이 될 거다."], ['daisuke', "계산이라면 저도 지지 않습니다."], ['hex', "흥미롭군. 하지만 계산은 이미 끝났다. 너희가 이길 확률은 0.3%다."]], post: [['hex', "0.3%가… 일어났다고? 재계산이 필요하다."], ['hex', "시스템 관리실의 유키가 곧 기지 전체를 잠글 거다. 서두르는 게 좋을걸."]] },
-    { k: 'yuki', lv: 7, pre: [['yuki', "시스템에 침입자 확인. …어머, 생각보다 잘생겼네요?"], ['daisuke', "네, 네?"], ['max', "유키 씨, 안테나 계획을 멈춰 주세요!"], ['yuki', "미안해요, 맥스. 얼굴은 합격인데… 일은 일이니까. 손가락 하나로 정리할게요."]], post: [['yuki', "시스템 다운… 이런 건 처음이에요."], ['yuki', "옥상엔 마스가 있어요. 프랑스에서 온… 아, 그 사람 정말 잘생겼죠."], ['daisuke', "…그게 지금 중요한가요?"]] },
+    { k: 'yuki', lv: 7, pre: [['yuki', {"hot": "시스템에 침입자 확인. …어머, 생각보다 잘생겼네요?", "mid": "시스템에 침입자 확인. …흠, 평범한 얼굴이네요.", "ugly": "시스템에 침입자 확인. …으, 모니터가 깨진 줄 알았네요.", "f": "시스템에 침입자 확인. …여자분이시네요. 반가워요."}], ['daisuke', {"hot": "네, 네?", "mid": "평범… 하다고요?", "ugly": "…방금 그거 욕이죠?", "f": "네, 반갑습니다…?"}], ['max', "유키 씨, 안테나 계획을 멈춰 주세요!"], ['yuki', {"hot": "미안해요, 맥스. 얼굴은 합격인데… 일은 일이니까. 손가락 하나로 정리할게요.", "mid": "미안해요, 맥스. 평범한 분은 빨리 끝내 드릴게요.", "ugly": "미안해요, 맥스. 이런 얼굴은 봐줄 이유가 하나도 없네요. 손가락 하나로 끝낼게요.", "f": "미안해요, 맥스. 일은 일이니까요. 손가락 하나로 정리할게요."}]], post: [['yuki', "시스템 다운… 이런 건 처음이에요."], ['yuki', "옥상엔 마스가 있어요. 프랑스에서 온… 아, 그 사람 정말 잘생겼죠."], ['daisuke', "…그게 지금 중요한가요?"]] },
     { k: 'mars', lv: 7, pre: [['mars', "봉주르! 여기까지 오다니, 당신들 대단해요."], ['ryohei', "말은 서툴러도 기운은 엄청나요. 방심하지 마세요."], ['mars', "무지개는 일곱 빛깔. 내 주먹도… 일곱 방. 맞아요? 이 말 맞아요?"]], post: [['mars', "와… 당신, 진짜 강해요. 메르시."], ['mars', "안테나 만드는 곳에는 안드로메다 아저씨가 있어요… 음, 조금 이상한 사람이에요."]] },
-    { k: 'andromeda', lv: 7.5, pre: [['andromeda', "오오! 우주의 신호가 왔다! …라고 생각했는데 그냥 침입자잖아."], ['daisuke', "저 야광봉은 대체…"], ['andromeda', "웃지 마라! 이건 우주와 교신하는 신성한 봉이다! …근데 거기 금발 아가씨는 없나?"], ['andromeda', "흠흠. 우주의 신호가 말하고 있어! 너희는 여기서 끝이라고!"]], post: [['andromeda', "아이고 허리야… 나이는 못 속이는군…"], ['andromeda', "본부엔 플레이아데스 님이 계신다. 그분은… 아름답지만 무섭지."], ['max', "…누나."]] },
+    { k: 'andromeda', lv: 7.5, pre: [['andromeda', "오오! 우주의 신호가 왔다! …라고 생각했는데 그냥 침입자잖아."], ['daisuke', "저 야광봉은 대체…"], ['andromeda', {"f": "웃지 마라! 이건 우주와 교신하는 신성한 봉이다! …오오, 아가씨! 우주의 신호가 바로 당신이었군!", "hot": "웃지 마라! 이건 우주와 교신하는 신성한 봉이다! …쳇, 잘생긴 놈은 우주의 적이다.", "mid": "웃지 마라! 이건 우주와 교신하는 신성한 봉이다! …근데 거기 금발 아가씨는 없나?", "ugly": "웃지 마라! 이건 우주와 교신하는 신성한 봉이다! …흠, 너도 나랑 같은 과로군."}], ['andromeda', "흠흠. 우주의 신호가 말하고 있어! 너희는 여기서 끝이라고!"]], post: [['andromeda', "아이고 허리야… 나이는 못 속이는군…"], ['andromeda', "본부엔 플레이아데스 님이 계신다. 그분은… 아름답지만 무섭지."], ['max', "…누나."]] },
     { k: 'rox', lv: 8, boss: 1, pre: [['rox', "왔구나, 맥스. 그리고 동생의 친구들. 차분하게 이야기로 끝낼 수도 있었는데."], ['max', "누나, 그만해요! 안테나를 켜면 이 나라 통신이 전부 마비돼요!"], ['rox', "알아. 그게 목적이니까."], ['daisuke', "맥스 씨의 누나라도… 여기서 멈추게 하겠습니다!"], ['rox', "…방해하지 마! 동생 친구라도 봐주지 않아!"]], post: [['rox', "……강해졌네, 맥스의 친구."], ['rox', "맥스에게 전해. 누나는 아직 포기 안 했다고."], ['max', "누나…!"], ['ryohei', "끝났어요, 다이스케 씨. …아니, 어쩌면 이제부터가 시작일지도 모르겠네요."]] } ] }
 };
 let scene = 'title', dlg = null, menu = 0, sel = { p: 'daisuke', o: 'hattori', side: 0 };
-function say(lines, then) { dlg = { lines, i: 0, then }; scene = 'dialog'; }
+// a line can vary with the player's looks ({ hot, mid, ugly, f }); the story is played as Daisuke for now
+const STORY_P = () => 'daisuke';
+function say(lines, then) { const L = (BY[STORY_P()] || {}).looks || 'mid'; lines = lines.map(([k, t]) => [k, typeof t === 'object' ? (t[L] || t.mid) : t]); dlg = { lines, i: 0, then }; scene = 'dialog'; }
 function storyNext() {
   const C = STORY[SAVE.ch];
   if (!C) { scene = 'ending'; return; }
@@ -1069,7 +1089,7 @@ function draw() {
 function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; bgKey = fi.k; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
 function storyNextGo() { SAVE.introSeen = SAVE.ch; save(); const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage]; dlg = null; startFightStory(C, fi); }
 function startFightStory(C, fi) {
-  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: 1, olv: oppLv(SAVE.ch, SAVE.stage), story: true, awkBoss: !!(fi.boss && AWK[fi.k]), onEnd: won => {
+  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: SAVE.ch === 1 && SAVE.stage === 0 ? 1 : fi.lv * 1.2 + 1, dmg: 1, olv: oppLv(SAVE.ch, SAVE.stage), story: true, awkBoss: !!(fi.boss && AWK[fi.k]), onEnd: won => {
     if (won) {
       const first = !SAVE.beat[fi.k], base = Math.round(30 + fi.lv * 14) * (fi.boss ? 2 : 1), hpB = Math.round(F.a.hp / F.a.maxhp * 30);
       reward(base + hpB, `${BY[fi.k].ko} 격파`); if (first) reward(50, '첫 승리 보너스');
