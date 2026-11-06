@@ -87,7 +87,7 @@ body:not(.mobile) .mhint{display:none}
 <div id="wrap">
   <canvas id="c" width="1280" height="720" aria-label="NEON CLASH 게임 화면"></canvas>
   <div class="pad" id="pad">
-    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button><button id="bu" data-k="up" aria-label="점프">▲</button><button id="bdn" data-k="down" aria-label="숙이기">▼</button><button id="bI" data-k="I">아이템</button><button id="bE" data-k="E">각성</button>
+    <button id="bl" data-k="left" aria-label="왼쪽">◀</button><button id="br" data-k="right" aria-label="오른쪽">▶</button><button id="bu" data-k="up" aria-label="점프">▲</button><button id="bdn" data-k="down" aria-label="숙이기">▼</button><button id="bI" data-k="I">아이템</button>
     <button id="bW" data-k="X">기술<small>필살</small></button><button id="bD" data-k="D">방어</button><button id="bS" data-k="K">킥</button><button id="bA" data-k="F">주먹</button>
   </div>
 </div>
@@ -99,7 +99,7 @@ body:not(.mobile) .mhint{display:none}
   <h1><img src="assets/ui/logo.webp" alt="NEON CLASH" style="height:clamp(160px,38vh,330px);display:block;margin:0 auto" onerror="this.outerHTML='<b>NEON</b> <i>CLASH</i>'"></h1>
   <p>웹 체험판 · 1~3장 스토리와 대전 · 대전 모드로 수련치를 올리고 코인으로 아이템과 각성 조각</p>
   <button id="go" type="button">게임 시작</button>
-  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>↑</kbd></span><span>점프 (점프 중 A·S 점프 공격)</span><span><kbd>↓</kbd></span><span>숙이기 (↓+A·S 하단 킥 · ↓+D 앉아 방어)</span><span><kbd>Q</kbd></span><span>아이템 사용 (라운드마다 1번)</span><span><kbd>E</kbd></span><span>각성 (해금한 캐릭터 · 게이지 절반 · 라운드마다 1번)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
+  <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd></span><span>이동</span><span><kbd>A</kbd></span><span>주먹</span><span><kbd>S</kbd></span><span>킥</span><span><kbd>D</kbd></span><span>방어</span><span><kbd>W</kbd></span><span>고유기 (게이지 MAX면 필살기)</span><span><kbd>↑</kbd></span><span>점프 (점프 중 A·S 점프 공격)</span><span><kbd>↓</kbd></span><span>숙이기 (↓+A·S 하단 킥 · ↓+D 앉아 방어)</span><span><kbd>Q</kbd></span><span>아이템 사용 (라운드마다 1번)</span><span><kbd>E</kbd></span><span>각성 모드 켜기/끄기 (대전 캐릭터 선택에서, 조각 5개 모은 캐릭터)</span><span><kbd>Enter</kbd></span><span>결정 · 대사 넘기기</span></div>
   <p class="mhint">가로 화면으로 돌려서 하세요. 싸울 때 화면 아래에 이동 버튼과 주먹·킥·방어·기술 버튼이 나와요.</p>
 </div>
 <div id="rot">화면을 가로로 돌려 주세요<br>横向きにしてください</div>
@@ -667,13 +667,14 @@ const SHOTS = [], FX = [];
 function startFight(p1, p2, opts) {
   const a = mk(p1, W / 2 - 240, 1, false), b = mk(p2, W / 2 + 240, -1, true, opts.lvl || 2);
   applyStats(a, SAVE.lv); applyStats(b, opts.olv || SAVE.lv, opts.flat ? [6, 6, 6, 6] : null); b.dmgMul = opts.dmg || 1; a.hpLag = a.hp; b.hpLag = b.hp; bgKey = p2;
-  a.awkOK = !!(AWK[p1] && SAVE.awk[p1]); b.awkOK = !!(AWK[p2] && (opts.awkBoss || !opts.story));
+  // awakening is picked on the select screen (only for fighters whose 5 shards are in); the CPU never awakens
+  a.awkOK = a.awkMode = !!(opts.awk && AWK[p1] && SAVE.awk[p1]); b.awkOK = b.awkMode = false; a.awk = a.awkMode ? 1e9 : 0;
   F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, one: !!opts.one, onEnd: opts.onEnd, banner: '' };
   SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
 function resetRound() {
-  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); a.hpLag = a.hp; b.hpLag = b.hp;
+  const { a, b } = F; Object.assign(a, { x: W / 2 - 240, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: a.awkMode ? 1e9 : 0, awkUsed: 0 }); Object.assign(b, { x: W / 2 + 240, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); a.hpLag = a.hp; b.hpLag = b.hp;
   F.timer = 3600; F.cut = 0; F.awkCut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
 function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard' || f.st === 'crouch' || f.st === 'cguard'; }
@@ -753,7 +754,6 @@ function control(f, o) {
     if (held.left) move = -1; if (held.right) move = 1; guard = held.D; down = held.down; jump = take('up');
     for (const k of ['F', 'K', 'X']) if (take(k)) cmd = k;
     if (take('I')) useItem(f);
-    if (take('E')) awaken(f);
   } else {
     const A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl;
     if (--A.t <= 0) {
@@ -765,7 +765,6 @@ function control(f, o) {
       else if (o.st === 'guard' && d < 250 && roll < .3) A.act = 'low';
       else if (d > 250 && d < 430 && roll < .1 + lv * .015) A.act = 'jumpin';
       else if (threat && roll < .12 + lv * .07) A.act = 'guard';
-      else if (canAwaken(f) && f.hp < f.maxhp * .4) { awaken(f); A.act = 'idle'; }
       else if (f.gauge >= 100 && roll < .5) A.act = 'X';
       else if (d > 420 && f.gauge >= 25 && roll < .25 + lv * .03) A.act = 'X';
       else if (d > 230 + f.r.reach) A.act = roll < .85 ? 'fwd' : 'idle';
@@ -912,8 +911,8 @@ function drawFight() {
   drawItemHud(a);
   [[a, 160, 'left'], [b, W - 160, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
     g.fillStyle = f.awk ? AWK[f.key].c : f.awkUsed ? '#6c6690' : f.gauge >= 50 ? AWK[f.key].c : '#9a93bd';
-    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? (MOBILE ? '각성 버튼 (게이지 절반)' : 'E 각성 (게이지 절반)') : '각성 가능', f === a ? 160 : W - 160, f === a ? 268 : 210); });
-  document.body.classList.toggle('awkok', !!(a.awkOK && !a.awkUsed));
+    g.fillText('각성 모드', f === a ? 160 : W - 160, f === a ? 268 : 210); });
+  document.body.classList.remove('awkok');
   if (uiImg('f_pip_on')) { for (let i = 0; i < (F.one ? 1 : 2); i++) [[a, W / 2 - 92 - i * 30], [b, W / 2 + 68 + i * 30]].forEach(([f, px]) => g.drawImage(uiImg(f.wins > i ? 'f_pip_on' : 'f_pip_off'), px, 70, 26, 26)); } else
   for (let i = 0; i < 2; i++) { [[a, 540 - i * 26], [b, 722 + i * 26]].forEach(([f, px]) => { g.save(); g.translate(px, 96); g.rotate(Math.PI / 4); g.fillStyle = f.wins > i ? '#ff3d81' : '#2a2442'; g.fillRect(-7, -7, 14, 14); g.strokeStyle = '#fff'; g.lineWidth = 1; g.strokeRect(-7, -7, 14, 14); g.restore(); }); }
   if (uiImg('f_timer')) g.drawImage(uiImg('f_timer'), W / 2 - 62, 6, 124, 107); else { g.save(); g.translate(W / 2, 58); g.beginPath(); for (let i = 0; i < 6; i++) { const an = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(an) * 46, Math.sin(an) * 46); } g.closePath(); g.fillStyle = '#0b0916'; g.fill(); g.strokeStyle = F.timer < 600 ? '#ff3d81' : '#ffd23f'; g.lineWidth = 3; g.stroke(); g.restore(); }
@@ -1073,7 +1072,7 @@ function statPanel(k, x, y, right, t, label) {
   const w = 520, h = 250; g.save();
   const gr = g.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(right ? 1 : 0, 'rgba(255,61,129,.28)'); gr.addColorStop(right ? 0 : 1, 'rgba(20,16,40,.9)');
   g.beginPath(); g.moveTo(x + 24, y); g.lineTo(x + w, y); g.lineTo(x + w - 24, y + h); g.lineTo(x, y + h); g.closePath(); g.fillStyle = gr; g.fill(); g.strokeStyle = '#ff3d81'; g.lineWidth = 2; g.stroke(); g.clip();
-  const cut = pimg('assets/cut/' + k + '.webp'), im = cut || faceImg(k), px = right ? x + w - 230 : x + 10;
+  const cut = (sel.awk && AWK[k] && SAVE.awk[k] && pimg('assets/awk/' + k + '/cutin.webp')) || pimg('assets/cut/' + k + '.webp'), im = cut || faceImg(k), px = right ? x + w - 230 : x + 10;
   if (im && im.complete && im.naturalWidth) { const s = Math.max(236 / im.naturalHeight, 230 / im.naturalWidth); g.drawImage(im, px + 115 - im.naturalWidth * s / 2, y + 14, im.naturalWidth * s, im.naturalHeight * s); }
   g.restore();
   const tx = right ? x + 30 : x + 250, r = BY[k];
@@ -1108,14 +1107,23 @@ function drawSelect() {
   sel.p = pick.key;
   const t = SAVE.lv;
   statPanel(sel.p, 50, 384, false, t, '1P · 수련치 ' + t); vsPreview(W - 570, 384);
+  // awakening toggle: only for fighters with all 5 shards
+  const canA = AWK[sel.p] && SAVE.awk[sel.p]; if (!canA) sel.awk = false;
+  if (canA) { const bx = 60, by = 642, bw = 250, bh = 40, on = !!sel.awk, A = AWK[sel.p];
+    if (tap && tap.x > bx && tap.x < bx + bw && tap.y > by && tap.y < by + bh) { sel.awk = !on; tap = null; sfx('sel'); }
+    if (take('E')) { sel.awk = !on; sfx('sel'); }
+    g.save(); g.shadowColor = A.c; g.shadowBlur = on ? 22 : 0; g.fillStyle = on ? A.c : 'rgba(20,16,40,.9)'; g.beginPath(); g.roundRect(bx, by, bw, bh, 20); g.fill(); g.restore();
+    g.strokeStyle = A.c; g.lineWidth = 2; g.beginPath(); g.roundRect(bx, by, bw, bh, 20); g.stroke();
+    txt(on ? '각성 모드 ON' : `각성 모드 OFF ${MOBILE ? '(누르기)' : '(E 키)'}`, bx + bw / 2, by + 27, 18, on ? '#120a1e' : A.c);
+    if (on) txt('공격 +30% · 받는 피해 -20% · 스피드 +2 · 각성 필살기', bx + bw + 16, by + 26, 15, A.c, 'left'); }
   if (!banner('vs', W / 2, 505, 92, null)) txt('VS', W / 2, 520, 64, '#ff3d81', 'center', DFONT);
   txt(unlocked(pick.key) ? (MOBILE ? '한 번 더 누르면 결정 · 왼쪽 위 뒤로' : 'Enter / A 로 결정 · Esc 뒤로') : '스토리에서 이기면 열려요', W / 2, 700, 18, '#aaa');
   txt('← 뒤로', 30, 46, 22, '#aaa', 'left'); if (tap && tap.x < 160 && tap.y < 70) pressed.back = true;
-  if ((take('ok') || take('F')) && unlocked(pick.key)) { sfx('sel'); vsCycleStart(); }
+  if ((take('ok') || take('F')) && unlocked(pick.key)) { sfx('sel'); VC_AWK = !!sel.awk; vsCycleStart(); }
   if (take('back')) { scene = 'title'; menu = 1; }
 }
 // ---------- 대전 모드: a cycle of 10 sparring fights, leveled to the player's 수련치, slightly harder toward the end ----------
-const VS_LEN = 10; let VC = null;
+const VS_LEN = 10; let VC = null, VC_AWK = false;
 // sparring pool: every unlocked fighter plus everyone beaten in the story; repeats (and mirror matches) are fine
 function vsPool() { const p = R.filter(r => r.real && (unlocked(r.key) || SAVE.beat[r.key])).map(r => r.key); return p.length ? p : ['ryohei']; }
 function vsCycleStart() { const pool = vsPool(); const list = []; for (let i = 0; i < VS_LEN; i++) { list.push(pool[Math.floor(Math.random() * pool.length)]); } VC = { list, i: 0, wins: 0 }; vsStart(); }
@@ -1127,9 +1135,9 @@ function vsPreview(x, y) {
   const need = xpNeed(SAVE.lv); txt(`다음 수련치까지 ${Math.max(0, need - (SAVE.xp || 0))}`, x + 50, y + 220, 18, '#ffd23f', 'left');
 }
 function vsStart() { const k = VC.list[VC.i], st = VC.i + 1, o = BY[k]; sel.o = k;
-  startFight(sel.p, k, { ch: o.ch, lvl: 1.5 + st * .35, olv: SAVE.lv + (st >= 8 ? 1 : 0), flat: true, one: true, onEnd: w => { vsWon = w;
+  startFight(sel.p, k, { ch: o.ch, lvl: 1.5 + st * .35, olv: SAVE.lv + (st >= 8 ? 1 : 0), flat: true, one: true, awk: VC_AWK, onEnd: w => { vsWon = w;
     const xp = 10 * (.8 + .04 * st);
-    if (w) { VC.wins++; reward(15 + st * 2, `대전 ${st}라운드 승리`); xpGain(xp, `대전 ${st}/${VS_LEN}`); if (AWK[sel.p] && roll(.1)) shardGain(sel.p, 1, '대전 승리'); VC.i++; if (VC.i >= VS_LEN) reward(100, '대전 사이클 완주'); }
+    if (w) { VC.wins++; reward(15 + st * 2, `대전 ${st}라운드 승리`); xpGain(xp, `대전 ${st}/${VS_LEN}`); if (AWK[sel.p] && roll(.1)) shardGain(sel.p, 1, '대전 승리'); if (AWK[k] && k !== sel.p && roll(.15)) shardGain(k, 1, `${o.ko}에게 승리`); VC.i++; if (VC.i >= VS_LEN) reward(100, '대전 사이클 완주'); }
     else { reward(5, '대전 참가'); xpGain(xp * .3, '대전 패배'); }
     save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
@@ -1210,7 +1218,7 @@ function openInv() {
     <p class="msg" id="iMsg" role="status"></p><div class="row"><button type="button" data-shop>상점</button><button type="button" data-close>닫기</button></div>`;
   const msg = t => { const m = $('iMsg'); if (m) m.textContent = t; };
   box.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { SAVE.equip = b.dataset.eq; save(); openInv(); msg(`${ITEMS[SAVE.equip].ko} 장착`); });
-  box.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { const k = b.dataset.awk; if ((SAVE.shards[k] || 0) < AWK_COST) return; SAVE.awk[k] = 1; save(); openInv(); msg(`${BY[k].ko} 각성 해금! 싸울 때 게이지 절반 이상이면 ${MOBILE ? '각성 버튼' : 'E 키'}`); });
+  box.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { const k = b.dataset.awk; if ((SAVE.shards[k] || 0) < AWK_COST) return; SAVE.awk[k] = 1; save(); openInv(); msg(`${BY[k].ko} 각성 해금! 대전 모드 캐릭터 선택에서 각성 모드를 켜세요`); });
   box.querySelector('[data-shop]').onclick = () => { closePanels(); openShop(); };
   box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
 }
