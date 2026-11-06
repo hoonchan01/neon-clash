@@ -1021,7 +1021,7 @@ function startFightStory(C, fi) {
       reward(base + hpB, `${BY[fi.k].ko} 격파`); if (first) reward(50, '첫 승리 보너스');
       if (AWK[fi.k]) { if (fi.boss) shardGain(fi.k, 2, '보스 격파'); else if (roll(.5)) shardGain(fi.k, 1, `${BY[fi.k].ko}에게서 발견`); }
       if (roll(.15)) shardGain('daisuke', 1, '승리');
-      xpGain(xpNeed(SAVE.lv) * (fi.boss ? 1.5 : .5), `${BY[fi.k].ko} 격파`);
+      xpGain(xpNeed(SAVE.lv) * (fi.boss ? .96 : .32), `${BY[fi.k].ko} 격파`);  // tuned so reaching 수련치 16 by the end of chapter 1 takes about 20 대전 cycles
       SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
       const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); shardGain('daisuke', 2, `${SAVE.ch}장 클리어`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
       save(); if (fi.post) say(fi.post, after); else after();
