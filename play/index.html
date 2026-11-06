@@ -645,7 +645,7 @@ function startFight(p1, p2, opts) {
   const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
   applyStats(a, SAVE.lv); applyStats(b, opts.olv || SAVE.lv, opts.flat ? [6, 6, 6, 6] : null); b.dmgMul = opts.dmg || 1; a.hpLag = a.hp; b.hpLag = b.hp; bgKey = p2;
   a.awkOK = !!(AWK[p1] && SAVE.awk[p1]); b.awkOK = !!(AWK[p2] && (opts.awkBoss || !opts.story));
-  F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
+  F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, one: !!opts.one, onEnd: opts.onEnd, banner: '' };
   SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
@@ -793,7 +793,7 @@ function updateFight() {
 }
 function endRound() {
   const { a, b } = F;
-  if (a.wins >= 2 || b.wins >= 2 || F.round >= 3) { const won = a.wins > b.wins; F.onEnd(won); return; }
+  const need = F.one ? 1 : 2; if (a.wins >= need || b.wins >= need || F.round >= (F.one ? 5 : 3)) { const won = a.wins > b.wins; F.onEnd(won); return; }
   F.round++; resetRound();
 }
 function glow(x, y, rad, col) {
@@ -891,7 +891,7 @@ function drawFight() {
     g.fillStyle = f.awk ? AWK[f.key].c : f.awkUsed ? '#6c6690' : f.gauge >= 50 ? AWK[f.key].c : '#9a93bd';
     g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', f === a ? 160 : 1120, f === a ? 268 : 210); });
   document.body.classList.toggle('awkok', !!(a.awkOK && !a.awkUsed));
-  if (uiImg('f_pip_on')) { for (let i = 0; i < 2; i++) [[a, 548 - i * 30], [b, 708 + i * 30]].forEach(([f, px]) => g.drawImage(uiImg(f.wins > i ? 'f_pip_on' : 'f_pip_off'), px, 70, 26, 26)); } else
+  if (uiImg('f_pip_on')) { for (let i = 0; i < (F.one ? 1 : 2); i++) [[a, 548 - i * 30], [b, 708 + i * 30]].forEach(([f, px]) => g.drawImage(uiImg(f.wins > i ? 'f_pip_on' : 'f_pip_off'), px, 70, 26, 26)); } else
   for (let i = 0; i < 2; i++) { [[a, 540 - i * 26], [b, 722 + i * 26]].forEach(([f, px]) => { g.save(); g.translate(px, 96); g.rotate(Math.PI / 4); g.fillStyle = f.wins > i ? '#ff3d81' : '#2a2442'; g.fillRect(-7, -7, 14, 14); g.strokeStyle = '#fff'; g.lineWidth = 1; g.strokeRect(-7, -7, 14, 14); g.restore(); }); }
   if (uiImg('f_timer')) g.drawImage(uiImg('f_timer'), W / 2 - 62, 6, 124, 107); else { g.save(); g.translate(W / 2, 58); g.beginPath(); for (let i = 0; i < 6; i++) { const an = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(an) * 46, Math.sin(an) * 46); } g.closePath(); g.fillStyle = '#0b0916'; g.fill(); g.strokeStyle = F.timer < 600 ? '#ff3d81' : '#ffd23f'; g.lineWidth = 3; g.stroke(); g.restore(); }
   g.font = `700 44px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = F.timer < 600 ? '#ff3d81' : '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
@@ -1007,7 +1007,7 @@ function draw() {
   else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
   else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); txt(`이번 클리어 타임 ${fmt((SAVE.run[1] || 0) + (SAVE.run[2] || 0) + (SAVE.run[3] || 0))} · 최고 ${fmt(SAVE.best.total)}`, W / 2, 500, 26, '#ffd23f'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
   else if (scene === 'vsend') { ctT++; g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); if (!(vsWon && banner('win', W / 2, 250, 300, ctT))) txt(vsWon ? 'YOU WIN' : 'YOU LOSE', W / 2, 300, 90, vsWon ? '#ffd23f' : '#ff3d81', 'center', DFONT); const done = VC && VC.i >= VS_LEN; txt(done ? `사이클 완주! ${VC.wins}승` : `대전 사이클 ${VC ? VC.i : 0} / ${VS_LEN}`, W / 2, 420, 26, '#ffd23f');
-    const c = menuList([done ? '새 사이클' : vsWon ? `다음 상대 (${VC.i + 1}/${VS_LEN})` : '다시 도전', '캐릭터 바꾸기', '타이틀로'], 500); if (c === 0) { if (done) vsCycleStart(); else vsStart(); } if (c === 1) { scene = 'select'; VC = null; } if (c === 2) { scene = 'title'; menu = 1; VC = null; } }
+    const c = menuList([done ? '새 사이클' : vsWon ? `다음 라운드 (${VC.i + 1}/${VS_LEN})` : '다시 도전', '캐릭터 바꾸기', '타이틀로'], 500); if (c === 0) { if (done) vsCycleStart(); else vsStart(); } if (c === 1) { scene = 'select'; VC = null; } if (c === 2) { scene = 'title'; menu = 1; VC = null; } }
   drawToasts();
   if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
   tap = null; for (const k in pressed) pressed[k] = false;
@@ -1086,22 +1086,21 @@ function drawSelect() {
   if (take('back')) { scene = 'title'; menu = 1; }
 }
 // ---------- 대전 모드: a cycle of 10 sparring fights, leveled to the player's 수련치, slightly harder toward the end ----------
-// TRAINEES = dedicated sparring characters (to be added); until then, roster characters stand in with flat even stats
-const TRAINEES = [];
 const VS_LEN = 10; let VC = null;
-function vsPool() { if (TRAINEES.length) return TRAINEES; const maxCh = Math.min(3, SAVE.ch); return R.filter(r => r.real && r.ch <= maxCh && r.key !== sel.p).map(r => r.key); }
-function vsCycleStart() { const pool = vsPool(); const list = []; for (let i = 0; i < VS_LEN; i++) { let k; do k = pool[Math.floor(Math.random() * pool.length)]; while (pool.length > 1 && k === list[i - 1]); list.push(k); } VC = { list, i: 0, wins: 0 }; vsStart(); }
+// sparring pool: every unlocked fighter plus everyone beaten in the story; repeats (and mirror matches) are fine
+function vsPool() { const p = R.filter(r => r.real && (unlocked(r.key) || SAVE.beat[r.key])).map(r => r.key); return p.length ? p : ['ryohei']; }
+function vsCycleStart() { const pool = vsPool(); const list = []; for (let i = 0; i < VS_LEN; i++) { list.push(pool[Math.floor(Math.random() * pool.length)]); } VC = { list, i: 0, wins: 0 }; vsStart(); }
 function vsPreview(x, y) {
   const w = 520, h = 250; g.save(); g.beginPath(); g.moveTo(x + 24, y); g.lineTo(x + w, y); g.lineTo(x + w - 24, y + h); g.lineTo(x, y + h); g.closePath(); g.fillStyle = 'rgba(20,16,40,.9)'; g.fill(); g.strokeStyle = '#ff3d81'; g.lineWidth = 2; g.stroke(); g.restore();
-  txt('대전 사이클', x + 50, y + 40, 16, '#ff8ab4', 'left'); txt(`훈련 상대 ${VS_LEN}명 연속`, x + 50, y + 80, 32, '#fff', 'left');
-  txt(`상대는 모두 내 수련치(${SAVE.lv})에 맞춰져요`, x + 50, y + 120, 18, '#cfc8ee', 'left'); txt('뒤로 갈수록 조금씩 강해져요', x + 50, y + 148, 18, '#cfc8ee', 'left');
+  txt('대전 사이클', x + 50, y + 40, 16, '#ff8ab4', 'left'); txt(`${VS_LEN}라운드 연속 승리`, x + 50, y + 80, 32, '#fff', 'left');
+  txt(`해금·격파한 캐릭터가 내 수련치(${SAVE.lv})로 나와요`, x + 50, y + 120, 18, '#cfc8ee', 'left'); txt('라운드마다 1판 승부 · 뒤로 갈수록 조금씩 강해져요', x + 50, y + 148, 18, '#cfc8ee', 'left');
   txt(`이길 때마다 수련 경험치 · 다 이기면 약 100`, x + 50, y + 186, 18, '#ffb27a', 'left');
   const need = xpNeed(SAVE.lv); txt(`다음 수련치까지 ${Math.max(0, need - (SAVE.xp || 0))}`, x + 50, y + 220, 18, '#ffd23f', 'left');
 }
 function vsStart() { const k = VC.list[VC.i], st = VC.i + 1, o = BY[k]; sel.o = k;
-  startFight(sel.p, k, { ch: o.ch, lvl: 1.5 + st * .35, olv: SAVE.lv + (st >= 8 ? 1 : 0), flat: true, onEnd: w => { vsWon = w;
+  startFight(sel.p, k, { ch: o.ch, lvl: 1.5 + st * .35, olv: SAVE.lv + (st >= 8 ? 1 : 0), flat: true, one: true, onEnd: w => { vsWon = w;
     const xp = 10 * (.8 + .04 * st);
-    if (w) { VC.wins++; reward(15 + st * 2, `대전 ${st}번째 승리`); xpGain(xp, `대전 ${st}/${VS_LEN}`); if (AWK[sel.p] && roll(.1)) shardGain(sel.p, 1, '대전 승리'); VC.i++; if (VC.i >= VS_LEN) reward(100, '대전 사이클 완주'); }
+    if (w) { VC.wins++; reward(15 + st * 2, `대전 ${st}라운드 승리`); xpGain(xp, `대전 ${st}/${VS_LEN}`); if (AWK[sel.p] && roll(.1)) shardGain(sel.p, 1, '대전 승리'); VC.i++; if (VC.i >= VS_LEN) reward(100, '대전 사이클 완주'); }
     else { reward(5, '대전 참가'); xpGain(xp * .3, '대전 패배'); }
     save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
