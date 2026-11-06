@@ -152,7 +152,7 @@ function resetRun() { SAVE.run = {}; }
 
 // ---------- input ----------
 const held = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', q: 'I', e: 'E', Enter: 'ok', ' ': 'ok', Escape: 'back' };
+const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'F', s: 'K', d: 'D', w: 'X', q: 'I', e: 'E', Enter: 'ok', ' ': 'ok', Escape: 'back', p: 'P' };
 const MOBILE = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 0 && matchMedia('(hover:none)').matches || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 document.body.classList.toggle('mobile', MOBILE);
 let started = false;
@@ -823,7 +823,7 @@ function updateFight() {
   const LIFE = e => e.k === 'super' ? superLife(e) : e.k === 'hitimg' ? e.life : e.k === 'cloud' ? 40 : e.k === 'ring' ? 20 : e.k === 'blastX' ? 24 : e.k === 'koFlash' ? 30 : 16;
   for (let i = FX.length - 1; i >= 0; i--) if (FX[i].t > LIFE(FX[i])) FX.splice(i, 1);
   stepParts();
-  if (F.timer > 0) F.timer--;
+  if (F.timer > 0) F.timer -= 1 / GAME_SPEED;
   if (a.hp <= 0 || b.hp <= 0 || F.timer <= 0) {
     F.phase = 'end'; F.pt = 0;
     const w = a.hp === b.hp ? null : a.hp > b.hp ? a : b; F.rw = w;
@@ -1041,10 +1041,29 @@ function menuList(items, y0) {
   if (take('ok') || take('F')) { sfx('sel'); return menu; }
   return -1;
 }
+const GAME_SPEED = 1.35;
+function drawPauseBtn() { if (F.phase !== 'fight' || F.paused) return; const x = W / 2 - 26, y = 114;
+  g.save(); g.globalAlpha = .75; g.fillStyle = 'rgba(10,8,22,.8)'; g.beginPath(); g.roundRect(x, y, 52, 34, 10); g.fill(); g.strokeStyle = '#ff3d81'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#fff'; g.fillRect(x + 18, y + 9, 5, 16); g.fillRect(x + 29, y + 9, 5, 16); g.restore(); }
+function drawPause() {
+  g.fillStyle = 'rgba(6,4,14,.72)'; g.fillRect(0, 0, W, H);
+  txt('일시정지', W / 2, 300, 48, '#ffd23f');
+  const c = menuList(['계속하기', F.story ? '스토리 홈 화면으로' : '홈 화면으로'], 400);
+  if (take('back') || take('P') || c === 0) { F.paused = false; sfx('sel'); }
+  else if (c === 1) { F.paused = false; scene = 'title'; menu = 0; VC = null; sel.mode = null; SHOTS.length = FX.length = PART.length = 0; save(); }
+}
+addEventListener('visibilitychange', () => { if (document.hidden && scene === 'fight' && F && F.phase === 'fight') F.paused = true; });
 function draw() {
-  document.body.classList.toggle('infight', scene === 'fight');
+  document.body.classList.toggle('infight', scene === 'fight' && !(F && F.paused));
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-  if (scene === 'fight') { updateFight(); drawFight(); }
+  if (scene === 'fight') {
+    if (!F.paused) {
+      // fights run 1.35x faster than the render rate (the round clock still counts real seconds)
+      F.sacc = (F.sacc || 0) + GAME_SPEED; while (F.sacc >= 1) { F.sacc -= 1; updateFight(); if (scene !== 'fight' || F.paused) break; }
+      if (scene === 'fight' && (take('back') || take('P') || (tap && Math.abs(tap.x - W / 2) < 34 && tap.y > 112 && tap.y < 152))) { F.paused = true; menu = 0; tap = null; sfx('sel'); }
+    }
+    if (scene === 'fight') { drawFight(); drawPauseBtn(); if (F.paused) drawPause(); }
+  }
   else if (scene === 'title') {
     bgDraw(1, 'hiroki'); g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, H);
     frontFace('daisuke', 'left', 400, -90, 720); frontFace('hiroki', 'right', 400, -90, 720);
