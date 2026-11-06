@@ -51,6 +51,21 @@ body.mobile .keys{display:none}
 .it{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #2c2748;border-radius:10px;background:#100d20}
 .it div{flex:1;min-width:0}.it b{display:block}.it small{color:#9a93bd;font-size:12.5px}
 .it button{padding:8px 12px;font-size:14px;white-space:nowrap}.it button:disabled{opacity:.4;cursor:default}
+
+.ico{position:relative;display:inline-grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--ic) 40%,#120f24);vertical-align:middle}
+.ico img{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);object-fit:contain}.ico img+i{display:none}.ico i{font:700 16px "Chakra Petch",system-ui;font-style:normal;color:#1a0612}
+button .ico{width:20px;height:20px;flex-basis:20px}button .ico i{font-size:11px}
+.cnt{font:700 13px "Chakra Petch",system-ui;color:#ffd23f;margin-left:4px}
+.wallet{display:flex;flex-wrap:wrap;gap:10px}.wallet>div{flex:1 1 180px;display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:10px;padding:10px 12px;border:1px solid #3a3360;border-radius:12px;background:linear-gradient(135deg,#1e1a36,#120f24)}
+.wallet .ico{grid-row:span 2;width:44px;height:44px}.wallet b{font:700 22px "Chakra Petch",system-ui;color:#ffd23f}.wallet small{color:#9a93bd;font-size:12px}
+.shards{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.sh{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:1px solid #3a3360;border-top:3px solid var(--ac);border-radius:12px;background:#100d20}
+.sh>img{width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:2px solid var(--ac)}.sh .ico{position:absolute;top:60px;left:calc(50% + 18px);width:26px;height:26px;flex-basis:26px}
+.sh b{font-size:14px}.sh small{color:#9a93bd;font-size:11.5px}.sh button{padding:6px 10px;font-size:13px}
+.pips{display:flex;gap:4px}.pips i{width:14px;height:14px;transform:rotate(45deg);border:1px solid var(--ac);background:#0c0a18}.pips i.on{background:var(--ac);box-shadow:0 0 8px var(--ac)}
+.sh.done{box-shadow:0 0 0 1px var(--ac) inset,0 0 18px -6px var(--ac)}
+.it .ico{width:40px;height:40px;flex-basis:40px}
+.box button{display:inline-flex;align-items:center;gap:6px}
 .coin{font:700 18px "Chakra Petch",system-ui;color:#ffd23f}
 .rk{width:100%;border-collapse:collapse;font-size:14px}
 .rk td,.rk th{padding:7px 6px;border-bottom:1px solid #2c2748;text-align:left}
@@ -69,6 +84,7 @@ body:not(.mobile) .mhint{display:none}
   </div>
 </div>
 <div class="panel" id="acct" role="dialog" aria-modal="true" aria-labelledby="acctT"><div class="box" id="acctBox"></div></div>
+<div class="panel" id="inv" role="dialog" aria-modal="true" aria-labelledby="invT"><div class="box" id="invBox"></div></div>
 <div class="panel" id="shop" role="dialog" aria-modal="true" aria-labelledby="shopT"><div class="box" id="shopBox"></div></div>
 <div class="panel" id="rank" role="dialog" aria-modal="true" aria-labelledby="rankT"><div class="box" id="rankBox"></div></div>
 <div id="start">
@@ -99,7 +115,10 @@ function portrait(k, x, y, w, h) { const i = faceImg(k); if (!i.complete || !i.n
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('neonclash_web') || '{}') } catch (e) { return {} } })();
 SAVE.beat = SAVE.beat || {}; SAVE.ch = SAVE.ch || 1; SAVE.stage = SAVE.stage || 0;
 SAVE.playMs = SAVE.playMs || 0; SAVE.run = SAVE.run || {}; SAVE.best = SAVE.best || {};
-function fixSave() { SAVE.coin = SAVE.coin || 0; SAVE.inv = SAVE.inv || {}; SAVE.up = SAVE.up || {}; if (SAVE.equip === undefined) SAVE.equip = 'potion'; SAVE.shard = SAVE.shard || 0; SAVE.awk = SAVE.awk || {}; }
+function fixSave() { SAVE.coin = SAVE.coin || 0; SAVE.inv = SAVE.inv || {}; SAVE.up = SAVE.up || {}; if (SAVE.equip === undefined) SAVE.equip = 'potion'; SAVE.awk = SAVE.awk || {}; SAVE.shards = SAVE.shards || {};
+  if (SAVE.train === undefined) { const u = SAVE.up || {}; SAVE.train = (u.hp || 0) + (u.atk || 0) + (u.gauge || 0); }
+  if (SAVE.shard) { SAVE.shards.daisuke = (SAVE.shards.daisuke || 0) + SAVE.shard; SAVE.shard = 0; }
+  if (SAVE.inv.rage) { SAVE.inv.jelly = (SAVE.inv.jelly || 0) + SAVE.inv.rage; delete SAVE.inv.rage; } if (SAVE.equip === 'rage') SAVE.equip = 'jelly'; }
 fixSave();
 function save() { try { localStorage.setItem('neonclash_web', JSON.stringify(SAVE)) } catch (e) {} if (window.Cloud && Cloud.sync) Cloud.sync(SAVE); }
 window.SAVE_REF = () => SAVE;
@@ -186,11 +205,30 @@ const BGI = {}; let bgKey = null;
 function bgImg(k) { if (!k) return null; if (!(k in BGI)) { const i = new Image(); i.onerror = () => { BGI[k] = null; }; i.src = 'assets/bg/' + k + '.webp'; BGI[k] = i; } const i = BGI[k]; return i && i.complete && i.naturalWidth ? i : null; }
 function bgDraw(ch, k) { const i = bgImg(k); if (i) { g.drawImage(i, 0, 0, W, H); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); } else g.drawImage(stage(ch), 0, 0); }
 
+// ---------- character stats: [공격 ATK, 맷집 DEF, 체력 HP, 스피드 SPD] on a 1-10 scale ----------
+const STATS = {
+  daisuke: [6, 6, 6, 6], ryohei: [6, 5, 6, 7], hattori: [6, 7, 6, 5], noise: [7, 5, 8, 4], shunsuke: [5, 5, 6, 8], shigeru: [8, 5, 6, 5],
+  kei: [7, 4, 5, 8], matsuhiro: [7, 6, 7, 4], iroha: [5, 4, 5, 10], haruhiko: [7, 5, 5, 7], heart: [6, 5, 5, 8], max: [6, 5, 5, 8], hiroki: [8, 6, 6, 6],
+  hiroshi: [8, 7, 7, 2], hayato: [7, 6, 6, 5], hidetoshi: [7, 6, 5, 6], shinken: [8, 7, 6, 3], hideo: [6, 4, 5, 9], ojonokata: [7, 4, 5, 8], marushige: [5, 8, 7, 4], shogun: [9, 7, 7, 5],
+  kouji: [8, 4, 5, 7], kuma: [9, 5, 7, 3], psyco: [7, 5, 6, 6], hex: [6, 5, 5, 8], yuki: [6, 4, 5, 9], mars: [7, 5, 5, 7], andromeda: [6, 6, 6, 6], rox: [8, 6, 7, 7] };
+const STAT_KO = ['공격', '맷집', '체력', '스피드'], STAT_COL = ['#ff6a4a', '#8fd6ff', '#7dffa0', '#ffd23f'];
+const TRAIN_MAX = 20, TRAIN_STEP = .6, trainCost = t => 80 + 40 * t;
+// effective stats = character base + account training (every owned fighter gets the same training)
+function statsOf(key, t) { const b = STATS[key] || [6, 6, 6, 6]; return b.map(v => v + TRAIN_STEP * t); }
+function applyStats(f, t) {
+  const [at, df, hp, sp] = statsOf(f.key, t); f.stat = [at, df, hp, sp];
+  f.maxhp = f.hp = Math.round(700 + 50 * hp); f.atkMul = .7 + .05 * at; f.defMul = Math.max(.45, 1.3 - .05 * df); f.spd = sp;
+}
+const spdOf = f => f.spd + (f.buff.jelly > 0 ? 4 : 0) + (f.awk ? 2 : 0);
+// story fights need a minimum account training (단련 단계)
+const REQ = { 1: [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 6], 2: [6, 7, 7, 8, 8, 9, 9, 10], 3: [10, 11, 11, 12, 12, 13, 13, 14] };
+const reqOf = (ch, st) => (REQ[ch] || [])[st] || 0;
+
 // ---------- awakening (각성): 6 fighters, unlocked with 각성의 조각 ----------
 const AWK = {
   daisuke: { S: '오렌지 인피니티', c: '#ff8c14' }, ryohei: { S: '녹룡 대선풍', c: '#3fe0b0' }, hiroki: { S: '제독참·흑룡', c: '#3264ff' },
   max: { S: '뇌신 천붕', c: '#ffe128' }, shogun: { S: '천하무쌍 일섬', c: '#eb2323' }, rox: { S: '칠성 뇌폭', c: '#5ad7ff' } };
-const AWK_COST = 5, AWK_TIME = 900, SHARD_PRICE = 300;
+const AWK_COST = 5, AWK_TIME = 900, SHARD_PRICE = 450;
 const AURA = {}; Object.keys(AWK).forEach(k => { const i = new Image(); i.src = 'assets/fx/aura/' + k + '.webp'; AURA[k] = i; });
 function canAwaken(f) { return AWK[f.key] && f.awkOK && !f.awkUsed && !f.awk && f.gauge >= 50 && F && F.phase === 'fight'; }
 function awaken(f) {
@@ -198,7 +236,8 @@ function awaken(f) {
   f.awk = AWK_TIME; f.awkUsed = 1; f.gauge -= 50; f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .3));
   F.freeze = 50; F.awkCut = 50; F.awkBy = f; sfx('super');;
 }
-function shardGain(n, why) { SAVE.shard = (SAVE.shard || 0) + n; toast(`각성의 조각 +${n} · ${why}`); }
+function shardGain(k, n, why) { if (!AWK[k] || SAVE.awk[k]) return; SAVE.shards[k] = Math.min(AWK_COST, (SAVE.shards[k] || 0) + n); toast(`${BY[k].ko}의 각성 조각 +${n} (${SAVE.shards[k]}/${AWK_COST}) · ${why}`); }
+const roll = p => Math.random() < p;
 
 // ---------- fighter ----------
 const FR = { // frames: [startup, active, recovery], damage, reach
@@ -259,7 +298,7 @@ function drawF0(f) {
   g.save();
   // shadow
   const sh0 = Math.max(.4, 1 - f.lift / 400); g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(f.x, FLOOR + 6, 90 * sh0, 14 * sh0, 0, 0, 7); g.fill();
-  if (f.buff.rage > 0) paintHit('c_rage', f.x, FLOOR - f.lift - 200, 260, f.face, .5 + Math.sin(f.t * .2) * .15);
+  if (f.buff.jelly > 0 && f.t % 8 < 4) paintHit('c_dash', f.x - f.face * 70, FLOOR - f.lift - 180, 260, f.face, .5);
   if (f.buff.charm > 0) paintHit('c_charm', f.x, FLOOR - f.lift - 200, 330, f.face, .35 + Math.sin(f.t * .2) * .08);
   g.translate(f.x, FLOOR - f.lift);
   if (!r.real) { // placeholder: fake motion with tilt / lunge
@@ -597,15 +636,14 @@ let F = null; // current fight
 const SHOTS = [], FX = [];
 function startFight(p1, p2, opts) {
   const a = mk(p1, 400, 1, false), b = mk(p2, 880, -1, true, opts.lvl || 2);
-  b.dmgMul = opts.dmg || 1;
-  const U = SAVE.up; a.maxhp = a.hp = Math.round(1000 * (1 + .05 * (U.hp || 0))); a.dmgMul = 1 + .05 * (U.atk || 0); a.gMul = 1 + .1 * (U.gauge || 0); bgKey = p2;
+  applyStats(a, SAVE.train || 0); applyStats(b, opts.train == null ? (SAVE.train || 0) : opts.train); b.dmgMul = opts.dmg || 1; a.hpLag = a.hp; b.hpLag = b.hp; bgKey = p2;
   a.awkOK = !!(AWK[p1] && SAVE.awk[p1]); b.awkOK = !!(AWK[p2] && (opts.awkBoss || !opts.story));
   F = { a, b, ch: opts.ch || 1, timer: 60 * 60, phase: 'intro', pt: 0, round: 1, freeze: 0, shake: 0, superBy: null, story: opts.story, onEnd: opts.onEnd, banner: '' };
   SHOTS.length = FX.length = PART.length = 0;
   scene = 'fight';
 }
 function resetRound() {
-  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 });
+  const { a, b } = F; Object.assign(a, { x: 400, face: 1, hp: a.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); Object.assign(b, { x: 880, face: -1, hp: b.maxhp, st: 'idle', t: 0, lift: 0, vx: 0, vy: 0, buff: {}, itemUsed: 0, awk: 0, awkUsed: 0 }); a.hpLag = a.hp; b.hpLag = b.hp;
   F.timer = 3600; F.cut = 0; F.awkCut = 0; F.phase = 'intro'; F.pt = 0; SHOTS.length = FX.length = PART.length = 0;
 }
 function canAct(f) { return f.st === 'idle' || f.st === 'walk' || f.st === 'back' || f.st === 'guard' || f.st === 'crouch' || f.st === 'cguard'; }
@@ -622,13 +660,16 @@ function act(f, o, cmd, down) {
 function damage(att, def, amt, kind) {
   if (def.st === 'ko') return;
   const low = kind === 'low', air = kind === 'air';
-  const guarding = ((def.st === 'guard' && !low) || (def.st === 'cguard' && !air)) && kind !== 'super-unblock';
-  let d = amt * att.dmgMul * (att.buff.rage > 0 ? 1.3 : 1) * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
+  let guarding = ((def.st === 'guard' && !low) || (def.st === 'cguard' && !air)) && kind !== 'super-unblock';
+  // speed: a faster attacker chips more through a guard and can break it; a faster defender holds the guard better
+  const sd = spdOf(att) - spdOf(def), melee = kind === 'jab' || kind === 'kick' || low || air;
+  if (guarding && melee && sd >= 2 && roll(Math.min(.35, .07 * (sd - 1)))) { guarding = false; hitSprite('c_guard2', def.x + def.face * 60, bodyY(def), 260, def.face, 14); if (!att.cpu || !def.cpu) toast('가드 브레이크!'); amt *= .7; }
+  let d = amt * att.dmgMul * att.atkMul * def.defMul * (def.buff.charm > 0 ? .6 : 1) * (att.awk ? 1.3 : 1) * (def.awk ? .8 : 1);
   // looks affinity
   const L = def.r.looks;
   if (att.key === 'noise' || att.key === 'andromeda') d *= L === 'hot' ? 1.2 : (L === 'ugly' || L === 'f') ? .85 : 1;
   if (att.key === 'yuki') d *= L === 'ugly' ? 1.25 : L === 'hot' ? .9 : 1;
-  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : .15; def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def, kind === 'super' || kind === 'superm'); }
+  if (guarding) { d *= (kind === 'super' || kind === 'superm') ? .4 : Math.max(.04, Math.min(.4, .15 + .025 * sd)); def.gauge = Math.min(100, def.gauge + 1); sfx('guard'); guardFX(def, kind === 'super' || kind === 'superm'); }
   else {
     def.st = 'hit'; def.t = 0; def.vx = -def.face * (kind === 'super' ? 14 : kind === 'superm' ? 4 : 7); def.flash = 4; if (def.lift > 0) def.vy = Math.max(def.vy, 3);
     if (kind !== 'super' && kind !== 'superm') { att.gauge = Math.min(100, att.gauge + (kind === 'kick' || low || air ? 4 : kind === 'special' ? 2 : 3) * att.gMul * (att.awk ? 1.5 : 1)); def.gauge = Math.min(100, def.gauge + 3 * def.gMul); }
@@ -714,7 +755,7 @@ function control(f, o) {
     if (jump) { f.st = 'jump'; f.t = 0; f.vy = 17; f.lift = 1; f.jvx = move * 6; hitSprite('c_jump', f.x, FLOOR - 30, 240, f.face, 12); return; }
     if (down) { const st = guard ? 'cguard' : 'crouch'; if (f.st !== st) { f.st = st; f.t = 0; } return; }
     if (guard) { if (f.st !== 'guard') { f.st = 'guard'; f.t = 0; } return; }
-    if (move) { const fwd = move === f.face; const st = fwd ? 'walk' : 'back'; if (f.st !== st) { f.st = st; f.t = 0; } f.x += move * (fwd ? 5 : 4); }
+    if (move) { const fwd = move === f.face; const st = fwd ? 'walk' : 'back'; if (f.st !== st) { f.st = st; f.t = 0; } f.x += move * (fwd ? 2.2 + .5 * spdOf(f) : 1.8 + .4 * spdOf(f)); }
     else if (f.st !== 'idle') { f.st = 'idle'; f.t = 0; }
   }
 }
@@ -753,6 +794,33 @@ function glow(x, y, rad, col) {
   gr.addColorStop(0, `rgba(${c1},1)`); gr.addColorStop(.35, `rgba(${c2},.9)`); gr.addColorStop(1, `rgba(${c2},0)`);
   g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
 }
+function hpBar(f, x, right) {
+  const w = 470, h = 26, y = 46, sk = 14, v = Math.max(0, f.hp / f.maxhp), lag = Math.max(v, (f.hpLag || f.hp) / f.maxhp);
+  f.hpLag = Math.max(f.hp, (f.hpLag || f.hp) - f.maxhp * .006);
+  const poly = (x0, x1, col) => { g.beginPath(); if (!right) { g.moveTo(x0 + sk, y); g.lineTo(x1 + sk, y); g.lineTo(x1, y + h); g.lineTo(x0, y + h); } else { g.moveTo(x0 - sk, y); g.lineTo(x1 - sk, y); g.lineTo(x1, y + h); g.lineTo(x0, y + h); } g.closePath(); g.fillStyle = col; g.fill(); };
+  const X = p => right ? x + w - p * w : x + p * w;
+  g.save(); g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 10; poly(right ? x + w + 6 : x - 6, right ? x - 6 : x + w + 6, '#0b0916'); g.restore();
+  poly(right ? x + w : x, right ? x : x + w, '#2a0f1e');
+  poly(right ? x + w : x, X(lag), '#ff3d6e');
+  const gr = g.createLinearGradient(0, y, 0, y + h); const low = v < .3;
+  gr.addColorStop(0, low ? '#ffb0a0' : '#fff6b0'); gr.addColorStop(.45, low ? '#ff5a3a' : '#ffd23f'); gr.addColorStop(1, low ? '#b0201a' : '#ff9a1f');
+  poly(right ? x + w : x, X(v), gr);
+  g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(Math.min(x, X(v)) + sk, y + 3, Math.abs(X(v) - (right ? x + w : x)) - sk, 4);
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5; g.beginPath(); if (!right) { g.moveTo(x + sk, y); g.lineTo(x + w + sk, y); g.lineTo(x + w, y + h); g.lineTo(x, y + h); } else { g.moveTo(x + w - sk, y); g.lineTo(x - sk, y); g.lineTo(x, y + h); g.lineTo(x + w, y + h); } g.closePath(); g.stroke();
+  // portrait badge
+  const px = right ? x + w + 18 : x - 84, im = faceImg(f.key);
+  g.save(); g.beginPath(); g.arc(px + 33, y + 14, 33, 0, 7); g.fillStyle = '#16122a'; g.fill(); g.clip(); if (im.complete && im.naturalWidth) g.drawImage(im, px, y - 19, 66, 66); g.restore();
+  g.strokeStyle = f.awk ? AWK[f.key].c : '#ffd23f'; g.lineWidth = 3; g.beginPath(); g.arc(px + 33, y + 14, 33, 0, 7); g.stroke();
+  // name plate + stats
+  g.font = `700 22px ${FONT}`; g.textAlign = right ? 'right' : 'left'; g.fillStyle = '#fff'; g.fillText(f.r.ko, right ? x + w - 4 : x + 4, y + h + 26);
+}
+function gaugeBar(f, x, right) {
+  const w = 300, h = 12, y = 106; for (let i = 0; i < 4; i++) { const sx = right ? x + w - (i + 1) * 75 + 3 : x + i * 75, fill = Math.max(0, Math.min(1, (f.gauge - i * 25) / 25));
+    g.fillStyle = '#0b0916'; g.fillRect(sx - 2, y - 2, 73, h + 4); g.fillStyle = '#1c2340'; g.fillRect(sx, y, 69, h);
+    const full = f.gauge >= 100; g.fillStyle = full ? (Math.floor(F.pt / 6) % 2 ? '#ff3d81' : '#ff8ab4') : '#3fd8ff'; const fw = 69 * fill; g.fillRect(right ? sx + 69 - fw : sx, y, fw, h); }
+  g.font = `700 13px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = right ? 'right' : 'left';
+  g.fillText(f.gauge >= 100 ? (MOBILE ? 'MAX! 기술 = 필살기' : 'MAX! W = 필살기') : (MOBILE ? '기술 (1칸)' : 'W 고유기 (1칸)'), right ? x + w : x, y + 30);
+}
 function bar(x, y, w, h, v, right, col) {
   g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x - 3, y - 3, w + 6, h + 6); g.fillStyle = '#3a1020'; g.fillRect(x, y, w, h);
   g.fillStyle = col; const vw = w * v; g.fillRect(right ? x + w - vw : x, y, vw, h);
@@ -788,16 +856,15 @@ function drawFight() {
     g.font = `700 ${110 + p * 30}px ${FONT}`; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#1a0612'; g.strokeText('각성!', W / 2, 640); g.fillStyle = A.c; g.fillText('각성!', W / 2, 640); }
   g.restore();
   // HUD
-  bar(60, 40, 500, 30, a.hp / a.maxhp, true, '#ffd23f'); bar(720, 40, 500, 30, b.hp / b.maxhp, false, '#ffd23f');
+  hpBar(a, 100, false); hpBar(b, 710, true); gaugeBar(a, 100, false); gaugeBar(b, 880, true);
   drawItemHud(a);
-  [[a, 60, 'left'], [b, 1220, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
+  [[a, 100, 'left'], [b, 1180, 'right']].forEach(([f, x, al]) => { if (!AWK[f.key] || !f.awkOK) return; g.font = `700 16px ${FONT}`; g.textAlign = al;
     g.fillStyle = f.awk ? AWK[f.key].c : f.awkUsed ? '#6c6690' : f.gauge >= 50 ? AWK[f.key].c : '#9a93bd';
-    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', x, f === a ? 222 : 178); });
+    g.fillText(f.awk ? `각성 중 ${Math.ceil(f.awk / 60)}초` : f.awkUsed ? '각성 (사용함)' : f === a ? `${MOBILE ? '각성' : 'E'} 각성 (게이지 절반)` : '각성 가능', f === a ? 100 : 1180, f === a ? 220 : 160); });
   document.body.classList.toggle('awkok', !!(a.awkOK && !a.awkUsed));
-  g.font = `700 26px ${FONT}`; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(a.r.ko, 60, 104); g.textAlign = 'right'; g.fillText(b.r.ko, 1220, 104);
-  for (let i = 0; i < 2; i++) { g.fillStyle = a.wins > i ? '#ff3d81' : '#333'; g.fillRect(470 - i * 26, 86, 18, 18); g.fillStyle = b.wins > i ? '#ff3d81' : '#333'; g.fillRect(792 + i * 26, 86, 18, 18); }
-  g.font = `700 52px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 76);
-  [[a, 60, false], [b, 920, true]].forEach(([f, x, rt]) => { bar(x, 120, 300, 14, f.gauge / 100, rt, f.gauge >= 100 ? '#ff3d81' : '#3fd8ff'); g.fillStyle = 'rgba(0,0,0,.6)'; for (let i = 1; i < 4; i++) g.fillRect(x + i * 75, 120, 2, 14); g.font = `700 14px ${DFONT}`; g.fillStyle = f.gauge >= 100 ? '#ff3d81' : '#9fe7ff'; g.textAlign = rt ? 'right' : 'left'; g.fillText(f.gauge >= 100 ? (MOBILE ? 'MAX! 기술 = 필살기' : 'MAX! W = 필살기') : (MOBILE ? '기술 (1/4)' : 'W 고유기 (1/4)'), rt ? x + 300 : x, 152); });
+  for (let i = 0; i < 2; i++) { [[a, 540 - i * 26], [b, 722 + i * 26]].forEach(([f, px]) => { g.save(); g.translate(px, 96); g.rotate(Math.PI / 4); g.fillStyle = f.wins > i ? '#ff3d81' : '#2a2442'; g.fillRect(-7, -7, 14, 14); g.strokeStyle = '#fff'; g.lineWidth = 1; g.strokeRect(-7, -7, 14, 14); g.restore(); }); }
+  g.save(); g.translate(W / 2, 58); g.beginPath(); for (let i = 0; i < 6; i++) { const an = Math.PI / 6 + i * Math.PI / 3; g.lineTo(Math.cos(an) * 46, Math.sin(an) * 46); } g.closePath(); g.fillStyle = '#0b0916'; g.fill(); g.strokeStyle = F.timer < 600 ? '#ff3d81' : '#ffd23f'; g.lineWidth = 3; g.stroke(); g.restore();
+  g.font = `700 44px ${DFONT}`; g.textAlign = 'center'; g.fillStyle = F.timer < 600 ? '#ff3d81' : '#fff'; g.fillText(Math.ceil(F.timer / 60), W / 2, 74);
   g.textAlign = 'center';
   if (F.phase === 'intro') { big(F.pt < 60 ? `ROUND ${F.round}` : 'FIGHT!'); }
   if (F.phase === 'end') { big(F.banner); if (F.pt > 60 && F.rw) { g.font = `700 32px ${FONT}`; g.fillStyle = '#fff'; g.fillText(`${F.rw.r.ko} WIN`, W / 2, 440); } }
@@ -880,14 +947,15 @@ function draw() {
     txt('웹 체험판 · 1~3장', W / 2, 296, 26, '#ccc');
     const prog = SAVE.ch > 3 ? '스토리 (클리어!)' : SAVE.ch > 1 || SAVE.stage > 0 ? `스토리 이어하기 (${SAVE.ch}장 ${SAVE.stage + 1}번째)` : '스토리 시작';
     const CLu = window.Cloud && Cloud.user;
-    const c = menuList([prog, '대전 모드', `상점 · ${SAVE.coin} 코인`, '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 362);
+    const c = menuList([prog, '대전 모드', '인벤토리', `상점 · 단련 ${SAVE.train || 0}단계`, '랭킹', CLu ? `계정 · ${Cloud.nick}` : '로그인 / 가입', '처음부터 다시'], 352);
     if (c === 0) { if (SAVE.ch > 3) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); } storyNext(); }
     if (c === 1) { scene = 'select'; sel.side = 0; }
-    if (c === 2) openShop();
-    if (c === 3) openRank('total');
-    if (c === 4) openAcct();
-    if (c === 5) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
-    txt(`🪙 ${SAVE.coin}   ◆ 조각 ${SAVE.shard || 0}`, 20, 34, 20, '#ffd23f', 'left'); txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
+    if (c === 2) openInv();
+    if (c === 3) openShop();
+    if (c === 4) openRank('total');
+    if (c === 5) openAcct();
+    if (c === 6) { SAVE.ch = 1; SAVE.stage = 0; SAVE.introSeen = 0; resetRun(); save(); storyNext(); }
+    drawWallet(20, 18); txt(`총 플레이 ${fmt(SAVE.playMs)}` + (SAVE.best.total ? ` · 최고 클리어 ${fmt(SAVE.best.total)}` : ''), W - 20, 34, 16, '#9a93bd', 'right');
     txt(MOBILE ? '화면을 눌러 고르기 · 싸울 때 아래 버튼으로 조작' : '↑↓ 고르기 · Enter 결정 · 싸울 때 ←→ 이동 ↑ 점프 ↓ 숙이기 · A 주먹 · S 킥 · D 방어 · W 기술 · Q 아이템', W / 2, 690, 18, '#999');
   }
   else if (scene === 'chtitle') {
@@ -905,6 +973,11 @@ function draw() {
     if (take('ok') || take('F') || take('K') || tap) { dlg.i++; if (dlg.i >= dlg.lines.length) { const t = dlg.then; dlg = null; t(); } }
   }
   else if (scene === 'select') drawSelect();
+  else if (scene === 'gate') { ctT++; const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage], need = reqOf(SAVE.ch, SAVE.stage);
+    bgDraw(SAVE.ch, fi.k); g.fillStyle = 'rgba(6,4,14,.78)'; g.fillRect(0, 0, W, H); portrait(fi.k, W / 2 - 90, 90, 180, 180);
+    txt(`다음 상대 · ${BY[fi.k].ko}`, W / 2, 320, 34, '#fff'); txt(`단련 ${need}단계 이상이 필요해요 (지금 ${SAVE.train || 0}단계)`, W / 2, 370, 28, '#ffd23f');
+    txt('대전 모드나 이전 상대에게 이겨서 코인을 모으고 상점에서 단련하세요', W / 2, 410, 20, '#b9b2da');
+    const c = menuList(['단련하러 가기', '대전 모드로 코인 모으기', '타이틀로'], 500); if (c === 0) { scene = 'title'; menu = 3; openShop('train'); } if (c === 1) { scene = 'select'; sel.side = 0; } if (c === 2) { scene = 'title'; menu = 0; } }
   else if (scene === 'lose') { ctT++; g.fillStyle = '#100810'; g.fillRect(0, 0, W, H); txt('패배…', W / 2, 300, 80, '#ff3d81'); const c = menuList(['다시 도전', '타이틀로'], 440); if (c === 0) storyNext(); if (c === 1) { scene = 'title'; menu = 0; } }
   else if (scene === 'chclear') { ctT++; g.drawImage(stage(SAVE.ch - 1), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt(`${SAVE.ch - 1}장 클리어!`, W / 2, 330, 80, '#ffd23f'); txt('다음 장으로', W / 2, 420, 30); if (ctT > 60 && (take('ok') || take('F') || tap)) storyNext(); }
   else if (scene === 'ending') { g.drawImage(stage(3), 0, 0); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); txt('체험판 클리어!', W / 2, 300, 80, '#ffd23f'); txt('4장 · 노스텔지어 파크 · Coming soon', W / 2, 390, 30); txt('대전 모드에서 이긴 상대를 모두 쓸 수 있어요', W / 2, 440, 24, '#ccc'); txt(`이번 클리어 타임 ${fmt((SAVE.run[1] || 0) + (SAVE.run[2] || 0) + (SAVE.run[3] || 0))} · 최고 ${fmt(SAVE.best.total)}`, W / 2, 500, 26, '#ffd23f'); if (take('ok') || take('F') || tap) { scene = 'title'; menu = 1; } }
@@ -913,16 +986,17 @@ function draw() {
   if (!AC && scene === 'title') txt('화면을 누르거나 키를 누르면 소리가 켜져요', W / 2, 30, 16, '#666');
   tap = null; for (const k in pressed) pressed[k] = false;
 }
-function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; bgKey = fi.k; say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
+function storyNextFight() { const C = STORY[SAVE.ch]; const fi = C.fights[SAVE.stage]; bgKey = fi.k; if ((SAVE.train || 0) < reqOf(SAVE.ch, SAVE.stage)) { scene = 'gate'; ctT = 0; menu = 0; return; } say(fi.pre, () => { scene = 'x'; storyNextGo(); }); }
 function storyNextGo() { SAVE.introSeen = SAVE.ch; save(); const C = STORY[SAVE.ch], fi = C.fights[SAVE.stage]; dlg = null; startFightStory(C, fi); }
 function startFightStory(C, fi) {
-  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: C.dmg || 1, story: true, awkBoss: !!(fi.boss && AWK[fi.k]), onEnd: won => {
+  startFight('daisuke', fi.k, { ch: SAVE.ch, lvl: fi.lv, dmg: 1, train: reqOf(SAVE.ch, SAVE.stage), story: true, awkBoss: !!(fi.boss && AWK[fi.k]), onEnd: won => {
     if (won) {
       const first = !SAVE.beat[fi.k], base = Math.round(30 + fi.lv * 14) * (fi.boss ? 2 : 1), hpB = Math.round(F.a.hp / F.a.maxhp * 30);
       reward(base + hpB, `${BY[fi.k].ko} 격파`); if (first) reward(50, '첫 승리 보너스');
-      if (fi.boss) shardGain(2, '보스 격파'); else if (Math.random() < .3) shardGain(1, `${BY[fi.k].ko}에게서 발견`);
+      if (AWK[fi.k]) { if (fi.boss) shardGain(fi.k, 2, '보스 격파'); else if (roll(.5)) shardGain(fi.k, 1, `${BY[fi.k].ko}에게서 발견`); }
+      if (roll(.15)) shardGain('daisuke', 1, '승리');
       SAVE.beat[fi.k] = 1; SAVE.stage++; const done = SAVE.stage >= C.fights.length;
-      const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); shardGain(1, `${SAVE.ch}장 클리어`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
+      const after = () => { if (done) { reward(200, `${SAVE.ch}장 클리어 보너스`); shardGain('daisuke', 2, `${SAVE.ch}장 클리어`); recordClear(SAVE.ch); SAVE.ch++; SAVE.stage = 0; save(); scene = SAVE.ch > 3 ? 'ending' : 'chclear'; ctT = 0; } else { save(); storyNextFight(); } };
       save(); if (fi.post) say(fi.post, after); else after();
     } else { reward(10, '위로금'); save(); scene = 'lose'; ctT = 0; menu = 0; }
   } });
@@ -939,30 +1013,51 @@ function wrap(t, x, y, mw, lh) { g.font = `500 28px ${FONT}`; g.fillStyle = '#ff
 // ---------- versus select ----------
 let vsWon = false;
 function unlocked(k) { return k === 'daisuke' || k === 'ryohei' || SAVE.beat[k]; }
+function statPanel(k, x, y, right, t, label) {
+  const w = 520, h = 250; g.save();
+  const gr = g.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(right ? 1 : 0, 'rgba(255,61,129,.28)'); gr.addColorStop(right ? 0 : 1, 'rgba(20,16,40,.9)');
+  g.beginPath(); g.moveTo(x + 24, y); g.lineTo(x + w, y); g.lineTo(x + w - 24, y + h); g.lineTo(x, y + h); g.closePath(); g.fillStyle = gr; g.fill(); g.strokeStyle = '#ff3d81'; g.lineWidth = 2; g.stroke(); g.clip();
+  const cut = pimg('assets/cut/' + k + '.webp'), im = cut || faceImg(k), px = right ? x + w - 230 : x + 10;
+  if (im && im.complete && im.naturalWidth) { const s = Math.max(236 / im.naturalHeight, 230 / im.naturalWidth); g.drawImage(im, px + 115 - im.naturalWidth * s / 2, y + 14, im.naturalWidth * s, im.naturalHeight * s); }
+  g.restore();
+  const tx = right ? x + 30 : x + 250, r = BY[k];
+  txt(label, tx, y + 32, 15, '#ff8ab4', 'left'); txt(r.ko, tx, y + 70, 34, '#fff', 'left');
+  if (AWK[k]) txt(SAVE.awk[k] ? '각성 해금' : `각성 조각 ${SAVE.shards[k] || 0}/${AWK_COST}`, tx, y + 96, 15, AWK[k].c, 'left');
+  const v = statsOf(k, t);
+  v.forEach((val, i) => { const by = y + 120 + i * 30; txt(STAT_KO[i], tx, by + 14, 16, '#cfc8ee', 'left');
+    g.fillStyle = '#0b0916'; g.fillRect(tx + 62, by, 180, 16);
+    for (let j = 0; j < 10; j++) { g.fillStyle = val / 2.2 > j ? STAT_COL[i] : '#221d3a'; g.fillRect(tx + 64 + j * 17.8, by + 2, 15, 12); }
+    txt(val.toFixed(1).replace('.0', ''), tx + 252, by + 14, 16, STAT_COL[i], 'left', DFONT); });
+}
 function drawSelect() {
   g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H);
-  txt(sel.side === 0 ? '내 캐릭터 선택' : '상대 선택', W / 2, 60, 36, '#ffd23f');
-  const list = R, cols = 10, cw = 112, ch = 112, x0 = (W - cols * cw) / 2, y0 = 100;
+  g.strokeStyle = 'rgba(255,61,129,.08)'; g.lineWidth = 1; for (let i = -H; i < W; i += 40) { g.beginPath(); g.moveTo(i, H); g.lineTo(i + H, 0); g.stroke(); }
+  txt(sel.side === 0 ? '내 캐릭터 선택' : '상대 선택', W / 2, 46, 32, '#ffd23f');
+  drawWallet(W - 340, 16);
+  const list = R, cols = 10, cw = 96, ch = 96, x0 = (W - cols * cw) / 2, y0 = 70;
   let cur = list.findIndex(r => r.key === (sel.side === 0 ? sel.p : sel.o));
   if (take('left')) cur = (cur + list.length - 1) % list.length; if (take('right')) cur = (cur + 1) % list.length;
   if (take('up')) cur = (cur + list.length - cols) % list.length; if (take('down')) cur = (cur + cols) % list.length;
   list.forEach((r, i) => {
     const x = x0 + (i % cols) * cw, y = y0 + Math.floor(i / cols) * ch, ok = sel.side === 1 || unlocked(r.key);
-    if (tap && tap.x > x && tap.x < x + cw - 8 && tap.y > y && tap.y < y + ch - 8) { if (cur === i) pressed.ok = true; cur = i; }
-    g.fillStyle = i === cur ? '#ff3d81' : '#1c1830'; g.fillRect(x, y, cw - 8, ch - 8);
-    g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 14, ch - 14); g.clip(); if (ok) portrait(r.key, x + 3, y + 3, cw - 14, ch - 14); else txt('?', x + cw / 2 - 4, y + ch / 2 + 14, 40, '#555'); g.restore();
-    if (!r.real) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y + ch - 30, cw - 8, 22); txt('모션 준비중', x + cw / 2 - 4, y + ch - 14, 13, '#ffd23f'); }
+    if (tap && tap.x > x && tap.x < x + cw - 6 && tap.y > y && tap.y < y + ch - 6) { if (cur === i) pressed.ok = true; cur = i; }
+    g.fillStyle = i === cur ? '#ff3d81' : AWK[r.key] && SAVE.awk[r.key] ? AWK[r.key].c : '#2a2444'; g.fillRect(x, y, cw - 6, ch - 6);
+    g.save(); g.beginPath(); g.rect(x + 3, y + 3, cw - 12, ch - 12); g.clip(); g.fillStyle = '#15122a'; g.fillRect(x + 3, y + 3, cw - 12, ch - 12);
+    if (ok) portrait(r.key, x + 3, y + 3, cw - 12, ch - 12); else txt('?', x + cw / 2 - 3, y + ch / 2 + 14, 40, '#555');
+    if (i !== cur) { g.fillStyle = 'rgba(12,10,24,.28)'; g.fillRect(x + 3, y + 3, cw - 12, ch - 12); } g.restore();
+    if (!r.real) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y + ch - 26, cw - 6, 20); txt('준비중', x + cw / 2 - 3, y + ch - 11, 12, '#ffd23f'); }
   });
   const pick = list[cur];
   if (sel.side === 0) sel.p = pick.key; else sel.o = pick.key;
-  g.save(); g.fillStyle = '#ff3d81'; g.fillRect(56, 476, 188, 188); g.fillRect(W - 244, 476, 188, 188); g.restore(); portrait(sel.p, 60, 480, 180, 180); portrait(sel.o, W - 240, 480, 180, 180);
-  txt(BY[sel.p].ko, 300, 560, 34, '#fff', 'left'); txt('VS', W / 2, 600, 60, '#ff3d81', 'center', DFONT); txt(BY[sel.o].ko, W - 300, 560, 34, '#fff', 'right');
-  txt(unlocked(pick.key) || sel.side === 1 ? (MOBILE ? '한 번 더 누르면 결정 · 왼쪽 위 뒤로' : 'Enter / A 로 결정 · Esc 뒤로') : '스토리에서 이기면 열려요', W / 2, 690, 20, '#aaa');
-  txt('← 뒤로', 30, 50, 22, '#aaa', 'left'); if (tap && tap.x < 160 && tap.y < 80) pressed.back = true;
+  const t = SAVE.train || 0;
+  statPanel(sel.p, 50, 384, false, t, '1P · 단련 ' + t + '단계'); statPanel(sel.o, W - 570, 384, true, t, 'CPU · 같은 단련');
+  txt('VS', W / 2, 520, 64, '#ff3d81', 'center', DFONT);
+  txt(unlocked(pick.key) || sel.side === 1 ? (MOBILE ? '한 번 더 누르면 결정 · 왼쪽 위 뒤로' : 'Enter / A 로 결정 · Esc 뒤로') : '스토리에서 이기면 열려요', W / 2, 700, 18, '#aaa');
+  txt('← 뒤로', 30, 46, 22, '#aaa', 'left'); if (tap && tap.x < 160 && tap.y < 70) pressed.back = true;
   if ((take('ok') || take('F')) && (sel.side === 1 || unlocked(pick.key))) { sfx('sel'); if (sel.side === 0) sel.side = 1; else vsStart(); }
   if (take('back')) { if (sel.side === 1) sel.side = 0; else { scene = 'title'; menu = 1; } }
 }
-function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; reward(w ? 25 : 5, w ? '대전 승리' : '대전 참가'); if (w && Math.random() < .15) shardGain(1, '대전 승리'); save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
+function vsStart() { const o = BY[sel.o]; startFight(sel.p, sel.o, { ch: o.ch, lvl: 5, onEnd: w => { vsWon = w; reward(w ? 25 : 5, w ? '대전 승리' : '대전 참가'); if (w) { if (AWK[sel.o] && roll(.3)) shardGain(sel.o, 1, '대전 승리'); if (AWK[sel.p] && roll(.1)) shardGain(sel.p, 1, '대전 승리'); } save(); scene = 'vsend'; ctT = 0; menu = 0; } }); }
 
 
 // ---------- coins, items, training ----------
@@ -970,9 +1065,7 @@ const ITEMS = {
   potion: { ko: '회복 드링크', price: 80, desc: '체력 25% 회복' },
   candy: { ko: '기력 캔디', price: 60, desc: '게이지 +50' },
   charm: { ko: '강철 부적', price: 100, desc: '10초 동안 받는 피해 40% 감소' },
-  rage: { ko: '분노 캡슐', price: 120, desc: '10초 동안 주는 피해 30% 증가' } };
-const UPS = { hp: { ko: '체력 단련', desc: '최대 체력 +5%' }, atk: { ko: '공격 단련', desc: '주는 피해 +5%' }, gauge: { ko: '기력 단련', desc: '게이지 충전 +10%' } };
-const UPMAX = 5, upCost = lv => 150 * (lv + 1);
+  jelly: { ko: '스피드 젤리', price: 110, desc: '10초 동안 스피드 +4 (가드를 잘 뚫고 잘 버팀, 이동 빨라짐)' } };
 const TOASTS = [];
 function toast(t) { TOASTS.push({ t, n: 0 }); if (TOASTS.length > 4) TOASTS.shift(); }
 function reward(n, why) { SAVE.coin = (SAVE.coin || 0) + n; toast(`+${n} 코인 · ${why}`); }
@@ -984,45 +1077,82 @@ function drawToasts() {
 function useItem(f) {
   if (f.cpu || !F || F.phase !== 'fight') return;
   const k = SAVE.equip, it = ITEMS[k];
-  if (!it || !(SAVE.inv[k] > 0)) { toast('장착한 아이템이 없어요 · 타이틀의 상점에서 사고 장착하세요'); return; }
+  if (!it || !(SAVE.inv[k] > 0)) { toast('장착한 아이템이 없어요 · 상점에서 사고 인벤토리에서 장착하세요'); return; }
   if (f.itemUsed) { toast('아이템은 라운드마다 1번만 쓸 수 있어요'); return; }
   SAVE.inv[k]--; f.itemUsed = 1; save(); sfx('sel');
   if (k === 'potion') f.hp = Math.min(f.maxhp, f.hp + Math.round(f.maxhp * .25));
   if (k === 'candy') f.gauge = Math.min(100, f.gauge + 50);
   if (k === 'charm') f.buff.charm = 600;
-  if (k === 'rage') f.buff.rage = 600;
-  hitSprite(k === 'candy' ? 'c_candy' : k === 'potion' ? 'c_heal' : k === 'rage' ? 'c_rage' : 'c_charm', f.x, k === 'candy' || k === 'potion' ? FLOOR - 120 : FLOOR - 200, k === 'rage' ? 260 : 330, f.face, 30);
+  if (k === 'jelly') f.buff.jelly = 600;
+  hitSprite(k === 'candy' ? 'c_candy' : k === 'potion' ? 'c_heal' : k === 'jelly' ? 'c_dash' : 'c_charm', f.x, k === 'candy' || k === 'potion' ? FLOOR - 120 : FLOOR - 200, 330, f.face, 30);
   toast(`${it.ko} 사용!`);
 }
 function drawItemHud(f) {
   const k = SAVE.equip, it = ITEMS[k], n = it ? (SAVE.inv[k] || 0) : 0;
   g.font = `700 16px ${FONT}`; g.textAlign = 'left'; g.fillStyle = f.itemUsed || !n ? '#6c6690' : '#ffd23f';
-  g.fillText(it ? `${MOBILE ? '아이템' : 'Q'} ${it.ko} ×${n}${f.itemUsed ? ' (사용함)' : ''}` : `${MOBILE ? '아이템' : 'Q'} 없음`, 60, 178);
-  let x = 60; for (const [b, l, c] of [['rage', '분노', '#ff6a4a'], ['charm', '부적', '#8fd6ff']]) if (f.buff[b] > 0) { g.fillStyle = c; g.fillText(`${l} ${Math.ceil(f.buff[b] / 60)}초`, x, 200); x += 90; }
+  if (it) { g.globalAlpha = f.itemUsed || !n ? .4 : 1; drawIcon(k, 100, 150, 26); g.globalAlpha = 1; }
+  g.fillText(it ? `${MOBILE ? '' : 'Q '}${it.ko} ×${n}${f.itemUsed ? ' (사용함)' : ''}` : `${MOBILE ? '아이템' : 'Q'} 없음`, 132, 169);
+  let x = 100; for (const [b, l, c] of [['jelly', '스피드', '#ffd23f'], ['charm', '부적', '#8fd6ff']]) if (f.buff[b] > 0) { g.fillStyle = c; g.fillText(`${l} ${Math.ceil(f.buff[b] / 60)}초`, x, 196); x += 100; }
 }
-function openShop() {
-  const box = $('shopBox'); $('shop').classList.add('open');
-  const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it"><div><b>${it.ko} · 보유 ${SAVE.inv[k] || 0}</b><small>${it.desc}</small></div>
-    <button type="button" data-buy="${k}" ${SAVE.coin < it.price ? 'disabled' : ''}>구매 ${it.price}</button>
-    <button type="button" data-eq="${k}" aria-pressed="${SAVE.equip === k}">${SAVE.equip === k ? '장착됨' : '장착'}</button></div>`).join('');
-  const ups = Object.entries(UPS).map(([k, u]) => { const lv = SAVE.up[k] || 0, max = lv >= UPMAX, c = upCost(lv);
-    return `<div class="it"><div><b>${u.ko} · Lv ${lv}/${UPMAX}</b><small>${u.desc} (지금 +${k === 'gauge' ? lv * 10 : lv * 5}%)</small></div>
-    <button type="button" data-up="${k}" ${max || SAVE.coin < c ? 'disabled' : ''}>${max ? '최대' : '단련 ' + c}</button></div>`; }).join('');
-  box.innerHTML = `<h2 id="shopT">상점</h2><p>보유 코인 <span class="coin">${SAVE.coin}</span> · 스토리와 대전에서 이기면 모여요</p>
+// ---------- UI icons (assets/ui/<name>.webp from the icon sheet; drawn fallbacks until then) ----------
+const UIC = {}; const ICONS = ['potion', 'candy', 'charm', 'jelly', 'coin', 'train', 'shard'];
+function uiImg(n) { if (!(n in UIC)) { const i = new Image(); i.onerror = () => { UIC[n] = null; }; i.src = 'assets/ui/' + n + '.webp'; UIC[n] = i; } const i = UIC[n]; return i && i.complete && i.naturalWidth ? i : null; }
+ICONS.forEach(uiImg);
+const ICOL = { potion: '#57e38a', candy: '#3fd8ff', charm: '#8fd6ff', jelly: '#ffd23f', coin: '#ffd23f', train: '#ff8a3d', shard: '#c08bff' };
+const ISYM = { potion: '✚', candy: '◆', charm: '⛨', jelly: '»', coin: '¢', train: '▲', shard: '✦' };
+function iconHTML(n, col) { const c = col || ICOL[n] || '#fff'; return `<span class="ico" style="--ic:${c}"><img src="assets/ui/${n}.webp" alt="" onerror="this.remove()"><i aria-hidden="true">${ISYM[n] || '•'}</i></span>`; }
+function drawIcon(n, x, y, sz, col) { g.save(); drawIcon0(n, x, y, sz, col); g.restore(); }
+function drawIcon0(n, x, y, sz, col) { const im = uiImg(n); if (im) { g.drawImage(im, x, y, sz, sz); return; } const c = col || ICOL[n];
+  const gr = g.createRadialGradient(x + sz * .35, y + sz * .3, 1, x + sz / 2, y + sz / 2, sz / 2); gr.addColorStop(0, '#fff'); gr.addColorStop(.35, c); gr.addColorStop(1, 'rgba(0,0,0,.6)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x + sz / 2, y + sz / 2, sz / 2, 0, 7); g.fill(); g.font = `700 ${sz * .55}px ${FONT}`; g.textAlign = 'center'; g.fillStyle = '#1a0612'; g.fillText(ISYM[n] || '', x + sz / 2, y + sz * .7); }
+function drawWallet(x, y) {
+  g.fillStyle = 'rgba(10,8,22,.75)'; g.fillRect(x - 6, y - 4, 330, 36); g.strokeStyle = 'rgba(255,210,63,.35)'; g.lineWidth = 1; g.strokeRect(x - 6, y - 4, 330, 36);
+  drawIcon('coin', x, y, 28); txt(`${SAVE.coin}`, x + 36, y + 22, 20, '#ffd23f', 'left', DFONT);
+  drawIcon('train', x + 150, y, 28); txt(`단련 ${SAVE.train || 0}`, x + 186, y + 22, 18, '#ffb27a', 'left');
+}
+function statBars(k, t) { const v = statsOf(k, t); return `<div class="stats">${STAT_KO.map((l, i) => `<span>${l}</span><b style="--w:${Math.min(100, v[i] * 5)}%;--c:${STAT_COL[i]}"></b><em>${v[i].toFixed(1).replace('.0', '')}</em>`).join('')}</div>`; }
+function openInv() {
+  const box = $('invBox'); $('inv').classList.add('open');
+  const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it">${iconHTML(k)}<div><b>${it.ko} <span class="cnt">×${SAVE.inv[k] || 0}</span></b><small>${it.desc}</small></div>
+    <button type="button" data-eq="${k}" aria-pressed="${SAVE.equip === k}" ${!(SAVE.inv[k] > 0) && SAVE.equip !== k ? 'disabled' : ''}>${SAVE.equip === k ? '장착됨' : '장착'}</button></div>`).join('');
+  const shards = Object.entries(AWK).map(([k, A]) => { const n = SAVE.shards[k] || 0, own = unlocked(k), done = SAVE.awk[k];
+    return `<div class="sh${done ? ' done' : ''}" style="--ac:${A.c}"><img src="assets/face/${k}.webp" alt="">${iconHTML('shard', A.c)}<b>${BY[k].ko}</b>
+      <span class="pips">${Array.from({ length: AWK_COST }, (_, i) => `<i class="${i < n || done ? 'on' : ''}"></i>`).join('')}</span>
+      ${done ? '<button type="button" disabled>각성 가능</button>' : `<button type="button" data-awk="${k}" ${n < AWK_COST ? 'disabled' : ''}>${n}/${AWK_COST}${n >= AWK_COST ? ' · 해금' : ''}</button>`}
+      ${own ? '' : '<small>캐릭터 미보유</small>'}</div>`; }).join('');
+  box.innerHTML = `<h2 id="invT">인벤토리</h2>
+    <div class="wallet"><div>${iconHTML('coin')}<b>${SAVE.coin}</b><small>코인</small></div><div>${iconHTML('train')}<b>${SAVE.train || 0} / ${TRAIN_MAX}</b><small>단련 단계 (보유 캐릭터 전원 공통)</small></div></div>
     <h3>전투 아이템</h3><p>장착한 아이템을 싸울 때 ${MOBILE ? '아이템 버튼' : 'Q 키'}로 써요. 라운드마다 1번.</p>${items}
-    <h3>단련 (영구)</h3><p>내 캐릭터에 계속 적용돼요.</p>${ups}
-    <h3>각성</h3><p>각성의 조각 <span class="coin">◆ ${SAVE.shard || 0}</span> · 보스를 이기면 2개, 장을 깨면 1개, 일반 상대에게서도 가끔 나와요. 조각 ${AWK_COST}개로 캐릭터 하나를 해금해요.</p>
-    <p>해금한 캐릭터로 싸울 때 게이지가 절반 이상이면 ${MOBILE ? '각성 버튼' : 'E 키'}로 각성 (라운드마다 1번, 15초): 체력 30% 회복, 주는 피해 +30%, 받는 피해 -20%, 게이지 빨리 참, 필살기가 각성 필살기로 바뀌어요.</p>
-    <div class="it"><div><b>각성의 조각 1개</b><small>코인으로 사기</small></div><button type="button" id="buyShard" ${SAVE.coin < SHARD_PRICE ? 'disabled' : ''}>구매 ${SHARD_PRICE}</button></div>
-    ${Object.entries(AWK).map(([k, A]) => `<div class="it"><div><b style="color:${A.c}">${BY[k].ko} 각성</b><small>각성 필살기 · ${A.S}</small></div>${SAVE.awk[k] ? '<button type="button" disabled>해금됨</button>' : `<button type="button" data-awk="${k}" ${(SAVE.shard || 0) < AWK_COST ? 'disabled' : ''}>해금 ◆${AWK_COST}</button>`}</div>`).join('')}
-    <p class="msg" id="sMsg" role="status"></p><div class="row"><button type="button" data-close>닫기</button></div>`;
-  const msg = t => { const m = $('sMsg'); if (m) m.textContent = t; };
-  box.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const k = b.dataset.buy, it = ITEMS[k]; if (SAVE.coin < it.price) return; SAVE.coin -= it.price; SAVE.inv[k] = (SAVE.inv[k] || 0) + 1; if (!ITEMS[SAVE.equip]) SAVE.equip = k; save(); openShop(); msg(`${it.ko}을(를) 샀어요`); });
-  box.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { SAVE.equip = b.dataset.eq; save(); openShop(); msg(`${ITEMS[SAVE.equip].ko} 장착`); });
-  box.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const k = b.dataset.up, lv = SAVE.up[k] || 0, c = upCost(lv); if (lv >= UPMAX || SAVE.coin < c) return; SAVE.coin -= c; SAVE.up[k] = lv + 1; save(); openShop(); msg(`${UPS[k].ko} Lv ${lv + 1}`); });
-  const bs = $('buyShard'); if (bs) bs.onclick = () => { if (SAVE.coin < SHARD_PRICE) return; SAVE.coin -= SHARD_PRICE; SAVE.shard = (SAVE.shard || 0) + 1; save(); openShop(); msg('각성의 조각을 샀어요'); };
-  box.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { const k = b.dataset.awk; if ((SAVE.shard || 0) < AWK_COST) return; SAVE.shard -= AWK_COST; SAVE.awk[k] = 1; save(); openShop(); msg(`${BY[k].ko} 각성 해금!`); });
+    <h3>각성의 조각</h3><p>캐릭터마다 조각 ${AWK_COST}개를 모으면 그 캐릭터의 각성이 열려요.</p><div class="shards">${shards}</div>
+    <p class="msg" id="iMsg" role="status"></p><div class="row"><button type="button" data-shop>상점 · 단련</button><button type="button" data-close>닫기</button></div>`;
+  const msg = t => { const m = $('iMsg'); if (m) m.textContent = t; };
+  box.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { SAVE.equip = b.dataset.eq; save(); openInv(); msg(`${ITEMS[SAVE.equip].ko} 장착`); });
+  box.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { const k = b.dataset.awk; if ((SAVE.shards[k] || 0) < AWK_COST) return; SAVE.awk[k] = 1; save(); openInv(); msg(`${BY[k].ko} 각성 해금! 싸울 때 게이지 절반 이상이면 ${MOBILE ? '각성 버튼' : 'E 키'}`); });
+  box.querySelector('[data-shop]').onclick = () => { closePanels(); openShop(); };
   box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
+}
+function openShop(focus) {
+  const box = $('shopBox'); $('shop').classList.add('open');
+  const t = SAVE.train || 0, max = t >= TRAIN_MAX, c = trainCost(t);
+  const items = Object.entries(ITEMS).map(([k, it]) => `<div class="it">${iconHTML(k)}<div><b>${it.ko} <span class="cnt">보유 ${SAVE.inv[k] || 0}</span></b><small>${it.desc}</small></div>
+    <button type="button" data-buy="${k}" ${SAVE.coin < it.price ? 'disabled' : ''}>${iconHTML('coin')} ${it.price}</button></div>`).join('');
+  const shards = Object.entries(AWK).filter(([k]) => !SAVE.awk[k]).map(([k, A]) => `<div class="it">${iconHTML('shard', A.c)}<div><b>${BY[k].ko}의 각성 조각 <span class="cnt">${SAVE.shards[k] || 0}/${AWK_COST}</span></b><small>상대로 이기면 나오기도 해요</small></div>
+    <button type="button" data-sh="${k}" ${SAVE.coin < SHARD_PRICE ? 'disabled' : ''}>${iconHTML('coin')} ${SHARD_PRICE}</button></div>`).join('') || '<p>모든 각성을 해금했어요.</p>';
+  const nextNeed = SAVE.ch <= 3 ? reqOf(SAVE.ch, SAVE.stage) : 0;
+  box.innerHTML = `<h2 id="shopT">상점 · 단련</h2><div class="wallet"><div>${iconHTML('coin')}<b>${SAVE.coin}</b><small>코인</small></div><div>${iconHTML('train')}<b>${t} / ${TRAIN_MAX}</b><small>단련 단계</small></div></div>
+    <h3 id="trainH">단련</h3><p>단련은 계정 전체에 적용돼요. 단계마다 보유한 모든 캐릭터의 공격·맷집·체력·스피드가 똑같이 +${TRAIN_STEP} 올라요. 새로 해금한 캐릭터도 같은 단계로 시작해요.${nextNeed ? ` 다음 스토리 상대는 단련 ${nextNeed}단계가 필요해요.` : ''}</p>
+    <div class="it">${iconHTML('train')}<div><b>단련 ${t}단계 → ${max ? '최대' : t + 1 + '단계'}</b><small>다이스케 기준 지금: ${statsOf('daisuke', t).map((v, i) => STAT_KO[i] + ' ' + v.toFixed(1).replace('.0', '')).join(' · ')}</small></div>
+    <button type="button" id="doTrain" ${max || SAVE.coin < c ? 'disabled' : ''}>${max ? '최대' : iconHTML('coin') + ' ' + c}</button></div>
+    <h3>전투 아이템</h3>${items}
+    <h3>각성의 조각</h3>${shards}
+    <p class="msg" id="sMsg" role="status"></p><div class="row"><button type="button" data-inv>인벤토리</button><button type="button" data-close>닫기</button></div>`;
+  const msg = m => { const e = $('sMsg'); if (e) e.textContent = m; };
+  $('doTrain').onclick = () => { const t = SAVE.train || 0, c = trainCost(t); if (t >= TRAIN_MAX || SAVE.coin < c) return; SAVE.coin -= c; SAVE.train = t + 1; save(); openShop(); msg(`단련 ${t + 1}단계! 모든 캐릭터 능력치 +${TRAIN_STEP}`); };
+  box.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const k = b.dataset.buy, it = ITEMS[k]; if (SAVE.coin < it.price) return; SAVE.coin -= it.price; SAVE.inv[k] = (SAVE.inv[k] || 0) + 1; if (!ITEMS[SAVE.equip] || !(SAVE.inv[SAVE.equip] > 0)) SAVE.equip = k; save(); openShop(); msg(`${it.ko}을(를) 샀어요`); });
+  box.querySelectorAll('[data-sh]').forEach(b => b.onclick = () => { const k = b.dataset.sh; if (SAVE.coin < SHARD_PRICE) return; SAVE.coin -= SHARD_PRICE; SAVE.shards[k] = Math.min(AWK_COST, (SAVE.shards[k] || 0) + 1); save(); openShop(); msg(`${BY[k].ko}의 각성 조각 ${SAVE.shards[k]}/${AWK_COST}`); });
+  box.querySelector('[data-inv]').onclick = () => { closePanels(); openInv(); };
+  box.querySelectorAll('[data-close]').forEach(b => b.onclick = closePanels);
+  if (focus === 'train') setTimeout(() => $('doTrain').focus(), 30);
 }
 
 // ---------- account & ranking panels ----------
