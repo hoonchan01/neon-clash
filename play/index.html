@@ -229,7 +229,10 @@ const BGI = {}; let bgKey = null;
 function bgImg(k) { if (!k) return null; if (!(k in BGI)) { const i = new Image(); i.onerror = () => { BGI[k] = null; }; i.src = 'assets/bg/' + k + '.webp'; BGI[k] = i; } const i = BGI[k]; return i && i.complete && i.naturalWidth ? i : null; }
 // photo backgrounds only (the old code-drawn street had signage); a fighter without a stage of its own borrows the chapter's
 const CH_OPEN = { 1: 'ryohei', 2: 'hiroshi', 3: 'kouji' }, CH_BOSS = { 1: 'hiroki', 2: 'shogun', 3: 'rox' };
-function bgDraw(ch, k) { const i = bgImg(k) || bgImg(CH_BOSS[ch] || 'hiroki'); if (i) { const bh = Math.max(H, W * i.naturalHeight / i.naturalWidth); g.drawImage(i, 0, H - bh, W, bh); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); } else { g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); } }
+// stage photos are cover-fitted (never stretched); BGFY = vertical anchor (0 top … 1 bottom) so the ground stays under the fighters
+const BGFY = { hiroshi: .85, hayato: .9, kouji: .8, kuma: .75, rox: .8, andromeda: .9, yuki: .6, hex: .75, mars: .8, hidetoshi: .55 };
+function bgDraw(ch, k) { const key = bgImg(k) ? k : (CH_BOSS[ch] || 'hiroki'), i = bgImg(key); if (i) { const sc = Math.max(W / i.naturalWidth, H / i.naturalHeight), dw = i.naturalWidth * sc, dh = i.naturalHeight * sc, fy = BGFY[key.replace(/_r\d$/, '')] ?? .7;
+  g.drawImage(i, (W - dw) / 2, (H - dh) * fy, dw, dh); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); } else { g.fillStyle = '#0c0a18'; g.fillRect(0, 0, W, H); } }
 
 // ---------- character stats: [공격 ATK, 맷집 DEF, 체력 HP, 스피드 SPD] on a 1-10 scale ----------
 const STATS = {
